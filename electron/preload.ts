@@ -62,6 +62,16 @@ import type {
 
 const imageSaves = createImageSaveTracker();
 
+contextBridge.exposeInMainWorld("promptWindowMain", {
+  open: () => ipcRenderer.invoke("prompt-window:open"),
+  publish: (snapshot: import("../src/prompt-window-contract").PromptWindowSnapshot) => ipcRenderer.send("prompt-window:publish", snapshot),
+  onEdit: (callback: (edit: import("../src/prompt-window-contract").PromptWindowEdit) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, edit: import("../src/prompt-window-contract").PromptWindowEdit) => callback(edit);
+    ipcRenderer.on("prompt-window:edit", listener);
+    return () => ipcRenderer.removeListener("prompt-window:edit", listener);
+  },
+});
+
 contextBridge.exposeInMainWorld("naiDesktop", {
   favoritesStatus:(src:string)=>ipcRenderer.invoke('favorites:status',src),
   favoritesList: () => ipcRenderer.invoke('favorites:list'),

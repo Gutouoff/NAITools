@@ -1,5 +1,6 @@
 import {prepareBatchImageService} from './ipc/batch-image-service';
 import {cancelBatchRedraw} from './ipc/nai';
+import { registerPromptWindowIpc } from "./ipc/prompt-window";
 import {prepareComicImageService} from './ipc/comic-image-service';
 import {cancelTagComicGeneration} from './ipc/nai';
 import { registerCompatibleImageIpc } from "./ipc/compatible-settings-ipc";
@@ -721,6 +722,12 @@ function createWindow() {
 }
 
 function registerIpc() {
+  registerPromptWindowIpc(
+    () => mainWindow,
+    path.join(__dirname, "prompt-preload.js"),
+    path.join(__dirname, "../../dist/index.html"),
+    process.env.VITE_DEV_SERVER_URL,
+  );
   registerImageFavoritesIpc();
   registerCompatibleImageIpc(() => mainWindow);
   ipcMain.handle("agent:getWorkspace", () => readAgentWorkspace());

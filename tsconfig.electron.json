@@ -22,6 +22,7 @@
   "include": [
     "electron/main.ts",
     "electron/preload.ts",
+    "electron/prompt-preload.ts",
     "electron/ipc/**/*.ts",
     "src/types.ts",
     "src/png-meta.ts",

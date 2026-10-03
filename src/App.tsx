@@ -40,6 +40,7 @@ import { ImageSaveFeedback } from "./components/ImageSaveFeedback";
 import { imagePasteProps } from "./image-paste";
 import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import { PromptMainSync } from "./PromptMainSync";
 import { PROMPT_DOCK_KEY, parsePromptDockHeight } from "./prompt-grid";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import clsx from "clsx";
@@ -1485,6 +1486,7 @@ export function PromptAndParams({
   const setI2ISizeMode = useAppStore((state) => state.setI2ISizeMode);
   const promptTab = useAppStore((state) => state.promptTab);
   const setPromptTab = useAppStore((state) => state.setPromptTab);
+  const ft = useFeatureText();
   const vibeImages = useAppStore((state) => state.vibeImages);
   const preciseRefCount = useAppStore((state) => state.preciseReferences.length);
   const charCaptions = useAppStore((state) => state.charCaptions);
@@ -2275,11 +2277,12 @@ export function PromptAndParams({
         </button>
 
       </div>
-      {promptTab === "positive" && !promptOverride && <div className="layered-prompt-mode" role="group" aria-label="正面提示词编辑方式">
-        <button type="button" className={clsx(layeredMode && "active")} aria-pressed={layeredMode} onClick={() => setLayeredMode(true)}>分层输入</button>
-        <button type="button" className={clsx(!layeredMode && "active")} aria-pressed={!layeredMode} onClick={() => setLayeredMode(false)}>单框编辑</button>
+      {promptTab === "positive" && !promptOverride && <div className="layered-prompt-mode" role="group" aria-label={ft("正面提示词编辑方式")}>
+        <button type="button" className={clsx(layeredMode && "active")} aria-pressed={layeredMode} onClick={() => setLayeredMode(true)}>{ft("分层输入")}</button>
+        <button type="button" className={clsx(!layeredMode && "active")} aria-pressed={!layeredMode} onClick={() => setLayeredMode(false)}>{ft("单框编辑")}</button>
       </div>}
       {showLayeredPrompt ? <LayeredPromptEditor
+        language={settings?.language}
         positivePrompt={effectivePositivePrompt}
         stylePrompt={params.stylePrompt}
         onPositiveChange={value => positiveHistory.commit(value, true)}
@@ -7127,6 +7130,7 @@ function PersistentCanvasSurface({
 }
 
 function MainPage() {
+  const ft = useFeatureText();
   const showSettings = useAppStore((state) => state.showSettings);
   const setShowSettings = useAppStore((state) => state.setShowSettings);
   const showOnboarding = useAppStore((state) => state.showOnboarding);
@@ -7227,6 +7231,7 @@ function MainPage() {
 
   return (
     <div className="app-shell">
+      <PromptMainSync />
       <AppTitleBar />
       <div className="app-notice-slot">
         <UpdateBanner />
@@ -7261,8 +7266,8 @@ function MainPage() {
           </div>
           <WorkspaceResizer edge="right" />
           <MemoizedHistoryPanel />
-          <section className="prompt-workbench-dock" style={{ "--prompt-dock-height": `${dockHeight}px` } as CSSProperties} aria-label="提示词工作区">
-            <div className="prompt-dock-resizer" role="separator" aria-label="调整提示词工作区高度" aria-orientation="horizontal" tabIndex={0}
+          <section className="prompt-workbench-dock" style={{ "--prompt-dock-height": `${dockHeight}px` } as CSSProperties} aria-label={ft("提示词工作区")}>
+            <div className="prompt-dock-resizer" role="separator" aria-label={ft("调整提示词工作区高度")} aria-orientation="horizontal" tabIndex={0}
               onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); dockDrag.current = { y: event.clientY, height: dockHeight }; }}
               onPointerMove={event => { if (dockDrag.current) setDockHeight(Math.max(180, Math.min(700, dockDrag.current.height + dockDrag.current.y - event.clientY))); }}
               onPointerUp={event => { dockDrag.current = null; event.currentTarget.releasePointerCapture(event.pointerId); try { localStorage.setItem(PROMPT_DOCK_KEY, String(dockHeight)); } catch { /* optional */ } }}
@@ -7276,6 +7281,7 @@ function MainPage() {
                   return next;
                 });
               }} />
+            <div className="prompt-dock-toolbar"><strong>{ft("提示词")}</strong><button type="button" className="layered-prompt-icon" title={ft("在独立窗口编辑提示词")} aria-label={ft("在独立窗口编辑提示词")} onClick={() => void window.promptWindowMain?.open()}><Icon name="externalLink" /></button></div>
             <div id="prompt-dock-host" className="prompt-dock-scroll" />
           </section>
         </PersistentTabView>
