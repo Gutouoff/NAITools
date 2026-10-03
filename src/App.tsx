@@ -39,6 +39,8 @@ import { MetadataApplyPanel } from "./MetadataApplyPanel";
 import { ImageSaveFeedback } from "./components/ImageSaveFeedback";
 import { imagePasteProps } from "./image-paste";
 import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
+import { PROMPT_DOCK_KEY, parsePromptDockHeight } from "./prompt-grid";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import clsx from "clsx";
 import { format } from "date-fns";
@@ -1455,6 +1457,14 @@ export function StylePresetImagesModal({
 }
 
 // ── Prompt + Params ───────────────────────────────────────────────────────────
+function PromptDockPortal({ enabled, children }: { enabled: boolean; children: React.ReactNode }) {
+  const [target, setTarget] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setTarget(enabled ? document.getElementById("prompt-dock-host") : null);
+  }, [enabled]);
+  return target ? createPortal(<div className="prompt-dock-content">{children}</div>, target) : <>{children}</>;
+}
+
 export function PromptAndParams({
   includeModel = true,
   imageToImage = false,
@@ -2255,6 +2265,7 @@ export function PromptAndParams({
               </div>
             )}
       </CapsuleEditor>}
+      <PromptDockPortal enabled={!promptOverride}>
       <div className="prompt-tabs">
         <button className={clsx(promptTab === "positive" && "active")} onClick={() => setPromptTab("positive")}>
           {generateText.prompt.positivePrompt}
@@ -2364,6 +2375,7 @@ export function PromptAndParams({
           </div>
         )}
       </div>
+      </PromptDockPortal>
       {imageToImage && workbenchImage && (
         <div className="i2i-size-control">
           <div className="i2i-size-mode" role="group" aria-label={t("i2i.sizeMode")}>
@@ -7064,12 +7076,16 @@ function PersistentTabView({
   children,
   scope,
   className,
+  style,
+  promptDocked = false,
   resetKey = active,
 }: {
   active: boolean;
   children: React.ReactNode;
   scope: string;
   className?: string;
+  style?: CSSProperties;
+  promptDocked?: boolean;
   resetKey?: unknown;
 }) {
   const [hasMounted, setHasMounted] = useState(active);
@@ -7080,7 +7096,8 @@ function PersistentTabView({
   if (!hasMounted && !active) return null;
   return (
     <div
-      ref={viewMotion} className={clsx("persistent-tools-view", className, active ? "is-active" : "is-hidden")}
+      ref={viewMotion} className={clsx("persistent-tools-view", className, promptDocked && "is-prompt-docked", active ? "is-active" : "is-hidden")}
+      style={style}
       aria-hidden={!active}
     >
       <AppErrorBoundary scope={scope} resetKey={resetKey}>
@@ -7123,6 +7140,12 @@ function MainPage() {
   const t = useCallback((key: string) => desktopUiText(language, key), [language]);
   const wsLeftWidth = useAppStore((state) => state.wsLeftWidth);
   const wsRightWidth = useAppStore((state) => state.wsRightWidth);
+  const activeCanvasSurface = useAppStore((state) => state.activeCanvasSurface);
+  const [dockHeight, setDockHeight] = useState(() => {
+    try { return parsePromptDockHeight(localStorage.getItem(PROMPT_DOCK_KEY)); }
+    catch { return 300; }
+  });
+  const dockDrag = useRef<{ y: number; height: number } | null>(null);
   const uiCaptureParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const uiCaptureTheme = uiCaptureParams.get("uiTheme");
   // Final render-boundary guard: even if a future IPC path forgets to sanitize
@@ -7221,6 +7244,8 @@ function MainPage() {
           scope={`tab:${activeTab}`}
           resetKey={activeTab}
           className="persistent-workbench-view"
+          promptDocked={activeTab === "generate" && activeCanvasSurface !== "generate:enhance"}
+          style={{ "--prompt-dock-height": `${dockHeight}px` } as CSSProperties}
         >
           <LeftPanel openSettings={() => setShowSettings(true)} />
           <WorkspaceResizer edge="left" />
@@ -7236,6 +7261,23 @@ function MainPage() {
           </div>
           <WorkspaceResizer edge="right" />
           <MemoizedHistoryPanel />
+          <section className="prompt-workbench-dock" style={{ "--prompt-dock-height": `${dockHeight}px` } as CSSProperties} aria-label="提示词工作区">
+            <div className="prompt-dock-resizer" role="separator" aria-label="调整提示词工作区高度" aria-orientation="horizontal" tabIndex={0}
+              onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); dockDrag.current = { y: event.clientY, height: dockHeight }; }}
+              onPointerMove={event => { if (dockDrag.current) setDockHeight(Math.max(180, Math.min(700, dockDrag.current.height + dockDrag.current.y - event.clientY))); }}
+              onPointerUp={event => { dockDrag.current = null; event.currentTarget.releasePointerCapture(event.pointerId); try { localStorage.setItem(PROMPT_DOCK_KEY, String(dockHeight)); } catch { /* optional */ } }}
+              onPointerCancel={() => { dockDrag.current = null; }}
+              onKeyDown={event => {
+                if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+                event.preventDefault();
+                setDockHeight(current => {
+                  const next = Math.max(180, Math.min(700, current + (event.key === "ArrowUp" ? 20 : -20)));
+                  try { localStorage.setItem(PROMPT_DOCK_KEY, String(next)); } catch { /* optional */ }
+                  return next;
+                });
+              }} />
+            <div id="prompt-dock-host" className="prompt-dock-scroll" />
+          </section>
         </PersistentTabView>
         <PersistentTabView active={activeTab === "styles"} scope="tab:styles"><StyleLibrary/></PersistentTabView>
         <PersistentTabView active={activeTab === "records"} scope="tab:records">

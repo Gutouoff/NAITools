@@ -58,9 +58,9 @@ type BrushMode = "paint" | "erase";
 // A finished convert/reverse job is already reflected in the result box and
 // history — leaving it in the tracker list just forces a manual ✕ click.
 const TEXTTOOL_DONE_AUTO_DISMISS_MS = 1500;
-const WS_LEFT_DEFAULT = 380;
-const WS_RIGHT_DEFAULT = 340;
-const WS_LEFT_MIN = 260;
+const WS_LEFT_DEFAULT = 240;
+const WS_RIGHT_DEFAULT = 240;
+const WS_LEFT_MIN = 220;
 const WS_LEFT_MAX = 560;
 const WS_RIGHT_MIN = 220;
 const WS_RIGHT_MAX = 480;
