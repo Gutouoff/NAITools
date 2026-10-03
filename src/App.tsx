@@ -14,6 +14,7 @@ import {usePromptHistory} from './use-prompt-history';
 import {promptEditorText} from './prompt-editor-text';
 import type {PromptEditRequest} from './prompt-assistant';
 import './prompt-editor.css';
+import { LayeredPromptEditor } from './LayeredPromptEditor';
 import {CompactIconButton,FurryModeSwitch,ResolutionPicker,CapsuleEditor} from "./components/CompactPromptControls";
 import {useFeatureText} from "./feature-i18n";
 import {localizeStoreMessage} from './store-i18n';
@@ -1523,6 +1524,8 @@ export function PromptAndParams({
   const [translateBackup, setTranslateBackup] = useState<Record<string, string>>({});
   // The override (inpaint) fully replaces params.positivePrompt as the source
   // of truth for every positive-prompt read/write in this component.
+  const [layeredMode, setLayeredMode] = useState(true);
+  const showLayeredPrompt = layeredMode && !promptOverride && promptTab === "positive";
   const effectivePositivePrompt = promptOverride ? promptOverride.value : params.positivePrompt;
   function setPositivePromptValue(value: string) {
     if (promptOverride) promptOverride.onChange(value);
@@ -2077,7 +2080,7 @@ export function PromptAndParams({
           </SelectMenuCompat>
         </div>
       )}
-      <label className="field">
+      {!showLayeredPrompt && <label className="field">
         <span className="field-label-row">
           {generateText.prompt.stylePrompt}
 
@@ -2087,7 +2090,7 @@ export function PromptAndParams({
           placeholder={generateText.prompt.stylePlaceholder}
           onChange={(e) => setPromptField("stylePrompt", e.target.value)}
         />
-      </label>
+      </label>}
       <div className="style-preset-row">
         <div className="style-preset-picker" ref={stylePresetPickerRef}>
           <button
@@ -2261,7 +2264,16 @@ export function PromptAndParams({
         </button>
 
       </div>
-      <div className="prompt-editor" onKeyDownCapture={e=>{
+      {promptTab === "positive" && !promptOverride && <div className="layered-prompt-mode" role="group" aria-label="正面提示词编辑方式">
+        <button type="button" className={clsx(layeredMode && "active")} aria-pressed={layeredMode} onClick={() => setLayeredMode(true)}>分层输入</button>
+        <button type="button" className={clsx(!layeredMode && "active")} aria-pressed={!layeredMode} onClick={() => setLayeredMode(false)}>单框编辑</button>
+      </div>}
+      {showLayeredPrompt ? <LayeredPromptEditor
+        positivePrompt={effectivePositivePrompt}
+        stylePrompt={params.stylePrompt}
+        onPositiveChange={value => positiveHistory.commit(value, true)}
+        onStyleChange={value => setPromptField("stylePrompt", value)}
+      /> : <div className="prompt-editor" onKeyDownCapture={e=>{
         if(!e.currentTarget.contains(e.target as Node)||e.nativeEvent.isComposing)return;
         if(e.key==='Escape'&&showPromptMore){setShowPromptMore(false);return;}
         if(!(e.target instanceof HTMLTextAreaElement)||!(e.ctrlKey||e.metaKey)||e.altKey)return;
@@ -2293,7 +2305,7 @@ export function PromptAndParams({
       </div>
       </SlidingPromptToolbar>
       <PromptResizeHandle language={settings?.language}/>
-      </div>
+      </div>}
       {assistantKind&&<PromptAssistant kind={assistantKind} currentValue={effectivePositivePrompt} context={assistantContext} mode={assistantMode} version={assistantVersion} language={settings?.language} onClose={()=>setAssistantKind(null)} onApply={(next,expected)=>{
         if(latestPromptValues.current.positivePrompt!==expected)return false;
         positiveHistory.commit(next);return true;
