@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
 const require=createRequire(import.meta.url);
 const { chromium }=require(process.env.PLAYWRIGHT_MODULE||"playwright");
-const origin=process.env.LANGBAI_SMOKE_ORIGIN||"http://127.0.0.1:1421";
+const origin=(process.argv.includes("--origin") ? process.argv[process.argv.indexOf("--origin")+1] : process.env.LANGBAI_SMOKE_ORIGIN)||"http://127.0.0.1:1420";
 const defaults=JSON.parse(readFileSync(new URL("../crates/studio-core/src/langbai-defaults.json",import.meta.url),"utf8"));
 const csp=JSON.parse(readFileSync(new URL("../src-tauri/tauri.langbai.conf.json",import.meta.url),"utf8")).app.security.csp;
 const browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE||undefined});

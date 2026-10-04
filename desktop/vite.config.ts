@@ -1,2 +1,8 @@
 import { defineConfig } from "vite";
-export default defineConfig({ server: { host: "127.0.0.1", port: 1420, strictPort: true }, clearScreen: false, build: { target: "es2022", sourcemap: false } });
+import langbai from "./vite.langbai.config";
+// The original renderer is the default. The retired custom editor is not loaded.
+export default defineConfig({
+  ...langbai,
+  server: { ...langbai.server, port: 1420 },
+  preview: { ...langbai.preview, port: 1420 },
+});

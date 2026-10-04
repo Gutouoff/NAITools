@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run typecheck:langbai && vite build",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "tauri": "tauri",
@@ -13,7 +13,7 @@
     "desktop:build": "tauri build --no-bundle",
     "test:core": "cargo test -p studio-core",
     "preview": "vite preview --host 127.0.0.1 --port 1420 --strictPort",
-    "test:browser": "node tests/browser-smoke.mjs",
+    "test:browser": "node tests/langbai-browser-smoke.mjs",
     "inventory:langbai": "node scripts/langbai-inventory.mjs",
     "check:langbai-source": "node scripts/langbai-inventory.mjs --check && node scripts/langbai-defaults.mjs --check && node --experimental-strip-types --test tests/langbai-source.test.ts",
     "defaults:langbai": "node scripts/langbai-defaults.mjs",
@@ -23,7 +23,8 @@
     "preview:langbai": "vite preview --config vite.langbai.config.ts",
     "desktop:dev:langbai": "tauri dev --config src-tauri/tauri.langbai.conf.json",
     "desktop:build:langbai": "tauri build --debug --no-bundle --config src-tauri/tauri.langbai.conf.json",
-    "test:browser:langbai": "node tests/langbai-browser-smoke.mjs"
+    "test:browser:langbai": "node tests/langbai-browser-smoke.mjs --origin http://127.0.0.1:1421",
+    "test:browser:legacy": "node tests/browser-smoke.mjs"
   },
   "dependencies": {
     "@tanstack/react-virtual": "3.14.10",

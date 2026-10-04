@@ -20,7 +20,7 @@ test("only local main webview receives narrow application command permissions", 
 });
 test("production CSP excludes internet access and remote scripts", () => {
   const csp = config.app.security.csp;
-  assert.ok(csp.includes("connect-src ipc: http://ipc.localhost"));
+  assert.equal(csp.split(";").find((part: string) => part.trim().startsWith("connect-src"))?.trim(), "connect-src 'self' data: blob: ipc: http://ipc.localhost");
   assert.ok(!csp.includes("https:")); assert.ok(!csp.includes("unsafe-eval"));
   assert.ok(csp.includes("img-src 'self' data: blob:;"));
   assert.ok(!csp.includes("script-src 'self' blob:"));
