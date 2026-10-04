@@ -4,13 +4,15 @@
 
 NAITools 的来源项目为 Langbai 的 novelai-image-desktop。原版权为 `Copyright (c) 2026 Langbai`，完整 MIT 文本保留在根目录 LICENSE，原 Git 历史不改写。
 
-旧版 Electron、Flutter、插件及其二进制不包含在本次 PC 源码树中；它们的许可证不能据本项目 MIT 推断或替换。
+desktop/langbai 保存原版渲染器与附带资源的冻结快照，源版本 2.4.4；另含用于类型检查的声明文件，不含 Electron 服务实现。资源清单与 SHA-256 见 source-manifest.json。Flutter、Electron 服务运行时、插件二进制不纳入 PC 构建。图像、音频和其他独立素材的权利必须单独核查，不因代码 MIT 自动获得分发授权。
 
 ## PC 依赖
 
 前端依赖由 `desktop/package-lock.json` 固定，Rust 依赖由 `desktop/Cargo.lock` 固定。
 
 - React / React DOM：MIT，原许可证随 npm 包提供。
+- @tanstack/react-virtual、clsx、date-fns、react-markdown、rehype-sanitize、remark-gfm、zustand：安装包声明为 MIT；完整版权和许可随各依赖包提供。
+- react-icons：包装代码声明为 MIT；实际包含的图标集合遵循各自来源许可，发行时需核查使用的集合并附带相关声明。
 - Tauri 与 Tauri API：MIT / Apache-2.0，依赖包中保留原许可证。
 - Rust 图像、ZIP、SQLite、HTTP、Windows 凭据及系统集成依赖：遵循各包原许可证，不能统一视为项目 MIT。
 

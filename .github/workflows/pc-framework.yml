@@ -1,9 +1,9 @@
 name: PC framework
 on:
   push:
-    paths: ["desktop/**", ".github/workflows/pc-framework.yml"]
+    paths: ["desktop/**", ".github/workflows/pc-framework.yml", ".gitattributes"]
   pull_request:
-    paths: ["desktop/**", ".github/workflows/pc-framework.yml"]
+    paths: ["desktop/**", ".github/workflows/pc-framework.yml", ".gitattributes"]
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,8 +23,19 @@ jobs:
           cache-dependency-path: desktop/package-lock.json
       - run: npm ci --ignore-scripts
       - run: npm test
+      - run: npm run check:langbai-source
       - run: npm run build
+      - run: npm run build:langbai
       - run: rustup toolchain install stable --profile minimal
       - run: rustup default stable
       - run: cargo test --workspace --locked
       - run: cargo build -p naitools --release --features custom-protocol --locked
+      - name: Compile original renderer host (no launch)
+        run: |
+          $env:TAURI_CONFIG = Get-Content src-tauri/tauri.langbai.conf.json -Raw | ConvertFrom-Json | ConvertTo-Json -Depth 30 -Compress
+          try {
+            cargo build -p naitools --features custom-protocol --locked
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } finally {
+            Remove-Item Env:TAURI_CONFIG -ErrorAction SilentlyContinue
+          }

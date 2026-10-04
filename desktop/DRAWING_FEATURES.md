@@ -1,12 +1,15 @@
 # 绘图功能对照与入口
 
+> 当前主线已切换为原版界面迁移。下表是先前默认工作台的范围，不是原版接口适配完成清单；实际迁移进度以 LANGBAI_PARITY.md 为准。
+
+
 记录日期：2026-10-04。对照的是工作区内旧版 Langbai 实现，不是从第三方代码推断 NovelAI 官方协议。
 
-参考文件：旧版 `src/components/FilePicker.tsx`、`src/App.tsx`、`src/PositivePromptPresets.tsx`、`src/components/PreviewImageViewer.tsx`、`src/types.ts`、`src/LayeredPromptEditor.tsx`、`src/retained-prompts.ts`。新版只复用工作流概念，不导入 Electron / ML / 大型组件依赖。
+参考文件：旧版 `src/components/FilePicker.tsx`、`src/App.tsx`、`src/PositivePromptPresets.tsx`、`src/components/PreviewImageViewer.tsx`、`src/types.ts`、`src/LayeredPromptEditor.tsx`、`src/retained-prompts.ts`。先前自定义工作台只参考工作流；此后已改为直接复用冻结的原版前端，不引入 Electron / ML 服务运行时。
 
-| 绘图工作流 | 新版入口和范围 |
+| 绘图工作流 | 先前自定义工作台入口和范围 |
 | --- | --- |
-| 多账号与中转切换 | 「设置」中的 API 配置，下拉切换及新增 / 编辑 / 复制；官方账号和原生兼容中转分开配置，密钥独立保管 |
+| 多账号与第三方提供商切换 | 「设置」中的 API 配置，下拉切换及新增 / 编辑 / 复制；官方账号和原生兼容第三方提供商分开配置，密钥独立保管 |
 | 提示词分层 | 原文与分层独立保留；支持启用 / 排序与最终文本预览，不宣称应用层模板是 NAI 官方排序 |
 | 绘图配置 | 左上「绘图配置」，最多 32 套，保存 / 更新 / 应用 / 删除；按保留选项处理画师串和负向提示词，不切换 API |
 | 画师串 | 独立于正向提示词，可单独编辑、保留、保存至绘图配置或仅应用配置中的画师串；不通过标签推测从原文拆分 |
@@ -19,7 +22,7 @@
 | 历史复用 | 历史分页与请求恢复；恢复的连接若已删除，要求显式重新选择，不偷换默认账号 |
 | 布局调整 | 两条分隔条拖动 / 方向键 / 双击重置；画师串 / 原文 / 分层 / 负向提示词输入均有高度拖动条；窄 PC 窗口保持生成按钮可见 |
 
-## 此轮没有直接移植
+## 先前自定义工作台未实现的内容
 
 - 多角色独立 caption、人物参考、局部重绘 / 蒙版、CFG Rescale / Noise Schedule 额外接口字段：需逐项取得官方或服务商可核验契约，再补请求映射、限制和验收，不从旧版变量名臆造。
 - 批量 / 自动队列：先完成单次请求与未知收费结果保护，再加入预算上限；此次不自动重复提交。

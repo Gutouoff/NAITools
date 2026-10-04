@@ -1,30 +1,36 @@
 # NAITools
 
-Windows 桌面端 NovelAI 图像生成工具。新版使用 Rust + Tauri 2 + React / TypeScript；只发布 PC 重构源码，不包含旧版 Electron / 移动端、用户数据或构建缓存。
+Windows 桌面端 NovelAI 图像生成工具，基于 Langbai 开展 PC 重构。
 
-## 功能范围
+## 当前重构路线
 
-- 文生图：V4.5 Full / Curated、Euler / Euler a、单张非流式生成。
-- 图生图（i2i）：导入底图，按目标比例中心裁剪。
-- 氛围参考（Vibe Transfer）：显式编码确认与本地缓存复用。
-- 提示词：原文编辑、可排序分层模板与实际提交文本预览。
-- 本地草稿、历史记录、PNG 导出与付费任务状态记录。
-- Token 保存在 Windows 凭据管理器，不写入仓库或草稿。
+按原版 Langbai 2.4.4 的界面与交互迁移，不再另行设计近似工作台：
 
-当前是开发预览：真实 NovelAI 文生图、i2i、Vibe 编码尚未付费验收，默认 AppData 本地存储的原生验收仍未通过。实现和验证不能等同于端到端验收。见 [验证记录](desktop/VALIDATION.md)。
+- 原版 React / TypeScript 渲染器、组件、样式和状态逻辑冻结在 desktop/langbai，逐文件校验源内容。
+- Electron 桌面宿主与服务逐项替换为 Rust / Tauri 2；**并非所有界面组件改用 Rust 绘制**。
+- 仅覆盖产品名、版本号和项目地址，其余原版界面暂不微调。
+- 原版界面通过独立迁移入口构建；尚未成为默认入口，未接入的原生功能明确报错，不伪造成功。
 
-## 开发与运行
+本阶段已实现本地设置、首次运行状态、凭据存在状态及窗口操作的适配，以及原版内置反推模板读取。生成、历史、参考文件和多配置管理仍需完成原版接口适配，**不宣称完整复刻或真实生图已正常**。详见 [迁移进度](desktop/LANGBAI_PARITY.md)及 [验收说明](desktop/VALIDATION.md)。
 
-源码位于 [`desktop/`](desktop/README.md)。在该目录执行 `npm ci`、`npm run build`，然后使用 `scripts/windows-cargo.ps1` 编译 Windows release。运行 `desktop/启动PC新版.cmd`；需要 WebView2 Runtime，不依赖 Vite、Node 或 Python 后台服务。
+## 现有 PC 开发预览
 
-构建环境：Node.js 24、Rust stable（MSVC）、VS 2022 Build Tools 的 C++ 桌面工具与 Windows SDK。详见 [开发说明](desktop/README.md) 和 [贡献指南](CONTRIBUTING.md)。
+默认入口暂时保留先前的自定义工作台，已有 V4.5 单图文生图、图生图、氛围参考信息提取、提示词、API 多配置和本地历史等代码。真实服务生成及默认 AppData 的原生保存仍未通过验收；实现、模拟测试与端到端可用性需要区分。
 
-## 协议与安全
+## 开发与验证
 
-以公开官方资料与客户端观察为证据，只实现已核验的子集；不宣称完整官方 API。请求不会自动重试，结果未知时需人工核对。仓库不包含凭据、个人提示词、历史图像或本机运行数据。
+在 desktop 目录执行 npm ci：
 
-## 来源与许可
+- npm run build：构建现有默认入口。
+- npm run build:langbai：构建冻结的原版界面迁移入口。
+- npm run check:langbai-source：检查源快照、契约清单及原版内置默认值。
+- npm run desktop:dev:langbai：使用 Rust 宿主开发迁移入口。
+- npm run desktop:build:langbai：构建迁移入口的 debug 可执行文件，不替换现有 release 程序。
 
-项目基于 Langbai 的 novelai-image-desktop 项目开展 PC 重构。保留原作者版权、MIT 许可证和 Git 历史；不代表 NovelAI 官方产品，也不与其建立隶属关系。
+构建环境为 Node.js 24、Rust stable（MSVC）、VS 2022 Build Tools 的 C++ 桌面工具与 Windows SDK；运行需要 WebView2。迁移版本首次打开数据库会进行保留现有表的 v4 → v5 升级，不能直接回退到仅支持 v4 的旧程序；升级前应退出程序并完整备份数据。应用标识、持久数据位置及凭据命名空间不变，不通过清库或切换目录规避错误。
 
-本项目遵循 [MIT](LICENSE)。第三方依赖各自遵循其许可证，见 [第三方说明](THIRD_PARTY_NOTICES.md)。
+## 协议、安全与许可
+
+只按已核验的协议子集编写原生请求，不从界面字段推断服务契约。收费请求不会自动重试；未知结果需人工核对。密钥使用 Windows 凭据管理器，不写入仓库或普通设置。代码仓库不包含运行凭据、个人历史或本机数据库。
+
+保留 Langbai 原作者版权、根目录完整 MIT 许可证及 Git 历史。第三方依赖与随原版附带的资源分别核查许可，代码 MIT 不自动授予所有图像素材权利。本项目并非 NovelAI 官方产品。
