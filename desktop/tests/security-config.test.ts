@@ -22,6 +22,8 @@ test("production CSP excludes internet access and remote scripts", () => {
   const csp = config.app.security.csp;
   assert.ok(csp.includes("connect-src ipc: http://ipc.localhost"));
   assert.ok(!csp.includes("https:")); assert.ok(!csp.includes("unsafe-eval"));
+  assert.ok(csp.includes("img-src 'self' data: blob:;"));
+  assert.ok(!csp.includes("script-src 'self' blob:"));
   assert.ok(csp.includes("object-src 'none'")); assert.ok(csp.includes("form-action 'none'"));
 });
 test("observed native subset is attributed without claiming real paid acceptance", () => {

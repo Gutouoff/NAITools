@@ -2,6 +2,7 @@
 // No browser downloads, accounts, existing browser profiles, or NovelAI requests.
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import { readFileSync } from "node:fs";
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
 const origin = process.env.SMOKE_ORIGIN || "http://127.0.0.1:1420";
@@ -10,7 +11,7 @@ const context = await browser.newContext({ viewport: { width: 1440, height: 900 
 const external = []; const errors = [];
 await context.route("**/*", async (route) => {
   const url = route.request().url();
-  if (url.startsWith(origin + "/") || url.startsWith("data:")) await route.continue();
+  if (url.startsWith(origin + "/") || url.startsWith("data:") || url.startsWith(`blob:${origin}/`)) await route.continue();
   else { external.push(url); await route.abort(); }
 });
 try {
@@ -144,13 +145,15 @@ try {
   assert.equal(await mocked.getByRole("dialog").count(),0);
   await mocked.getByRole("button",{name:"设置",exact:true}).click();
   await mocked.getByText(/NovelAI 官方 · 凭据已保存/).waitFor();
+  await mocked.getByRole("button",{name:"付费任务记录",exact:true}).click();
   await mocked.getByText("任务记录未读取，不能视为没有待核对任务。",{exact:true}).waitFor();
   assert.equal(await mocked.getByText("暂无任务记录。",{exact:true}).count(),0);
   await mocked.evaluate(()=>{window.__SMOKE_CASE__="credentials-failed";});
   await mocked.getByRole("button",{name:"工作台",exact:true}).click();
   await mocked.getByRole("button",{name:"设置",exact:true}).click();
-  await mocked.getByText("暂无任务记录。",{exact:true}).waitFor();
   await mocked.getByText(/NovelAI 官方 · 凭据状态不可读/).waitFor();
+  await mocked.getByRole("button",{name:"付费任务记录",exact:true}).click();
+  await mocked.getByText("暂无任务记录。",{exact:true}).waitFor();
   await mocked.evaluate(()=>{window.__SMOKE_CASE__="unresolved";});
   await mocked.getByRole("button",{name:"工作台",exact:true}).click();
   await mocked.getByRole("button",{name:"生成图像",exact:true}).click();
@@ -163,7 +166,9 @@ try {
   assert.equal(await mocked.getByRole("dialog").count(),0);
   assert.equal(await mocked.evaluate(()=>window.__SMOKE_CALLS__.filter(c=>c==="generation_submit"||c==="vibe_encode").length),0);
   await mocked.getByRole("button", {name:"设置", exact:true}).click();
-  await mocked.getByRole("button", {name:"添加中转站", exact:true}).click();
+  await mocked.getByRole("button", {name:"添加第三方提供商", exact:true}).click();
+  assert.equal(await mocked.getByLabel("API Key / Persistent API Token", {exact:true}).isEnabled(), true, "New unsaved profiles must allow credential entry");
+  await mocked.getByLabel("API Key / Persistent API Token", {exact:true}).fill("synthetic-test-only-not-a-real-key");
   await mocked.getByLabel("配置名称", {exact:true}).fill("Synthetic relay");
   await mocked.getByLabel("服务地址", {exact:true}).fill("https://relay.example");
   await mocked.getByLabel("图像生成接口路径", {exact:true}).fill("/documented/generate");
@@ -172,7 +177,7 @@ try {
   await mocked.getByText("连接配置已保存。密钥请在下方单独保存。", {exact:true}).waitFor();
   await mocked.getByLabel("API Key / Persistent API Token", {exact:true}).fill("synthetic-test-only-not-a-real-key");
   await mocked.getByRole("button", {name:"保存凭据", exact:true}).click();
-  await mocked.getByText("凭据已保存；输入框已清空。", {exact:true}).waitFor();
+  await mocked.getByText("配置与凭据已保存；输入框已清空。", {exact:true}).waitFor();
   assert.equal(await mocked.getByLabel("API Key / Persistent API Token", {exact:true}).inputValue(), "");
   await mocked.getByLabel("当前 API 配置", {exact:true}).selectOption({label:"Synthetic relay"});
   await mocked.getByRole("button", {name:"工作台", exact:true}).click();
@@ -280,6 +285,67 @@ try {
   if(process.env.CONNECTION_SMOKE_SCREENSHOT)await mocked.screenshot({path:process.env.CONNECTION_SMOKE_SCREENSHOT,fullPage:true});
   await mocked.getByRole("button",{name:"工作台",exact:true}).click();
   await mocked.close();
+  // Real IndexedDB in an isolated browser context under the shipped CSP: no user data or API access.
+  const library = await context.newPage();
+  library.on("pageerror", e => errors.push(e.message));
+  const csp = JSON.parse(readFileSync(new URL("../src-tauri/tauri.conf.json", import.meta.url), "utf8")).app.security.csp;
+  await library.route(origin + "/", async route => {
+    const response = await route.fetch();
+    await route.fulfill({response, headers:{...response.headers(), "content-security-policy":csp}});
+  });
+  await library.addInitScript(() => {
+    window.__SMOKE_CSP__ = [];
+    document.addEventListener("securitypolicyviolation", e => window.__SMOKE_CSP__.push(e.violatedDirective));
+  });
+  await library.goto(origin);
+  await library.getByRole("button", {name:"参考预设库", exact:true}).click();
+  await library.getByText("暂无氛围迁移文件。导入后可在此集中查看和维护。", {exact:true}).waitFor();
+  const sample = readFileSync(new URL("../public/demo-history/demo-01.png", import.meta.url));
+  await library.getByLabel("参考预设名称", {exact:true}).fill("Synthetic atmosphere preset");
+  await library.getByLabel("参考预设备注", {exact:true}).fill("Local persistence test only");
+  await library.getByLabel("导入参考预设文件", {exact:true}).setInputFiles({name:"synthetic-reference.png",mimeType:"image/png",buffer:sample});
+  await library.locator(".reference-detail h3").filter({hasText:"Synthetic atmosphere preset"}).waitFor();
+  await library.waitForFunction(() => {
+    const image = document.querySelector(".reference-detail img");
+    return image?.complete && image.naturalWidth > 0;
+  });
+  await library.getByRole("button", {name:"精准参考 0", exact:true}).click();
+  assert.equal(await library.locator(".reference-detail").count(), 0, "Switching categories clears the unrelated detail panel");
+  await library.getByLabel("导入参考预设文件", {exact:true}).setInputFiles({name:"synthetic-precise.png",mimeType:"image/png",buffer:sample});
+  await library.locator(".reference-detail h3").filter({hasText:"synthetic-precise"}).waitFor();
+  await library.reload();
+  await library.getByRole("button", {name:"参考预设库", exact:true}).click();
+  await library.getByRole("button", {name:"氛围迁移 1", exact:true}).waitFor();
+  await library.getByRole("button", {name:"精准参考 1", exact:true}).waitFor();
+  await library.locator(".reference-card").filter({hasText:"Synthetic atmosphere preset"}).click();
+  await library.getByText("Local persistence test only", {exact:true}).waitFor();
+  library.once("dialog", dialog => dialog.dismiss());
+  await library.getByRole("button", {name:"删除预设", exact:true}).click();
+  assert.equal(await library.locator(".reference-card").count(), 1, "Cancelled deletion preserves the preset");
+  library.once("dialog", dialog => dialog.accept());
+  await library.getByRole("button", {name:"删除预设", exact:true}).click();
+  await library.getByText("暂无氛围迁移文件。导入后可在此集中查看和维护。", {exact:true}).waitFor();
+  await library.getByLabel("导入参考预设文件", {exact:true}).setInputFiles({name:"not-supported.svg",mimeType:"image/svg+xml",buffer:Buffer.from("<svg/>")});
+  await library.getByRole("alert").filter({hasText:"仅支持 PNG、JPEG 或 WebP 图像文件。"}).waitFor();
+  await library.getByLabel("导入参考预设文件", {exact:true}).setInputFiles({name:"corrupt.png",mimeType:"image/png",buffer:Buffer.from("not an image")});
+  await library.getByRole("alert").filter({hasText:"无法解码参考图像。"}).waitFor();
+  assert.equal(await library.locator(".reference-card").count(), 0, "Invalid image files are not archived");
+  await library.getByRole("button", {name:"精准参考 1", exact:true}).click();
+  await library.locator(".reference-card").click();
+  if(process.env.LIBRARY_SMOKE_SCREENSHOT) await library.screenshot({path:process.env.LIBRARY_SMOKE_SCREENSHOT, fullPage:true});
+  assert.deepEqual(await library.evaluate(() => window.__SMOKE_CSP__), [], "Library previews must satisfy the native production CSP");
+  await library.close();
+  const deniedLibrary = await context.newPage();
+  deniedLibrary.on("pageerror", e => errors.push(e.message));
+  await deniedLibrary.addInitScript(() => {
+    Object.defineProperty(window, "indexedDB", {get(){throw new DOMException("test denied", "SecurityError");}});
+  });
+  await deniedLibrary.goto(origin);
+  await deniedLibrary.getByRole("button", {name:"参考预设库", exact:true}).click();
+  await deniedLibrary.getByRole("alert").waitFor();
+  assert.equal(await deniedLibrary.getByText("正在读取预设库…", {exact:true}).count(), 0);
+  assert.equal(await deniedLibrary.locator(".library-empty").count(), 0, "Unavailable storage must not look like an empty library");
+  await deniedLibrary.close();
   const deniedLayout = await context.newPage();
   deniedLayout.on("pageerror", e=>errors.push(e.message));
   await deniedLayout.addInitScript(() => {
@@ -290,7 +356,7 @@ try {
   await deniedLayout.getByLabel("正向提示词", {exact:true}).fill("layout preferences are optional");
   await deniedLayout.close();
   assert.deepEqual(external, []); assert.deepEqual(errors, []);
-  console.log("PASS: pointer/keyboard column and raw/layered/negative textarea resize, optional layout storage, 1440/1101/900px layouts, multi-profile switching/duplicate editor, drawing presets, resolution/seed controls, source import, atmosphere drop/paste and result viewer with synthetic IPC; no external HTTP requests or page errors.");
+  console.log("PASS: pointer/keyboard column and raw/layered/negative textarea resize, optional layout storage, 1440/1101/900px layouts, multi-profile switching/duplicate editor, drawing presets, resolution/seed controls, source import, atmosphere drop/paste and result viewer with synthetic IPC; reference import, category isolation, reload persistence, deletion, invalid images and storage failures under production CSP; no external HTTP requests or page errors.");
 } catch(error) {
   for(const p of context.pages()) console.error("SMOKE failure state:",await p.evaluate(()=>({alerts:Array.from(document.querySelectorAll('[role="alert"]')).map(n=>n.textContent),calls:window.__SMOKE_CALLS__,presets:window.__SMOKE_PRESETS__})).catch(()=>null));
   throw error;

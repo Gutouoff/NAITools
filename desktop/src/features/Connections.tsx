@@ -79,7 +79,7 @@ export default function Connections({ api, native, onChanged, selectedId, onSele
             void run(async () => { await api.deleteConnection(profile.id); choose(official); await refresh(); setMessage("连接已删除；历史与图片保留。"); });
         }}>删除配置</button><button className="primary">保存配置</button></div></fieldset>
     </form>
-    <form onSubmit={e => { e.preventDefault(); const secret = token; void run(async () => { await api.saveConnection(profile); await api.setConnectionToken(profile.id, secret); setToken(""); await refresh(); setMessage("配置与凭据已保存；输入框已清空。"); }); }}><fieldset disabled={!native || busy}><label htmlFor="token">{profile.kind === "official" ? "Persistent API Token" : "API Key"}</label><input id="token" type="password" autoComplete="off" spellCheck={false} value={token} onChange={e => setToken(e.target.value)} placeholder="输入密钥正文，不包含 Bearer 前缀"/><div className="actions"><button type="button" disabled={!saved?.hasToken} onClick={() => {
+    <form onSubmit={e => { e.preventDefault(); const secret = token; void run(async () => { await api.saveConnection(profile); await api.setConnectionToken(profile.id, secret); setToken(""); await refresh(); setMessage("配置与凭据已保存；输入框已清空。"); }); }}><fieldset disabled={!native || busy}><label htmlFor="token">API Key / Persistent API Token</label><input id="token" type="password" autoComplete="off" spellCheck={false} value={token} onChange={e => setToken(e.target.value)} placeholder="输入密钥正文，不包含 Bearer 前缀"/><div className="actions"><button type="button" disabled={!saved?.hasToken} onClick={() => {
             if (!window.confirm("只删除此连接保存的凭据？"))
                 return;
             setToken("");

@@ -57,7 +57,7 @@ export default function History({ api, native, onReplay }: { api: DesktopApi; na
   return <section className="panel history-panel">
     <header className="history-toolbar"><div><h2>作品管理</h2><p className="hint">浏览生成记录、检查原始图像元数据，或将参数恢复到工作台。恢复操作不会自动提交生成请求。</p></div><div className="actions"><button disabled={!native || busy} onClick={() => void load()}>刷新</button></div></header>
     <div className="history-filters"><input aria-label="搜索历史记录" value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索文件标识、提示词或种子"/><select aria-label="日期筛选" value={dateFilter} onChange={e => setDateFilter(e.target.value)}><option value="all">全部日期</option>{days.map(([value, count]) => <option key={value} value={value}>{value}（{count}）</option>)}</select><select aria-label="排序方式" value={sort} onChange={e => setSort(e.target.value as typeof sort)}><option value="newest">最新在前</option><option value="oldest">最早在前</option></select></div>
-    {!native && <p className="notice">浏览器预览无法查询原生数据库，以下仅显示示例画廊。</p>}
+    {!native && <><p className="notice">浏览器预览无法查询原生数据库。</p><p className="hint">以下仅显示示例画廊。</p></>}
     {error && <p role="alert" className="error">{error}</p>}
     <div className="history-layout">
       <aside className="history-sidebar"><strong>历史记录</strong><button className={dateFilter === "all" ? "selected" : ""} onClick={() => setDateFilter("all")}>全部作品 <span>{page?.items.length ?? 0}</span></button><div className="history-side-title">日期</div>{days.map(([value, count]) => <button key={value} className={dateFilter === value ? "selected" : ""} onClick={() => setDateFilter(value)}>{value}<span>{count}</span></button>)}</aside>
@@ -70,4 +70,3 @@ export default function History({ api, native, onReplay }: { api: DesktopApi; na
     </div>
   </section>;
 }
-
