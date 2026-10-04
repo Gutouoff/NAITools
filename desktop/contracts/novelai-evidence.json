@@ -1,0 +1,226 @@
+{
+  "schemaVersion": 2,
+  "checkedOn": "2026-10-03",
+  "status": "observed_subset",
+  "generationEnabled": true,
+  "policy": "Native-only implementation of an observed V4.5 non-streaming subset. Every paid operation requires explicit human confirmation; unknown outcomes are journaled and never automatically resent. No real NovelAI generation or encoding has been performed.",
+  "legacyEvidence": [
+    {
+      "file": "electron/ipc/nai.ts",
+      "symbol": "buildGenerateImageHttpBody",
+      "classification": "existing_implementation_only"
+    },
+    {
+      "file": "electron/ipc/nai.ts",
+      "symbol": "postGenerateImage",
+      "classification": "existing_implementation_only"
+    },
+    {
+      "file": "src/nai-dimensions.ts",
+      "classification": "existing_implementation_only"
+    }
+  ],
+  "unverifiedItems": [
+    "Real authenticated generation, i2i and vibe encoding acceptance (requires separate human permission)",
+    "Complete service-wide limits, cost estimator and model/sampler coverage outside this bounded application subset",
+    "Streaming event framing and JSON response inconsistency (not implemented)",
+    "Release cold/warm startup, full process-tree memory and original application comparison"
+  ],
+  "enablementRequires": [
+    "Retrieved versioned official schema/documentation with SHA-256 and attribution",
+    "Redacted request fixtures for gaps not covered by docs, clearly marked observed rather than official",
+    "Model-specific request validation and positive/negative contract tests",
+    "ZIP/stream decoding and size limits",
+    "Native-only credential storage",
+    "Persistent pre-submit task journal and no blind retry of unknown paid outcomes",
+    "Separate human permission for a real paid generation test"
+  ],
+  "previousOfficialAttempts": [
+    {
+      "url": "https://api.novelai.net/docs/",
+      "result": "timeout",
+      "retrieved": false
+    },
+    {
+      "url": "https://api.novelai.net/docs",
+      "result": "timeout",
+      "retrieved": false
+    },
+    {
+      "url": "https://image.novelai.net/docs/",
+      "result": "timeout",
+      "retrieved": false
+    },
+    {
+      "url": "https://image.novelai.net/openapi.json",
+      "result": "timeout",
+      "retrieved": false
+    },
+    {
+      "url": "https://docs.novelai.net/en/image/",
+      "result": "timeout",
+      "retrieved": false
+    }
+  ],
+  "officialAttempts": [
+    {
+      "url": "https://novelai.net/",
+      "result": "HTTP 200",
+      "retrieved": true,
+      "checkedOn": "2026-10-03"
+    },
+    {
+      "url": "https://image.novelai.net/docs/index.html",
+      "result": "HTTP 200",
+      "retrieved": true,
+      "checkedOn": "2026-10-03"
+    },
+    {
+      "url": "https://api.novelai.net/docs/",
+      "result": "HTTP 200",
+      "retrieved": true,
+      "checkedOn": "2026-10-03"
+    },
+    {
+      "url": "https://docs.novelai.net/en/image/",
+      "result": "HTTP 200",
+      "retrieved": true,
+      "checkedOn": "2026-10-03"
+    },
+    {
+      "url": "https://image.novelai.net/docs/doc.json",
+      "result": "HTTP 200",
+      "retrieved": true,
+      "checkedOn": "2026-10-03"
+    }
+  ],
+  "officialArtifacts": [
+    {
+      "url": "https://image.novelai.net/docs/doc.json",
+      "discoveredFrom": "https://image.novelai.net/docs/index.html",
+      "file": "contracts/official/novelai-image-openapi-2026-10-03.json",
+      "retrievedOn": "2026-10-03",
+      "format": "Swagger 2.0",
+      "documentTitle": "Omegalaser API",
+      "documentVersion": "1.0",
+      "sha256": "2bd3c5fcd491016e1951f5a3f347d0207d49d4add153899405224e21fd1dc684",
+      "classification": "official_document_snapshot",
+      "coverage": "Published envelope/endpoints and partial parameter declarations; gaps are explicitly classified as public-client observations, not guaranteed schemas."
+    }
+  ],
+  "inspectedDeclarations": [
+    {
+      "pointer": "/info/description",
+      "finding": "Integration uses a user Persistent API token in Authorization; no token was read or sent."
+    },
+    {
+      "pointer": "/securityDefinitions/ApiKeyAuth",
+      "finding": "Authorization header is declared; exact header value formatting is not specified here."
+    },
+    {
+      "pointer": "/paths/~1ai~1generate-image/post",
+      "finding": "POST image generation, JSON body schema reference, ZIP/JSON response media types. The published document has empty host/schemes."
+    },
+    {
+      "pointer": "/definitions/image.ImageGenerationRequest",
+      "finding": "Declared properties: action, input, model, parameters, url. No required array or model enum in this definition."
+    },
+    {
+      "pointer": "/definitions/image.RequestParameters",
+      "finding": "Typed parameter properties are declared, but comprehensive model-specific enums, defaults and bounds are absent."
+    },
+    {
+      "pointer": "/paths/~1ai~1generate-image-stream/post",
+      "finding": "Official document declares SSE/text-event-stream; do not inherit the legacy binary decoder without verifying actual event framing."
+    },
+    {
+      "pointer": "/definitions/image.ImageGenerationJsonResponse",
+      "finding": "Definition declares an object with images; response prose describes an array. Treat this inconsistency as unresolved."
+    },
+    {
+      "pointer": "/paths/~1ai~1generate-image/post/description",
+      "finding": "Generation must be initiated by human action; automation creating excessive system load is not allowed."
+    }
+  ],
+  "implementationCheckedOn": "2026-10-04",
+  "realPaidAcceptance": false,
+  "clientObservations": [
+    {
+      "url": "https://novelai.net/_next/static/chunks/pages/_app-a70b21aef518ab63.js",
+      "retrievedOn": "2026-10-03",
+      "sha256": "e9b05933119185f6fe2495697074f3604709dabb55fb3830b193fe6e854503f9",
+      "classification": "official_client_observation",
+      "localCache": ".evidence-cache/_app-a70b21aef518ab63.js",
+      "findings": [
+        "Bearer Authorization; legacy JSON request branch exists alongside multipart.",
+        "V4.5 model IDs and defaults; encode-vibe uses image, information_extracted, mask and model."
+      ]
+    },
+    {
+      "url": "https://novelai.net/_next/static/chunks/2952-12a04300b81268d4.js",
+      "retrievedOn": "2026-10-03",
+      "sha256": "87faa89eb52bd8c5fc4db6bfc5105d770fbc5f13e9b56caa7eeefd93b963251c",
+      "classification": "official_client_observation",
+      "localCache": ".evidence-cache/2952-12a04300b81268d4.js",
+      "findings": [
+        "V4 positive/negative caption envelopes with empty character captions.",
+        "img2img image/strength/noise, extra_noise_seed=seed-1, color_correct=false.",
+        "Encoded references use reference_image_multiple and reference_strength_multiple; extraction applies during encoding."
+      ]
+    }
+  ],
+  "documentationObservations": [
+    {
+      "url": "https://docs.novelai.net/en/image/vibetransfer",
+      "retrievedOn": "2026-10-03",
+      "sha256": "3cacc1d0d8b96a0b4a18d4a55f1a8db8b7d5039e9b83c111c5e33052d4dca703",
+      "classification": "official_user_documentation",
+      "localCache": ".evidence-cache/docs-vibetransfer.html"
+    },
+    {
+      "url": "https://docs.novelai.net/en/image/controltools",
+      "retrievedOn": "2026-10-03",
+      "sha256": "42db5e35a8103589bf45cda4190aeb2d125b6a2445c267ef522cd486eff54382",
+      "classification": "official_user_documentation",
+      "localCache": ".evidence-cache/docs-controltools.html"
+    },
+    {
+      "url": "https://docs.novelai.net/en/image/models",
+      "retrievedOn": "2026-10-03",
+      "sha256": "24d63537cea07826c3d0ffbd851760889057821d3deef7a55cabeee900a0fef7",
+      "classification": "official_user_documentation",
+      "localCache": ".evidence-cache/docs-models.html"
+    },
+    {
+      "url": "https://docs.novelai.net/en/image/basics",
+      "retrievedOn": "2026-10-03",
+      "sha256": "077023f70ae0dbbf71f93ea8ab369c04f41754a83bf0b0283df939b4c7e4a50a",
+      "classification": "official_user_documentation",
+      "localCache": ".evidence-cache/docs-basics.html"
+    },
+    {
+      "url": "https://docs.novelai.net/en/image/stepsguidance",
+      "retrievedOn": "2026-10-03",
+      "sha256": "f9f1665f9c44eed1b05afcc8405c254d5c0117470ad9f4ade97a421c01ec3988",
+      "classification": "official_user_documentation",
+      "localCache": ".evidence-cache/docs-stepsguidance.html"
+    }
+  ],
+  "applicationLimits": {
+    "models": [
+      "nai-diffusion-4-5-full",
+      "nai-diffusion-4-5-curated"
+    ],
+    "samplers": [
+      "k_euler",
+      "k_euler_ancestral"
+    ],
+    "nSamples": 1,
+    "maxVibes": 4,
+    "maxVibeStrengthSum": 1,
+    "maxPixels": 1048576,
+    "maxSteps": 28,
+    "classification": "application_safety_subset_not_universal_service_limits"
+  },
+  "fixtureClassification": "Application-authored expected request fixtures, NOT captured paid requests or a guaranteed official schema."
+}

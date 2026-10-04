@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-image-import"
+description = "Enables the image_import command without any pre-configured scope."
+commands.allow = ["image_import"]
+
+[[permission]]
+identifier = "deny-image-import"
+description = "Denies the image_import command without any pre-configured scope."
+commands.deny = ["image_import"]

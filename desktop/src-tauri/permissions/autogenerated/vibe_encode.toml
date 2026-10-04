@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-vibe-encode"
+description = "Enables the vibe_encode command without any pre-configured scope."
+commands.allow = ["vibe_encode"]
+
+[[permission]]
+identifier = "deny-vibe-encode"
+description = "Denies the vibe_encode command without any pre-configured scope."
+commands.deny = ["vibe_encode"]

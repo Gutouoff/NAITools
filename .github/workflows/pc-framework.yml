@@ -1,0 +1,30 @@
+name: PC framework
+on:
+  push:
+    paths: ["desktop/**", ".github/workflows/pc-framework.yml"]
+  pull_request:
+    paths: ["desktop/**", ".github/workflows/pc-framework.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-framework:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run build
+      - run: rustup toolchain install stable --profile minimal
+      - run: rustup default stable
+      - run: cargo test -p studio-core -p studio-nai --locked
+      - run: cargo check -p langbai-studio-pc --locked

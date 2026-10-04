@@ -1,0 +1,10 @@
+node_modules/
+dist/
+target/
+src-tauri/gen/
+*.log
+.npm-cache/
+.evidence-cache/
+
+.webview2-cache/
+startup-error.log

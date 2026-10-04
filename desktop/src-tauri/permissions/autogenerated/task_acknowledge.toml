@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-task-acknowledge"
+description = "Enables the task_acknowledge command without any pre-configured scope."
+commands.allow = ["task_acknowledge"]
+
+[[permission]]
+identifier = "deny-task-acknowledge"
+description = "Denies the task_acknowledge command without any pre-configured scope."
+commands.deny = ["task_acknowledge"]

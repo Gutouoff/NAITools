@@ -1,0 +1,14 @@
+{
+  "draft": {
+    "prompt": "测试 prompt",
+    "negativePrompt": "排除内容"
+  },
+  "historyQuery": {
+    "limit": 50,
+    "before": null
+  },
+  "emptyHistoryPage": {
+    "items": [],
+    "nextCursor": null
+  }
+}

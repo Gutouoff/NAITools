@@ -1,0 +1,27 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-local",
+  "description": "Only local main WebView can invoke PC commands; no FS/shell/HTTP plugins or remote origins.",
+  "windows": [
+    "main"
+  ],
+  "local": true,
+  "permissions": [
+    "allow-desktop-bootstrap",
+    "allow-desktop-mark-ready",
+    "allow-draft-load",
+    "allow-draft-save",
+    "allow-history-list",
+    "allow-history-request",
+    "allow-generation-submit",
+    "allow-credentials-status",
+    "allow-credentials-set",
+    "allow-credentials-delete",
+    "allow-image-import",
+    "allow-vibe-encode",
+    "allow-artifact-read",
+    "allow-artifact-export",
+    "allow-task-list",
+    "allow-task-acknowledge"
+  ]
+}

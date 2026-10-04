@@ -1,11 +1,13 @@
-node_modules/
-dist/
-dist-electron/
-release/
-*.log
-.DS_Store
-.tmp/
-scripts/__pycache__/
-*.pyc
-mobile/android/app/src/main/jniLibs/
-mobile/android/app/src/main/assets/agent/
+# Only the PC rewrite is published. Legacy files stay local and in Git history.
+/*
+!/.gitignore
+!/LICENSE
+!/README.md
+!/CONTRIBUTING.md
+!/THIRD_PARTY_NOTICES.md
+!/desktop/
+!/.github/
+/.github/*
+!/.github/workflows/
+/.github/workflows/*
+!/.github/workflows/pc-framework.yml

@@ -1,0 +1,77 @@
+[
+  {
+    "document": {
+      "mode": "layered",
+      "raw": "unchanged original",
+      "blocks": [
+        {
+          "id": "a",
+          "title": "画师",
+          "enabled": true,
+          "text": "1.5::artist:example::, repeated, repeated,"
+        },
+        {
+          "id": "b",
+          "title": "禁用内容",
+          "enabled": false,
+          "text": "DO NOT SEND"
+        },
+        {
+          "id": "c",
+          "title": "内容",
+          "enabled": true,
+          "text": "{subject}, [background], -2::text::"
+        }
+      ]
+    },
+    "expected": "1.5::artist:example::, repeated, repeated,\n{subject}, [background], -2::text::"
+  },
+  {
+    "document": {
+      "mode": "raw",
+      "raw": "  exact raw\n::, {}, []  ",
+      "blocks": [
+        {
+          "id": "a",
+          "title": "画师",
+          "enabled": true,
+          "text": "1.5::artist:example::, repeated, repeated,"
+        },
+        {
+          "id": "b",
+          "title": "禁用内容",
+          "enabled": false,
+          "text": "DO NOT SEND"
+        },
+        {
+          "id": "c",
+          "title": "内容",
+          "enabled": true,
+          "text": "{subject}, [background], -2::text::"
+        }
+      ]
+    },
+    "expected": "  exact raw\n::, {}, []  "
+  },
+  {
+    "document": {
+      "mode": "layered",
+      "raw": "",
+      "blocks": [
+        {
+          "id": "a",
+          "title": "a",
+          "enabled": true,
+          "text": "one"
+        },
+        {
+          "id": "b",
+          "title": "b",
+          "enabled": true,
+          "text": "two"
+        }
+      ]
+    },
+    "expected": "one,\ntwo"
+  }
+]

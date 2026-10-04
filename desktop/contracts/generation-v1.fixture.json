@@ -1,0 +1,59 @@
+{
+  "classification": "application_contract_fixture_not_captured_paid_request",
+  "input": {
+    "draft": {
+      "prompt": "a landscape, watercolor",
+      "negativePrompt": "text"
+    },
+    "model": "nai-diffusion-4-5-full",
+    "mode": "txt2img",
+    "width": 832,
+    "height": 1216,
+    "steps": 23,
+    "guidance": 5,
+    "sampler": "k_euler_ancestral",
+    "seed": 42,
+    "imageId": null,
+    "strength": 0.7,
+    "noise": 0,
+    "vibes": [],
+    "confirmPaid": true
+  },
+  "expectedWire": {
+    "input": "a landscape, watercolor",
+    "model": "nai-diffusion-4-5-full",
+    "action": "generate",
+    "parameters": {
+      "params_version": 4,
+      "width": 832,
+      "height": 1216,
+      "steps": 23,
+      "scale": 5.0,
+      "sampler": "k_euler_ancestral",
+      "seed": 42,
+      "n_samples": 1,
+      "noise_schedule": "karras",
+      "cfg_rescale": 0,
+      "negative_prompt": "text",
+      "dynamic_thresholding": false,
+      "image_format": "png",
+      "v4_prompt": {
+        "caption": {
+          "base_caption": "a landscape, watercolor",
+          "char_captions": []
+        },
+        "use_coords": false,
+        "use_order": true
+      },
+      "v4_negative_prompt": {
+        "caption": {
+          "base_caption": "text",
+          "char_captions": []
+        },
+        "legacy_uc": false
+      },
+      "deliberate_euler_ancestral_bug": false,
+      "prefer_brownian": true
+    }
+  }
+}
