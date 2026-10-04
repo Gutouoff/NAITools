@@ -1,4 +1,5 @@
 import {useEffect,useRef,useState} from "react";
+import type React from "react";
 import type {DesktopApi} from "../platform/desktop-api";
 import type {GenerationInput,GenerationResult,ImageAsset,VibeAsset} from "../platform/types";
 import {normalizeError} from "../platform/types";
@@ -6,11 +7,32 @@ import PromptEditor from "./PromptEditor";
 import {compilePrompt,newPromptDocument} from "./prompt";
 interface Row {key:string;image?:ImageAsset;encoding?:VibeAsset;information:number;strength:number}
 interface Confirmation {title:string;description:string;run:()=>Promise<void>}
+interface PanelWidths {editor:number;controls:number}
 function Confirm({value,onCancel,onAccept}:{value:Confirmation;onCancel:()=>void;onAccept:()=>void}){const ref=useRef<HTMLDialogElement>(null);useEffect(()=>{ref.current?.showModal();},[]);return <dialog ref={ref} onCancel={onCancel} className="confirm-dialog"><h2>{value.title}</h2><p>{value.description}</p><p className="hint">请求可能消耗 Anlas；发生超时或未知结果不会自动重发。</p><div className="actions"><button autoFocus onClick={onCancel}>取消</button><button className="primary" onClick={onAccept}>确认并提交一次</button></div></dialog>;}
 async function fileBase64(file:File){if(file.size>16*1024*1024)throw new Error("图片不得超过 16 MB。");return new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error("文件读取失败。"));reader.onload=()=>resolve(String(reader.result).split(",")[1]);reader.readAsDataURL(file);});}
 export default function Workbench({api,native,input,setInput,replaySignal,onTasks}:{api:DesktopApi;native:boolean;input:GenerationInput;setInput:(i:GenerationInput)=>void;replaySignal:number;onTasks:()=>void}) {
   const [busy,setBusy]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState(""),[image,setImage]=useState<ImageAsset>(),[rows,setRows]=useState<Row[]>([]),[result,setResult]=useState<GenerationResult>(),[confirmation,setConfirmation]=useState<Confirmation>();
   const lock=useRef(false);
+  const [panelWidths,setPanelWidths]=useState<PanelWidths>(()=>{
+    try { const saved=JSON.parse(localStorage.getItem("naitools.workbenchWidths")||"null"); if(saved&&Number.isFinite(saved.editor)&&Number.isFinite(saved.controls)) return saved; } catch { /* ignore malformed local layout state */ }
+    return {editor:34,controls:22};
+  });
+  const drag=useRef<{kind:"editor"|"controls";startX:number;startValue:number}|null>(null);
+  function beginResize(kind:"editor"|"controls",event:React.PointerEvent<HTMLDivElement>){
+    if(window.matchMedia("(max-width: 1100px)").matches)return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    drag.current={kind,startX:event.clientX,startValue:panelWidths[kind]};
+    const move=(e:PointerEvent)=>{
+      if(!drag.current)return;
+      const delta=(e.clientX-drag.current.startX)/Math.max(1,window.innerWidth)*100;
+      const limits=drag.current.kind==="editor"?[24,48]:[16,34];
+      const value=Math.min(limits[1],Math.max(limits[0],drag.current.startValue+(drag.current.kind==="editor"?delta:-delta)));
+      setPanelWidths((current:PanelWidths)=>({...current,[drag.current!.kind]:Number(value.toFixed(2))}));
+    };
+    const end=()=>{window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",end);drag.current=null;};
+    window.addEventListener("pointermove",move);window.addEventListener("pointerup",end,{once:true});
+  }
+  useEffect(()=>{try{localStorage.setItem("naitools.workbenchWidths",JSON.stringify(panelWidths));}catch{/* layout persistence is optional */}},[panelWidths]);
   useEffect(()=>{setRows(input.vibes.map((v,index)=>({key:`replay-${replaySignal}-${index}`,encoding:{id:v.encodingId,model:input.model,informationExtracted:-1,cacheHit:true},information:-1,strength:v.strength})));setImage(undefined);},[replaySignal]);
   const doc=input.draft.promptDocument??newPromptDocument(input.draft.prompt);
   function patch(p:Partial<GenerationInput>){setInput({...input,...p});}
@@ -28,7 +50,12 @@ export default function Workbench({api,native,input,setInput,replaySignal,onTask
     setConfirmation({title:"确认生成一张图片",description:`${input.model.includes("curated")?"V4.5 Curated":"V4.5 Full"} · ${input.width} × ${input.height} · ${input.steps} 步 · ${input.mode==="i2i"?"图生图":"文生图"} · ${rows.length} 个已编码氛围参考。实际费用由账户与 NAI 决定，本应用不承诺免费。`,run:async()=>{try{const r=await api.submitGeneration(snapshot);setResult(r);setMessage(`已保存结果。Seed: ${r.seed}`);}catch(e){onTasks();throw e;}}});
   });}
   const disabled=busy||!!confirmation;
-  return <><div className="workbench">
+  const workbenchStyle={"--editor-width":`${panelWidths.editor}%`,"--controls-width":`${panelWidths.controls}%`} as React.CSSProperties;
+  function separator(kind:"editor"|"controls",label:string){
+    const value=kind==="editor"?panelWidths.editor:panelWidths.controls;
+    return <div className={`workbench-divider ${kind}`} role="separator" aria-label={label} aria-valuemin={kind==="editor"?24:16} aria-valuemax={kind==="editor"?48:34} aria-valuenow={value} tabIndex={0} onPointerDown={e=>beginResize(kind,e)} onKeyDown={e=>{if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;e.preventDefault();const direction=e.key==="ArrowRight"?1:-1;const limits=kind==="editor"?[24,48]:[16,34];const next=Math.min(limits[1],Math.max(limits[0],value+direction));setPanelWidths((current:PanelWidths)=>({...current,[kind]:next}));}}/>;
+  }
+  return <><div className="workbench" style={workbenchStyle}>
     <div className="editor-column">
       <PromptEditor doc={doc} disabled={disabled} onChange={d=>patch({draft:{...input.draft,promptDocument:d,prompt:compilePrompt(d)}})}/>
       <section className="panel negative-panel">
@@ -37,6 +64,7 @@ export default function Workbench({api,native,input,setInput,replaySignal,onTask
         <div className="actions"><button disabled={!native||disabled} onClick={()=>void load()}>读取草稿</button><button className="tonal" disabled={!native||disabled} onClick={()=>void save()}>保存草稿</button></div>
       </section>
     </div>
+    {separator("editor","调整提示词与预览宽度")}
     <div className="result-column">
       <section className="panel stage">
         <div className="panel-heading"><h2>图像预览</h2>{busy&&<span className="chip" role="status">处理中</span>}</div>
@@ -47,6 +75,7 @@ export default function Workbench({api,native,input,setInput,replaySignal,onTask
         <p className="hint generate-hint">提交前确认费用；失败不自动重试。</p>
       </section>
     </div>
+    {separator("controls","调整预览与参数宽度")}
     <div className="controls-column" aria-label="生成参数与参考图">
       <section className="panel parameters"><div className="panel-heading"><h2>生成参数</h2></div>
         <fieldset disabled={disabled}><div className="field-grid">
