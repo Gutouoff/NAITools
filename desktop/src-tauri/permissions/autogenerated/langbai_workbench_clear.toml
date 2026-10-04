@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-langbai-workbench-clear"
+description = "Enables the langbai_workbench_clear command without any pre-configured scope."
+commands.allow = ["langbai_workbench_clear"]
+
+[[permission]]
+identifier = "deny-langbai-workbench-clear"
+description = "Denies the langbai_workbench_clear command without any pre-configured scope."
+commands.deny = ["langbai_workbench_clear"]

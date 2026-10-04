@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-langbai-metadata-save"
+description = "Enables the langbai_metadata_save command without any pre-configured scope."
+commands.allow = ["langbai_metadata_save"]
+
+[[permission]]
+identifier = "deny-langbai-metadata-save"
+description = "Denies the langbai_metadata_save command without any pre-configured scope."
+commands.deny = ["langbai_metadata_save"]

@@ -11,7 +11,7 @@ test("every required original contract member is present, without invented metho
  assert.ok(Object.isFrozen(bridge.api));
  assert.deepEqual(Object.keys(bridge.api).sort(),contract.filter((m:{optional:boolean})=>!m.optional).map((m:{name:string})=>m.name).sort());
  assert.equal(bridge.api.platform,"win32");
- assert.equal(IMPLEMENTED_METHODS.length,11);
+ assert.equal(IMPLEMENTED_METHODS.length,18);
  assert.equal(bridge.api.onStudioAgentRequest,undefined);
  for(const name of SUBSCRIPTIONS) {
   const remove=(bridge.api[name as keyof typeof bridge.api] as (callback:()=>void)=>()=>void)(()=>{throw Error("fake progress");});

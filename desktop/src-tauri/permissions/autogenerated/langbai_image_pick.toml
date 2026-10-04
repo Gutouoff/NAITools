@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-langbai-image-pick"
+description = "Enables the langbai_image_pick command without any pre-configured scope."
+commands.allow = ["langbai_image_pick"]
+
+[[permission]]
+identifier = "deny-langbai-image-pick"
+description = "Denies the langbai_image_pick command without any pre-configured scope."
+commands.deny = ["langbai_image_pick"]

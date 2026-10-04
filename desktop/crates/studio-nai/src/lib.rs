@@ -1,4 +1,5 @@
 pub mod assets;
+pub mod local_images;
 pub mod credentials;
 mod http;
 use assets::{ImageAsset,VibeAsset,VibeMeta};

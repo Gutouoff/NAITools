@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-langbai-metadata-read"
+description = "Enables the langbai_metadata_read command without any pre-configured scope."
+commands.allow = ["langbai_metadata_read"]
+
+[[permission]]
+identifier = "deny-langbai-metadata-read"
+description = "Denies the langbai_metadata_read command without any pre-configured scope."
+commands.deny = ["langbai_metadata_read"]

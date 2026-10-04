@@ -1,5 +1,7 @@
 // Renderer-only smoke tests. Synthetic IPC never enters user storage or providers.
 import assert from "node:assert/strict";
+import { imageFixture } from "./langbai-image-fixture.mjs";
+const plainImage = imageFixture(); const metadataImage = imageFixture(true);
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
@@ -28,7 +30,9 @@ try {
  async function createFixture(failure=false) {
   const page=await context.newPage();page.on("pageerror",e=>errors.push(e.message));
   page.on("response",response=>{if(response.status()>=400)missingAssets.push(response.url());});
-  await page.addInitScript(({defaults,failure})=>{
+  await page.addInitScript(({defaults,failure,plainImage,metadataImage})=>{
+   window.__LANGBAI_TEST_PICK__ = plainImage.image; window.__LANGBAI_TEST_META__ = metadataImage.image;
+   window.__LANGBAI_TEST_SNAPSHOT__ = null;
    window.isTauri=true;window.__LANGBAI_TEST_CALLS__=[];window.__LANGBAI_TEST_SETTINGS__={...defaults,hasOnboarded:true};
    window.__TAURI_INTERNALS__={invoke:async(command,args)=>{
     window.__LANGBAI_TEST_CALLS__.push({command,args});
@@ -39,9 +43,19 @@ try {
     if(command==="langbai_setting_set") {window.__LANGBAI_TEST_SETTINGS__[args.key]=args.value;return args.value;}
     if(command==="credentials_status")return false;
     if(command==="langbai_window_action")return;
+    if(command==="langbai_image_pick")return window.__LANGBAI_TEST_PICK__;
+    if(command==="langbai_image_read")return args.reference === metadataImage.image.filePath ? metadataImage.image : plainImage.image;
+    if(command==="langbai_workbench_clear")return;
+    if(command==="langbai_metadata_read") {
+     const snapshot = args.reference === metadataImage.image.filePath ? metadataImage.snapshot : plainImage.snapshot;
+     if(args.persist)window.__LANGBAI_TEST_SNAPSHOT__ = snapshot;
+     return snapshot;
+    }
+    if(command==="langbai_metadata_save") {window.__LANGBAI_TEST_SNAPSHOT__=args.snapshot;return;}
+    if(command==="langbai_metadata_load")return window.__LANGBAI_TEST_SNAPSHOT__;
     throw Error("Unexpected native command: "+command);
    }};
-  },{defaults,failure});
+  },{defaults,failure,plainImage,metadataImage});
   await page.goto(origin+"/");return page;
  }
  const failed=await createFixture(true);
@@ -110,6 +124,38 @@ try {
  await page.waitForFunction(()=>document.documentElement.classList.contains("theme-dark"));
  assert.equal(await page.evaluate(()=>window.__LANGBAI_TEST_SETTINGS__.theme),"dark","Original theme control reaches the explicit setting command");
  await page.locator(".modal.settings-modal header button").click();
+
+ // Original workbench buttons must actually display imported images. Metadata
+ // comes from the unchanged parser, not from a synthetic native metadata DTO.
+ await page.getByRole("button",{name:"图生图",exact:true}).click();
+ const upload = page.locator(".wb-upload:visible").first();
+ await upload.getByRole("button",{name:"加载图片...",exact:true}).click();
+ await page.waitForFunction(()=>{const e=document.querySelector(".wb-thumb");return e?.complete&&e.naturalWidth===64;});
+ assert.equal(await page.evaluate(()=>document.querySelector(".wb-thumb").naturalHeight),48);
+ const plainResult = await page.evaluate(async()=>window.naiDesktop.loadImageFromPath("naitools://imports/fixture-plain.png"));
+ assert.equal("metadata" in plainResult,false,"Absent metadata must stay absent");
+ await page.evaluate(()=>{window.__LANGBAI_TEST_PICK__=window.__LANGBAI_TEST_META__;});
+ await upload.getByRole("button",{name:"重新加载",exact:true}).click();
+ // Restoring V4.5 metadata legitimately opens the original V5 notice.
+ // Dismiss through its original keep-current-model action, not a storage override.
+ await page.locator(".v5-migration-notice").waitFor();
+ await page.locator(".v5-migration-notice footer button").first().click();
+ await page.locator(".v5-migration-notice").waitFor({state:"hidden"});
+ const extracted = await page.evaluate(async()=>window.naiDesktop.loadImageFromPath("naitools://imports/fixture-meta.png"));
+ assert.equal(extracted.metadata.imported.positivePrompt,"artist:fixture, 1girl, blue hair");
+ assert.equal(extracted.metadata.imported.seed,42);
+ const selectedImage = await upload.locator(".wb-thumb").getAttribute("src");
+ const snapshotRoundTrip = await page.evaluate(async()=>{
+  await window.naiDesktop.saveMetadataSnapshotFromPath("naitools://imports/fixture-meta.png");
+  return window.naiDesktop.loadMetadataSnapshot();
+ });
+ assert.equal(snapshotRoundTrip.snapshot.base64,metadataImage.snapshot.base64,"Snapshot preserves original metadata bytes");
+ await page.evaluate(async()=>window.naiDesktop.readMetadataSnapshotFromPath("naitools://imports/fixture-plain.png"));
+ assert.equal(await upload.locator(".wb-thumb").getAttribute("src"),selectedImage,"Metadata reads cannot replace the workbench");
+ await upload.getByRole("button",{name:"清除",exact:true}).click();
+ await upload.getByRole("button",{name:"加载图片...",exact:true}).waitFor();
+ await page.getByRole("button",{name:"文生图",exact:true}).click();
+
  // The native boundary is still incomplete. Calling a paid method must fail
  // locally, never return images or execute an unknown Rust command.
  const rejection=await page.evaluate(async()=>{
@@ -118,7 +164,7 @@ try {
  assert.equal(rejection.code,"langbai_api_unavailable");
  assert.match(rejection.message,/未发送付费请求/);
  assert.equal(await page.evaluate(()=>window.__LANGBAI_TEST_CALLS__.some(c=>/generation|vibe|encode/.test(c.command))),false);
- if(process.env.LANGBAI_SMOKE_SCREENSHOT)await page.screenshot({path:process.env.LANGBAI_SMOKE_SCREENSHOT,fullPage:true});
+ if(process.env.LANGBAI_SMOKE_SCREENSHOT)await page.screenshot({path:process.env.LANGBAI_SMOKE_SCREENSHOT,fullPage:true,animations:"disabled"});
  assert.deepEqual(external,[],"No external requests");assert.deepEqual(missingAssets,[],"No broken original assets");assert.deepEqual(errors,[],"No renderer crash");
- console.log("Langbai renderer smoke passed: explicit boot failures, original main screen, valid icon, splitters, prompt resizing, exclusive modes, settings navigation and no paid/native side effects.");
+ console.log("Langbai renderer smoke passed: explicit boot failures, original main screen, valid icon, splitters, prompt resizing, exclusive modes, settings navigation, full image display, original metadata parsing/snapshots and no paid side effects.");
 } finally {await browser.close();}
