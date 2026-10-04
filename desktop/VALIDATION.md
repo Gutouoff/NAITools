@@ -2,7 +2,33 @@
 
 更新：2026-10-04。以下以本机命令和真实 Windows 运行输出为准，区分“实现 / 本地测试 / 真实服务验收”。源码从新仓库原有 `f5ed6e8` 续接，不重写原作者或其他 agent 的提交历史。
 
-## 本轮绘图增量（e2c5815 / 6bafcaf）
+## 本轮绘图配置与 API 设置（de1b78a / f6a11f3 / 9d78f44）
+
+| 检查 | 结果 |
+| --- | --- |
+| 前端 | 42/42 单元测试通过；最终 TypeScript + Vite 生产构建通过 |
+| Rust workspace | 48/48 通过（宿主 3、core 25、IPC 集成 1、NAI 19） |
+| 提示词兼容 | 共享 fixture 覆盖独立画师串与旧文档；旧原文模式中未激活的画师层不会因配置切换而自动提交；画师串仅编译到原有 provider 提示词字段，没有增加请求字段 |
+| 绘图配置 | 保存 / 更新 / 应用、默认保留画师串及负向提示词、关闭保留后替换、仅应用画师串及按策略清空，通过 |
+| 设置职责 | API 多配置选择 / 复制 / 未保存修改处理归入设置；工作台仅显示 API 名称和设置入口，通过 |
+| 生产界面回归 | 1440 / 1101 / 900px 布局；栏宽及画师串 / 原文 / 分层 / 负向高度调整；底图导入、氛围拖放 / 粘贴、结果缩放 / 平移 / 转底图，通过 |
+| 费用与外网 | 外部 HTTP 0，真实付费调用 0，页面脚本错误 0；本轮消费 $0 |
+| 最终 release 原生 | WebView2 渲染、IPC 2 handshake、画师串编辑、分隔调整、命令权限与校验、未确认生成拒绝通过；延迟 5 秒后 IPC 仍响应 |
+| 真实持久存储 | **未通过**：最终 EXE 读取连接、绘图配置及历史均返回 storage_unavailable；Rust 写入探针仍为 Win32 5 / PermissionDenied |
+
+上述绘图配置保存及 API 切换使用合成 IPC，不代表真实账号保存或服务验收。保留选项仅作用于配置应用及提示词清空，不限制手动编辑、草稿读取或历史恢复。
+
+最终主 JS 230,913 bytes（gzip 72,584 bytes），CSS 15,125 bytes（gzip 3,787 bytes）；设置页按需拆包 10,483 bytes（gzip 3,961 bytes）。无新增运行时依赖。合成截图：`target/drawing-settings-smoke.png`、`target/api-settings-smoke.png`，不含真实凭据或真实生成图。
+
+### 当前构建产物
+
+- EXE：`D:\dsh\nai\desktop\target\release\naitools.exe`，**14,938,112 bytes**，2026-10-04 17:55:58 本机修改时间；最终前端资源已通过 `custom-protocol` 内嵌，无需 Vite。启动入口仍为 `启动PC新版.cmd`。
+- 首次编译因用户正在运行旧 EXE 而拒绝访问；没有强制结束用户进程。另目录验证编译通过；原窗口关闭后，标准 release 路径已重新构建并完成原生验收。
+- 单次调试启动 `rendererReadyHostMs=1723`，含调试开销，起点为 Rust main；不是重复冷启动测试或完整启动时间结论。文件大小不代表内存占用。
+- 原生截图：`target/drawing-settings-native.png`、`target/drawing-settings-native-diagnostics.png`；真实存储失败提示仍保留。原生 smoke 允许 storage_unavailable，只证明渲染、IPC 与拒绝机制，不证明保存正常。
+- 本轮没有读取 Token、改 ACL、关闭安全措施、清理或迁移持久数据。测试原生进程与临时调试端口 9225 已关闭，浏览器测试服务器已停止。
+
+## 前次绘图增量（e2c5815 / 6bafcaf）
 
 | 检查 | 结果 |
 | --- | --- |
@@ -17,7 +43,7 @@
 
 合成预览只使用本地纯色 PNG，不是真实 NovelAI / 中转生图。原生 smoke 允许“命令有权限，但数据目录不可用”的结果，不把它算作持久化验收。没有读取真实凭据、改 ACL、清 journal 或将收费任务切到空目录。
 
-### 当前构建产物
+### 前次构建产物（历史记录）
 
 - EXE：`D:\dsh\nai\desktop\target\release\naitools.exe`，**14,935,040 bytes**，2026-10-04 16:59:23 本机修改时间；已启用 `custom-protocol`，不依赖 Vite 服务器。文件大小不是进程内存。
 - 主 JS 229.63 kB（gzip 73.10 kB），CSS 15.30 kB（gzip 3.82 kB）；连接编辑器按需拆包 7.00 kB。没有新增运行时 UI 依赖。
