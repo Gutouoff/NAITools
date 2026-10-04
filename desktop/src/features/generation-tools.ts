@@ -1,5 +1,5 @@
 import type { DrawingPreset, GenerationInput } from "../platform/types.ts";
-import { compilePrompt } from "./prompt.ts";
+import { compilePrompt, newPromptDocument } from "./prompt.ts";
 export const SIZE_PRESETS = [
     { name: "竖图", width: 832, height: 1216 }, { name: "横图", width: 1216, height: 832 },
     { name: "方图", width: 1024, height: 1024 }, { name: "小方图", width: 512, height: 512 },
@@ -24,9 +24,48 @@ export function makeDrawingPreset(i: GenerationInput, id: string, name: string):
         draft.prompt = compilePrompt(draft.promptDocument);
     return { id, name: name.trim(), draft, model: i.model, width: i.width, height: i.height, steps: i.steps, guidance: i.guidance, sampler: i.sampler, seed: i.seed, strength: i.strength, noise: i.noise };
 }
-export function applyDrawingPreset(i: GenerationInput, p: DrawingPreset): GenerationInput {
+export interface PromptRetention { style: boolean; negative: boolean }
+export const DEFAULT_RETENTION: PromptRetention = { style: true, negative: true };
+export function readPromptRetention(): PromptRetention {
+    try {
+        const value = JSON.parse(localStorage.getItem("naitools.promptRetention") ?? "null");
+        if (typeof value?.style === "boolean" && typeof value?.negative === "boolean") return { style: value.style, negative: value.negative };
+    } catch { /* optional UI preference, never prompt content */ }
+    return { ...DEFAULT_RETENTION };
+}
+export function rememberPromptRetention(value: PromptRetention): void {
+    try { localStorage.setItem("naitools.promptRetention", JSON.stringify(value)); } catch { /* optional */ }
+}
+function retainedStyle(source: GenerationInput["draft"], target: GenerationInput["draft"]): void {
+    const current = source.promptDocument ?? newPromptDocument(source.prompt);
+    const next = target.promptDocument ?? newPromptDocument(target.prompt);
+    next.stylePrompt = current.stylePrompt ?? "";
+    // Existing ten-layer documents remain lossless. Do not infer artist tags from raw text.
+    const artist = current.blocks.find(block => block.id === "block-1" && block.title === "画师");
+    next.blocks = next.blocks.filter(block => !(block.id === "block-1" && block.title === "画师"));
+    if (artist && current.mode === "layered" && artist.enabled) {
+        next.stylePrompt = compilePrompt({ mode: "layered", raw: "", stylePrompt: current.stylePrompt, blocks: [artist] });
+    } else if (artist) next.blocks.unshift(structuredClone(artist));
+    target.promptDocument = next;
+    target.prompt = compilePrompt(next);
+}
+export function applyDrawingPreset(i: GenerationInput, p: DrawingPreset, retention: PromptRetention = { style: false, negative: false }): GenerationInput {
+    const draft = structuredClone(p.draft);
+    if (retention.style) retainedStyle(i.draft, draft);
+    if (retention.negative) draft.negativePrompt = i.draft.negativePrompt;
     // Explicit whitelist: never adopt credentials, routing, images or paid consent from a preset.
-    return { ...i, draft: structuredClone(p.draft), model: p.model, width: p.width, height: p.height, steps: p.steps, guidance: p.guidance, sampler: p.sampler, seed: p.seed, strength: p.strength, noise: p.noise, vibes: [], confirmPaid: false };
+    return { ...i, draft, model: p.model, width: p.width, height: p.height, steps: p.steps, guidance: p.guidance, sampler: p.sampler, seed: p.seed, strength: p.strength, noise: p.noise, vibes: [], confirmPaid: false };
+}
+export function applyArtistString(i: GenerationInput, p: DrawingPreset): GenerationInput {
+    const draft = structuredClone(i.draft);
+    retainedStyle(p.draft, draft);
+    return { ...i, draft, confirmPaid: false };
+}
+export function clearPromptDraft(i: GenerationInput, retention: PromptRetention): GenerationInput {
+    const draft = { prompt: "", negativePrompt: "", promptDocument: newPromptDocument() };
+    if (retention.style) retainedStyle(i.draft, draft);
+    if (retention.negative) draft.negativePrompt = i.draft.negativePrompt;
+    return { ...i, draft, confirmPaid: false };
 }
 const SELECTION_KEY = "naitools.activeConnection";
 export function readSelectedConnection(): string {

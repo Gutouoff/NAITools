@@ -31,7 +31,7 @@ impl GenerationInput {
             return Err(AppError::new("local_safety_limit","参数超出本版本的保守安全范围；这是应用限制，不是 NAI 全部规格。"));
         }
         if self.vibes.len()>4||!self.strength.is_finite()||!(0.0..=1.0).contains(&self.strength)||!self.noise.is_finite()||!(0.0..=1.0).contains(&self.noise){return Err(AppError::invalid());}
-        if self.mode==GenerationMode::I2i && self.image_id.is_none(){return Err(AppError::new("image_required","i2i 需要导入底图。"));}
+        if self.mode==GenerationMode::I2i && self.image_id.is_none(){return Err(AppError::new("image_required","图生图需要导入底图。"));}
         if self.mode==GenerationMode::Txt2img && self.image_id.is_some(){return Err(AppError::invalid());}
         if self.image_id.as_ref().is_some_and(|id|!valid_id(id)){return Err(AppError::invalid());}
         let mut total=0.0;let mut ids=std::collections::HashSet::new();
@@ -59,6 +59,21 @@ pub fn build_wire(input:&GenerationInput,seed:u32,image:Option<String>,vibes:Vec
     use super::*;
     fn input()->GenerationInput{serde_json::from_value(serde_json::from_str::<Value>(include_str!("../../../contracts/generation-v1.fixture.json")).unwrap()["input"].clone()).unwrap()}
     #[test]fn shared_wire_fixture(){let fixture:Value=serde_json::from_str(include_str!("../../../contracts/generation-v1.fixture.json")).unwrap();assert_eq!(build_wire(&input(),42,None,vec![]).unwrap(),fixture["expectedWire"]);}
+    #[test]
+    fn artist_string_reaches_existing_prompt_fields_only() {
+        let mut i = input();
+        let document: crate::prompt::PromptDocument = serde_json::from_value(json!({
+            "mode": "raw", "raw": "1girl", "stylePrompt": "1.2::artist:a::", "blocks": []
+        })).unwrap();
+        i.draft.prompt = document.compile().unwrap();
+        i.draft.prompt_document = Some(document);
+        let wire = build_wire(&i, 42, None, vec![]).unwrap();
+        assert_eq!(wire["input"], "1.2::artist:a::,\n1girl");
+        assert_eq!(wire["parameters"]["v4_prompt"]["caption"]["base_caption"], wire["input"]);
+        assert!(wire.get("stylePrompt").is_none());
+        assert!(wire["parameters"].get("stylePrompt").is_none());
+        assert!(wire["parameters"].get("promptDocument").is_none());
+    }
     #[test]fn reject_unreviewed_or_unconfirmed(){let mut i=input();i.confirm_paid=false;assert_eq!(i.validate().unwrap_err().code,"confirmation_required");i.confirm_paid=true;i.model="made-up-model".into();assert!(i.validate().is_err());}
     #[test]fn i2i_and_vibes_are_not_conflated(){let mut i=input();i.mode=GenerationMode::I2i;i.image_id=Some("input-1".into());i.vibes=vec![VibeInput{encoding_id:"encoded-1".into(),strength:0.5}];let w=build_wire(&i,7,Some("PNG_INPUT".into()),vec![ResolvedVibe{data:"ENCODED_BINARY".into(),information_extracted:0.8,strength:0.5}]).unwrap();assert_eq!(w["action"],"img2img");assert_eq!(w["parameters"]["image"],"PNG_INPUT");assert_eq!(w["parameters"]["reference_image_multiple"][0],"ENCODED_BINARY");assert!(w["parameters"].get("reference_information_extracted_multiple").is_none());}
     #[test]fn local_bounds_reject_overload_and_invalid_numbers(){let mut i=input();i.width=1536;i.height=1536;assert!(i.validate().is_err());i=input();i.guidance=f64::NAN;assert!(i.validate().is_err());i=input();i.seed=Some(u32::MAX);assert!(i.validate().is_ok());}

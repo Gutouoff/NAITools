@@ -73,5 +73,63 @@
       ]
     },
     "expected": "one,\ntwo"
+  },
+  {
+    "document": {
+      "mode": "raw",
+      "raw": "  1girl, {red hair}  ",
+      "stylePrompt": "  1.2::artist:example::  ",
+      "blocks": []
+    },
+    "expected": "1.2::artist:example::,\n  1girl, {red hair}  "
+  },
+  {
+    "document": {
+      "mode": "layered",
+      "raw": "inactive raw",
+      "stylePrompt": "artist:a,",
+      "blocks": [
+        {
+          "id": "body",
+          "title": "角色",
+          "enabled": true,
+          "text": " {subject}, repeated, repeated "
+        },
+        {
+          "id": "off",
+          "title": "停用",
+          "enabled": false,
+          "text": "hidden"
+        }
+      ]
+    },
+    "expected": "artist:a,\n{subject}, repeated, repeated"
+  },
+  {
+    "document": {
+      "mode": "raw",
+      "raw": "",
+      "stylePrompt": " artist:a  ",
+      "blocks": []
+    },
+    "expected": "artist:a"
+  },
+  {
+    "document": {
+      "mode": "raw",
+      "raw": ", body",
+      "stylePrompt": "artist:a",
+      "blocks": []
+    },
+    "expected": "artist:a\n, body"
+  },
+  {
+    "document": {
+      "mode": "raw",
+      "raw": " exact raw ",
+      "stylePrompt": "   ",
+      "blocks": []
+    },
+    "expected": " exact raw "
   }
 ]

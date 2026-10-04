@@ -2,7 +2,7 @@
 export interface NaiContractStatus { verification: "unverified" | "observed_subset"; generationEnabled: boolean; reason: string; evidenceFile: string }
 export interface BootInfo { schemaVersion: 2; appVersion: string; runtime: "tauri" | "browser_preview"; storage: "isolated_sqlite_lazy" | "unavailable"; hostElapsedMs: number | null; rendererReadyHostMs: number | null; naiContract: NaiContractStatus }
 export interface PromptBlock { id: string; title: string; enabled: boolean; text: string }
-export interface PromptDocument { mode: "raw" | "layered"; raw: string; blocks: PromptBlock[] }
+export interface PromptDocument { mode: "raw" | "layered"; raw: string; stylePrompt?: string; blocks: PromptBlock[] }
 export interface EditorDraft { prompt: string; negativePrompt: string; promptDocument?: PromptDocument }
 export interface HistoryCursor { createdAtMs: number; id: string }
 export interface HistoryQuery { limit?: number; before?: HistoryCursor | null }

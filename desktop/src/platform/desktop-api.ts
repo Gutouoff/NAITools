@@ -14,7 +14,7 @@ export interface DesktopApi {
 }
 export function mapDraft(d:EditorDraft):EditorDraft {
   const mapped:EditorDraft={prompt:d.prompt,negativePrompt:d.negativePrompt};
-  if(d.promptDocument) mapped.promptDocument={mode:d.promptDocument.mode,raw:d.promptDocument.raw,blocks:d.promptDocument.blocks.map(b=>({id:b.id,title:b.title,enabled:b.enabled,text:b.text}))};
+  if(d.promptDocument) mapped.promptDocument={mode:d.promptDocument.mode,raw:d.promptDocument.raw,...(d.promptDocument.stylePrompt !== undefined ? {stylePrompt:d.promptDocument.stylePrompt} : {}),blocks:d.promptDocument.blocks.map(b=>({id:b.id,title:b.title,enabled:b.enabled,text:b.text}))};
   return mapped;
 }
 export function mapGeneration(i:GenerationInput):GenerationInput {return {...(i.connectionId?{connectionId:i.connectionId}:{}),draft:mapDraft(i.draft),model:i.model,mode:i.mode,width:i.width,height:i.height,steps:i.steps,guidance:i.guidance,sampler:i.sampler,seed:i.seed,imageId:i.imageId,strength:i.strength,noise:i.noise,vibes:i.vibes.map(v=>({encodingId:v.encodingId,strength:v.strength})),confirmPaid:i.confirmPaid};}
