@@ -4,12 +4,12 @@
 
 ## 功能与边界
 
-- 紧凑三栏工作台：提示词、图像预览、生成参数与参考图；窄窗口保留可见生成按钮。
+- 紧凑三栏工作台：提示词、图像预览、生成参数与参考图；宽窗口通过分隔条调整栏宽（方向键微调、双击重置），窄窗口保留可见生成按钮。原文、分层和负向输入框均有独立高度拖动条。
 - 原文 / 10 层应用模板：两份内容独立保留，当前模式决定提交文本；可启用、排序、预览，不去重、不改权重，不宣称官方排序。
 - V4.5 Full / Curated、Euler / Euler a，单张非流式文生图。
 - 图生图（i2i）：本地导入，按目标比例中心裁剪后缩放，这是应用选择。
-- 氛围参考（Vibe Transfer）：显式编码确认、素材 / 模型 / 提取量缓存；生成不会自动付费编码。
-- Windows 凭据管理器保存 Token，无明文降级；本地草稿、PNG 保存 / 导出、历史分页与参数恢复。
+- 氛围参考（Vibe Transfer）：显式编码确认、素材 / 模型 / 提取量 / 连接 / 凭据版本缓存；生成不会自动付费编码。
+- 最多 32 套 NovelAI 官方账号 / 原生兼容中转配置，生成时明确选择；Windows 凭据管理器按配置保存密钥，无明文降级；本地草稿、PNG 保存 / 导出、历史分页与参数恢复。
 - 收费请求前检查任务存储，实际提交前通过 SQLite IMMEDIATE 事务落盘并复查未知任务；未知结果不重试。
 - 「关于」显示来源、完整项目 MIT 许可证与折叠诊断，不在主工作台展示技术宣传。
 
@@ -41,13 +41,13 @@ npm run build
 
 辅助脚本仅为当前进程加载 VS2022 x64 环境，临时文件位于 `target/build-tmp`；不改全局 PATH。参数使用数组避免 PowerShell 的 `-p` 歧义。依赖已缓存时可追加 `--offline`。
 
-开发模式：`npm run desktop:dev`。生产构建通过 `custom-protocol` 内嵌页面，不依赖开发服务器。次级页面按需加载；启动不读 Token、不初始化数据库、不扫描历史、不连接 NAI。
+开发模式：`npm run desktop:dev`。生产构建通过 `custom-protocol` 内嵌页面，不依赖开发服务器。次级页面按需加载；启动按需读取本地连接元数据，不读 Token、不扫描历史、不发远程请求；设置页打开后才查询各配置的凭据状态。
 
 可选浏览器验收：先运行 `npm run preview`，在另一个终端设置 `PLAYWRIGHT_MODULE` / `BROWSER_EXECUTABLE`，再运行 `npm run test:browser`。采用独立 context，阻断外部 HTTP；合成 IPC 用于错误 UI 测试，不冒充原生服务。
 
 ## 协议、许可和发布
 
-协议依据及已知缺口见 [contracts](contracts/README.md)：公开 Swagger 快照、官网客户端观察及用户文档。客户端观察不是稳定 schema 承诺；fixture 是应用自编期望请求，不是付费抓包。Rust 固定 HTTPS endpoint，禁重定向、禁自动重试；界面不能传任意 URL / 远程 JSON。
+协议依据及已知缺口见 [contracts](contracts/README.md)：公开 Swagger 快照、官网客户端观察及用户文档。客户端观察不是稳定 schema 承诺；fixture 是应用自编期望请求，不是付费抓包。官方账号固定 HTTPS endpoint；中转站地址和路径必须显式保存为连接元数据，服务端校验后使用，禁止重定向与自动重试，生成 IPC 不接受任意 URL / 远程 JSON。当前仅适配 NovelAI 原生 JSON → ZIP，不冒充 OpenAI Images / Chat 全协议兼容。配置说明及中转站核验边界见 [连接配置](CONNECTIONS.md)。
 
 保留原作者版权、完整 MIT 许可与 Git 来源历史。第三方依赖各有许可，详见根目录 THIRD_PARTY_NOTICES.md。当前不制作安装包、签名或自动更新；发行二进制前还需收集随包第三方许可并进行端到端验收。
 
