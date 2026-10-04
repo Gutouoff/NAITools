@@ -12,6 +12,7 @@ pub enum GenerationMode{Txt2img,I2i}
 #[derive(Debug,Clone,Serialize,Deserialize)]
 #[serde(rename_all="camelCase",deny_unknown_fields)]
 pub struct GenerationInput {
+    #[serde(default)] pub connection_id:Option<String>,
     pub draft:EditorDraft,pub model:String,pub mode:GenerationMode,
     pub width:u32,pub height:u32,pub steps:u32,pub guidance:f64,pub sampler:String,
     pub seed:Option<u32>,pub image_id:Option<String>,pub strength:f64,pub noise:f64,
@@ -20,6 +21,7 @@ pub struct GenerationInput {
 impl GenerationInput {
     pub fn validate(&self)->Result<(),AppError>{
         self.draft.validate()?;
+        if self.connection_id.as_ref().is_some_and(|id|!valid_id(id)){return Err(AppError::invalid());}
         if !self.confirm_paid{return Err(AppError::new("confirmation_required","需要用户显式确认可能产生费用；未发送请求。"));}
         if self.draft.prompt.trim().is_empty(){return Err(AppError::new("empty_prompt","请输入正向提示词。"));}
         if !MODELS.contains(&self.model.as_str())||!["k_euler","k_euler_ancestral"].contains(&self.sampler.as_str()){

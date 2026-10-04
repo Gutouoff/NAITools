@@ -11,7 +11,7 @@ pub struct ImageAsset { pub id:String, pub width:u32, pub height:u32, pub previe
 #[serde(rename_all="camelCase")]
 pub struct VibeAsset { pub id:String, pub model:String, pub information_extracted:f64, pub cache_hit:bool }
 #[derive(Serialize, Deserialize)]
-pub struct VibeMeta { pub model:String, pub information_extracted:f64 }
+pub struct VibeMeta { #[serde(default)] pub connection_scope:String, pub model:String, pub information_extracted:f64 }
 pub fn path(root:&Path, folder:&str, id:&str, ext:&str)->Result<PathBuf,AppError>{
     if !valid_id(id){return Err(AppError::invalid());}
     Ok(root.join(folder).join(format!("{id}.{ext}")))

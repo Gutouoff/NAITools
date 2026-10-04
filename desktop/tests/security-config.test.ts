@@ -14,7 +14,7 @@ test("only local main webview receives narrow application command permissions", 
   assert.deepEqual(config.app.security.capabilities, ["main-local"]);
   assert.deepEqual(capability.windows, ["main"]); assert.equal(capability.local, true);
   assert.equal(capability.remote, undefined);
-  assert.deepEqual(capability.permissions, ["allow-desktop-bootstrap", "allow-desktop-mark-ready", "allow-draft-load", "allow-draft-save", "allow-history-list", "allow-history-request", "allow-generation-submit", "allow-credentials-status", "allow-credentials-set", "allow-credentials-delete", "allow-image-import", "allow-vibe-encode", "allow-artifact-read", "allow-artifact-export", "allow-task-list", "allow-task-acknowledge"]);
+  assert.deepEqual(capability.permissions, ["allow-desktop-bootstrap", "allow-desktop-mark-ready", "allow-draft-load", "allow-draft-save", "allow-history-list", "allow-history-request", "allow-generation-submit", "allow-credentials-status", "allow-credentials-set", "allow-credentials-delete", "allow-image-import", "allow-vibe-encode", "allow-artifact-read", "allow-artifact-export", "allow-task-list", "allow-task-acknowledge", "allow-connections-list", "allow-connection-save", "allow-connection-delete", "allow-connection-token-set", "allow-connection-token-delete"]);
   // Registration must opt into AppManifest ACLs, not rely on default global command access.
   assert.ok(read("src-tauri/build.rs").includes("AppManifest::new().commands"));
 });
@@ -58,7 +58,8 @@ test("native transport disables automatic retries and redirects", () => {
   assert.ok(transport.includes(".retry(reqwest::retry::never())"));
   assert.ok(transport.includes(".redirect(Policy::none())"));
   assert.ok(transport.includes(".https_only(true)"));
-  assert.ok(transport.includes("https://image.novelai.net/ai/generate-image"));
+  assert.ok(read("crates/studio-core/src/connections.rs").includes("https://image.novelai.net"));
+  assert.ok(transport.includes("validate_profile"));
 });
 
 test("host owns window creation and separates disposable WebView cache from durable tasks", () => {

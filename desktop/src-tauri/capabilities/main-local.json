@@ -22,6 +22,11 @@
     "allow-artifact-read",
     "allow-artifact-export",
     "allow-task-list",
-    "allow-task-acknowledge"
+    "allow-task-acknowledge",
+    "allow-connections-list",
+    "allow-connection-save",
+    "allow-connection-delete",
+    "allow-connection-token-set",
+    "allow-connection-token-delete"
   ]
 }

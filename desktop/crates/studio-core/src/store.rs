@@ -3,7 +3,7 @@ use rusqlite::{params, Connection, OptionalExtension};
 use crate::{dto::*, error::AppError, task::TaskState};
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all="camelCase")]
-pub struct TaskRecord { pub id:String, pub state:TaskState, pub kind:String, pub created_at_ms:i64, pub acknowledged:bool, pub error_code:Option<String> }
+pub struct TaskRecord { pub id:String, pub state:TaskState, pub kind:String, pub created_at_ms:i64, pub acknowledged:bool, pub error_code:Option<String>, pub connection:Option<crate::connections::ConnectionProfile> }
 pub struct Store { db: Connection }
 impl Store {
     pub fn open(path: &Path) -> Result<Self, AppError> {
@@ -13,7 +13,7 @@ impl Store {
     fn initialize(db: Connection) -> Result<Self, AppError> {
         db.busy_timeout(Duration::from_secs(5)).map_err(|_| AppError::storage())?;
         let version: i64 = db.pragma_query_value(None, "user_version", |row| row.get(0)).map_err(|_| AppError::storage())?;
-        if version > 2 { return Err(AppError::new("storage_version_unsupported", "数据库版本高于程序支持的版本；未修改数据。")); }
+        if version > 3 { return Err(AppError::new("storage_version_unsupported", "数据库版本高于程序支持的版本；未修改数据。")); }
         db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;").map_err(|_| AppError::storage())?;
         if version == 0 {
             db.execute_batch("BEGIN IMMEDIATE;
@@ -34,10 +34,48 @@ impl Store {
                 ALTER TABLE history ADD COLUMN request_json TEXT;
                 PRAGMA user_version=2; COMMIT;").map_err(|_| AppError::storage())?;
         }
+        if version <= 2 {
+            db.execute_batch("BEGIN IMMEDIATE;
+                CREATE TABLE connections (id TEXT PRIMARY KEY, payload TEXT NOT NULL);
+                CREATE TABLE connection_revisions (id TEXT PRIMARY KEY, revision TEXT NOT NULL);
+                PRAGMA user_version=3; COMMIT;").map_err(|_| AppError::storage())?;
+        }
+        let official = crate::connections::ConnectionProfile::official();
+        db.execute("INSERT OR IGNORE INTO connections(id,payload) VALUES(?1,?2)", params![official.id, serde_json::to_string(&official).map_err(|_|AppError::storage())?]).map_err(|_|AppError::storage())?;
         Ok(Self { db })
     }
     #[cfg(test)]
     fn memory() -> Self { Self::initialize(Connection::open_in_memory().unwrap()).unwrap() }
+    pub fn connections(&self) -> Result<Vec<crate::connections::ConnectionProfile>, AppError> {
+        let mut statement = self.db.prepare("SELECT payload FROM connections ORDER BY id").map_err(|_|AppError::storage())?;
+        let rows = statement.query_map([], |row|row.get::<_,String>(0)).map_err(|_|AppError::storage())?;
+        rows.map(|row|serde_json::from_str(&row.map_err(|_|AppError::storage())?).map_err(|_|AppError::storage())).collect()
+    }
+    pub fn connection(&self,id:&str) -> Result<crate::connections::ConnectionProfile, AppError> {
+        let raw: Option<String> = self.db.query_row("SELECT payload FROM connections WHERE id=?1", [id], |row|row.get(0)).optional().map_err(|_|AppError::storage())?;
+        serde_json::from_str(&raw.ok_or_else(||AppError::new("connection_missing","连接配置不存在；未发送请求。"))?).map_err(|_|AppError::storage())
+    }
+    pub fn connection_revision(&self,id:&str)->Result<String,AppError> {
+        self.db.query_row("SELECT revision FROM connection_revisions WHERE id=?1",[id],|r|r.get(0)).optional().map_err(|_|AppError::storage()).map(|v|v.unwrap_or_default())
+    }
+    pub fn rotate_connection_revision(&self,id:&str,revision:&str)->Result<(),AppError> {
+        self.connection(id)?;
+        self.db.execute("INSERT INTO connection_revisions(id,revision) VALUES(?1,?2) ON CONFLICT(id) DO UPDATE SET revision=excluded.revision",params![id,revision]).map_err(|_|AppError::storage())?;Ok(())
+    }
+    pub fn save_connection(&mut self,p:&crate::connections::ConnectionProfile) -> Result<(),AppError> {
+        p.validate()?;
+        let tx = self.db.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate).map_err(|_|AppError::storage())?;
+        let count:i64=tx.query_row("SELECT COUNT(*) FROM connections",[],|r|r.get(0)).map_err(|_|AppError::storage())?;
+        let exists:bool=tx.query_row("SELECT EXISTS(SELECT 1 FROM connections WHERE id=?1)",[&p.id],|r|r.get(0)).map_err(|_|AppError::storage())?;
+        if count>=32 && !exists {return Err(AppError::new("connection_limit","最多保存 32 套连接配置。"));}
+        if p.id==crate::connections::DEFAULT_CONNECTION && p.kind!=crate::connections::ConnectionKind::Official {return Err(AppError::invalid());}
+        tx.execute("INSERT INTO connections(id,payload) VALUES(?1,?2) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload",params![p.id,serde_json::to_string(p).map_err(|_|AppError::invalid())?]).map_err(|_|AppError::storage())?;
+        tx.commit().map_err(|_|AppError::storage())
+    }
+    pub fn delete_connection(&self,id:&str) -> Result<(),AppError> {
+        if id==crate::connections::DEFAULT_CONNECTION {return Err(AppError::new("default_connection","默认账号可修改名称或删除凭据，但不能删除配置。"));}
+        self.db.execute("DELETE FROM connections WHERE id=?1",[id]).map_err(|_|AppError::storage())?;Ok(())
+    }
     pub fn load_draft(&self) -> Result<EditorDraft, AppError> {
         let raw: Option<String> = self.db.query_row("SELECT payload FROM editor_draft WHERE id=1", [], |row| row.get(0)).optional().map_err(|_| AppError::storage())?;
         let draft = match raw { None => EditorDraft::default(), Some(raw) => serde_json::from_str::<EditorDraft>(&raw).map_err(|_| AppError::storage())? };
@@ -138,9 +176,9 @@ impl Store {
         tx.commit().map_err(|_| AppError::storage())
     }
     pub fn task_list(&self) -> Result<Vec<TaskRecord>, AppError> {
-        let mut stmt=self.db.prepare("SELECT id,state,kind,created_at_ms,acknowledged,error_code FROM task_journal ORDER BY created_at_ms DESC,id DESC LIMIT 30").map_err(|_| AppError::storage())?;
-        let rows=stmt.query_map([],|r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?,r.get::<_,i64>(3)?,r.get::<_,bool>(4)?,r.get::<_,Option<String>>(5)?))).map_err(|_| AppError::storage())?;
-        rows.map(|row|{let(id,state,kind,created_at_ms,acknowledged,error_code)=row.map_err(|_| AppError::storage())?;Ok(TaskRecord{id,state:serde_json::from_str(&state).map_err(|_| AppError::storage())?,kind,created_at_ms,acknowledged,error_code})}).collect()
+        let mut stmt=self.db.prepare("SELECT id,state,kind,created_at_ms,acknowledged,error_code,payload FROM task_journal ORDER BY created_at_ms DESC,id DESC LIMIT 30").map_err(|_| AppError::storage())?;
+        let rows=stmt.query_map([],|r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?,r.get::<_,i64>(3)?,r.get::<_,bool>(4)?,r.get::<_,Option<String>>(5)?,r.get::<_,String>(6)?))).map_err(|_| AppError::storage())?;
+        rows.map(|row|{let(id,state,kind,created_at_ms,acknowledged,error_code,payload)=row.map_err(|_| AppError::storage())?;let value:serde_json::Value=serde_json::from_str(&payload).map_err(|_|AppError::storage())?;let connection=value.get("connection").map(|v|serde_json::from_value(v.clone()).map_err(|_|AppError::storage())).transpose()?;Ok(TaskRecord{id,state:serde_json::from_str(&state).map_err(|_| AppError::storage())?,kind,created_at_ms,acknowledged,error_code,connection})}).collect()
     }
     pub fn acknowledge_unknown(&self, id: &str) -> Result<(), AppError> {
         if !valid_id(id) { return Err(AppError::invalid()); }
@@ -245,5 +283,46 @@ mod tests {
     #[test]
     fn dto_rejects_credentials() {
         assert!(serde_json::from_str::<EditorDraft>(r#"{"prompt":"p","negativePrompt":"","token":"secret"}"#).is_err());
+    }
+}
+
+#[cfg(test)] mod connection_tests {
+    use super::*;
+    use crate::connections::*;
+    #[test] fn metadata_roundtrip_is_bounded_and_retains_default() {
+        let mut s=Store::memory();
+        assert_eq!(s.connections().unwrap(),vec![ConnectionProfile::official()]);
+        let mut profile=ConnectionProfile::official();profile.id="account-b".into();profile.name="账号 B".into();
+        s.save_connection(&profile).unwrap();assert_eq!(s.connection("account-b").unwrap(),profile);
+        s.delete_connection("account-b").unwrap();assert_eq!(s.connections().unwrap().len(),1);
+        assert_eq!(s.delete_connection(DEFAULT_CONNECTION).unwrap_err().code,"default_connection");
+    }
+    #[test] fn v2_migration_preserves_draft_and_unresolved_journal() {
+        let d=tempfile::tempdir().unwrap();let path=d.path().join("existing.sqlite3");
+        let db=Connection::open(&path).unwrap();
+        db.execute_batch(r#"CREATE TABLE editor_draft(id INTEGER PRIMARY KEY,payload TEXT NOT NULL);
+          CREATE TABLE history(id TEXT PRIMARY KEY,created_at_ms INTEGER,prompt TEXT,artifact_id TEXT,request_json TEXT);
+          CREATE TABLE task_journal(id TEXT PRIMARY KEY,state TEXT,payload TEXT,kind TEXT,created_at_ms INTEGER,acknowledged INTEGER,error_code TEXT);
+          INSERT INTO editor_draft VALUES(1,'{"prompt":"old draft","negativePrompt":""}');
+          INSERT INTO task_journal VALUES('old-task','"submitting"','{}','generation',1,0,NULL);
+          PRAGMA user_version=2;"#).unwrap();drop(db);
+        let s=Store::open(&path).unwrap();assert_eq!(s.load_draft().unwrap().prompt,"old draft");
+        assert!(s.has_unresolved().unwrap());assert_eq!(s.connections().unwrap().len(),1);
+    }
+    #[test] fn metadata_rejects_unknown_secret_fields() {
+        let mut v=serde_json::to_value(ConnectionProfile::official()).unwrap();v["token"]=serde_json::json!("test-only");
+        assert!(serde_json::from_value::<ConnectionProfile>(v).is_err());
+    }
+}
+
+#[cfg(test)] mod connection_limit_tests {
+    use super::*;
+    #[test] fn profile_limit_rejects_insert_not_update_and_revision_is_durable() {
+        let mut s=Store::memory();
+        for n in 1..32 {let mut p=crate::connections::ConnectionProfile::official();p.id=format!("account-{n}");s.save_connection(&p).unwrap();}
+        let mut p=crate::connections::ConnectionProfile::official();p.id="account-overflow".into();assert_eq!(s.save_connection(&p).unwrap_err().code,"connection_limit");
+        p.id="account-1".into();p.name="updated".into();s.save_connection(&p).unwrap();
+        assert_eq!(s.connection_revision("account-1").unwrap(),"");
+        s.rotate_connection_revision("account-1","test-revision").unwrap();assert_eq!(s.connection_revision("account-1").unwrap(),"test-revision");
     }
 }

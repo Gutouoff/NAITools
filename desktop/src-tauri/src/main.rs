@@ -19,8 +19,8 @@ async fn service<T:Send+'static>(s:Arc<Runtime>,f:impl FnOnce(&NaiService)->Resu
 #[tauri::command]async fn history_request(state:State<'_,Arc<Runtime>>,id:String)->Result<GenerationInput,AppError>{service(state.inner().clone(),move|n|n.with_store(|s|s.history_request(&id))).await}
 #[tauri::command]async fn generation_submit(state:State<'_,Arc<Runtime>>,input:GenerationInput)->Result<GenerationResult,AppError>{service(state.inner().clone(),move|n|n.generate(input)).await}
 #[tauri::command]async fn credentials_status(state:State<'_,Arc<Runtime>>)->Result<bool,AppError>{service(state.inner().clone(),|_|studio_nai::credentials::status()).await}
-#[tauri::command]async fn credentials_set(state:State<'_,Arc<Runtime>>,token:String)->Result<(),AppError>{service(state.inner().clone(),move|_|studio_nai::credentials::set(token)).await}
-#[tauri::command]async fn credentials_delete(state:State<'_,Arc<Runtime>>)->Result<(),AppError>{service(state.inner().clone(),|_|studio_nai::credentials::delete()).await}
+#[tauri::command]async fn credentials_set(state:State<'_,Arc<Runtime>>,token:String)->Result<(),AppError>{service(state.inner().clone(),move|n|n.set_connection_token(studio_core::connections::DEFAULT_CONNECTION,token)).await}
+#[tauri::command]async fn credentials_delete(state:State<'_,Arc<Runtime>>)->Result<(),AppError>{service(state.inner().clone(),|n|n.delete_connection_token(studio_core::connections::DEFAULT_CONNECTION)).await}
 #[tauri::command]async fn image_import(state:State<'_,Arc<Runtime>>,base64:String)->Result<ImageAsset,AppError>{service(state.inner().clone(),move|n|n.import_image(&base64)).await}
 #[tauri::command]async fn vibe_encode(state:State<'_,Arc<Runtime>>,input:EncodeInput)->Result<VibeAsset,AppError>{service(state.inner().clone(),move|n|n.encode(input)).await}
 #[tauri::command]async fn artifact_read(state:State<'_,Arc<Runtime>>,id:String,thumbnail:bool)->Result<String,AppError>{service(state.inner().clone(),move|n|n.artifact(&id,thumbnail)).await}
@@ -34,6 +34,11 @@ async fn service<T:Send+'static>(s:Arc<Runtime>,f:impl FnOnce(&NaiService)->Resu
 }
 #[tauri::command]async fn task_list(state:State<'_,Arc<Runtime>>)->Result<Vec<TaskRecord>,AppError>{service(state.inner().clone(),|n|n.with_store(|s|s.task_list())).await}
 #[tauri::command]async fn task_acknowledge(state:State<'_,Arc<Runtime>>,id:String)->Result<(),AppError>{service(state.inner().clone(),move|n|n.with_store(|s|s.acknowledge_unknown(&id))).await}
+#[tauri::command]async fn connections_list(state:State<'_,Arc<Runtime>>,check_credentials:Option<bool>)->Result<Vec<studio_nai::ConnectionStatus>,AppError>{service(state.inner().clone(),move|n|n.connections(check_credentials.unwrap_or(true))).await}
+#[tauri::command]async fn connection_save(state:State<'_,Arc<Runtime>>,profile:studio_core::connections::ConnectionProfile)->Result<(),AppError>{service(state.inner().clone(),move|n|n.save_connection(profile)).await}
+#[tauri::command]async fn connection_delete(state:State<'_,Arc<Runtime>>,id:String)->Result<(),AppError>{service(state.inner().clone(),move|n|n.delete_connection(&id)).await}
+#[tauri::command]async fn connection_token_set(state:State<'_,Arc<Runtime>>,id:String,token:String)->Result<(),AppError>{service(state.inner().clone(),move|n|n.set_connection_token(&id,token)).await}
+#[tauri::command]async fn connection_token_delete(state:State<'_,Arc<Runtime>>,id:String)->Result<(),AppError>{service(state.inner().clone(),move|n|n.delete_connection_token(&id)).await}
 fn setup_runtime(app: &mut tauri::App, started: Instant) -> Result<(), Box<dyn std::error::Error>> {
     // Browser cache is disposable. Durable tasks, images and credentials retain
     // their existing per-user locations even when the executable is moved.
@@ -60,7 +65,7 @@ fn main(){let started=Instant::now();let result=tauri::Builder::default().setup(
     }
     Ok(())
 })
-.invoke_handler(tauri::generate_handler![desktop_bootstrap,desktop_mark_ready,draft_load,draft_save,history_list,history_request,generation_submit,credentials_status,credentials_set,credentials_delete,image_import,vibe_encode,artifact_read,artifact_export,task_list,task_acknowledge])
+.invoke_handler(tauri::generate_handler![desktop_bootstrap,desktop_mark_ready,draft_load,draft_save,history_list,history_request,generation_submit,credentials_status,credentials_set,credentials_delete,image_import,vibe_encode,artifact_read,artifact_export,task_list,task_acknowledge,connections_list,connection_save,connection_delete,connection_token_set,connection_token_delete])
 .run(tauri::generate_context!());
     if let Err(error) = result {
         startup::report_failure(&error.to_string());

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-connection-token-delete"
+description = "Enables the connection_token_delete command without any pre-configured scope."
+commands.allow = ["connection_token_delete"]
+
+[[permission]]
+identifier = "deny-connection-token-delete"
+description = "Denies the connection_token_delete command without any pre-configured scope."
+commands.deny = ["connection_token_delete"]

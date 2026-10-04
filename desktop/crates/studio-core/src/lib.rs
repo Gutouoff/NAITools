@@ -5,3 +5,5 @@ pub mod store;
 pub mod task;
 pub mod generation;
 pub mod prompt;
+
+pub mod connections;
