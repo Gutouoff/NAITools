@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, PointerEvent } from "react";
 import { readWidths, fitWidths } from "./workbench-layout";
-import ConnectionPicker from "./ConnectionPicker";
 import DrawingPresets from "./DrawingPresets";
 import ImageDropZone from "./ImageDropZone";
 import ResultViewer from "./ResultViewer";
-import { SIZE_PRESETS, localParameterError, applyDrawingPreset } from "./generation-tools";
+import { SIZE_PRESETS, localParameterError, applyDrawingPreset, applyArtistString, clearPromptDraft, readPromptRetention, rememberPromptRetention } from "./generation-tools";
 import ResizableTextArea from "./ResizableTextArea";
 import type { DesktopApi } from "../platform/desktop-api";
 import type { GenerationInput, GenerationResult, ImageAsset, VibeAsset, ConnectionStatus } from "../platform/types";
@@ -28,20 +27,22 @@ function Confirm({ value, onCancel, onAccept }: {
     value: Confirmation;
     onCancel: () => void;
     onAccept: () => void;
-}) { const ref = useRef<HTMLDialogElement>(null); useEffect(() => { ref.current?.showModal(); }, []); return <dialog ref={ref} onCancel={onCancel} className="confirm-dialog"><h2>{value.title}</h2><p>{value.description}</p><p className="hint">请求可能产生服务费用；发生超时或未知结果不会自动重发。</p><div className="actions"><button autoFocus onClick={onCancel}>取消</button><button className="primary" onClick={onAccept}>确认并提交一次</button></div></dialog>; }
+}) { const ref = useRef<HTMLDialogElement>(null); useEffect(() => { ref.current?.showModal(); }, []); return <dialog ref={ref} onCancel={onCancel} className="confirm-dialog"><h2>{value.title}</h2><p>{value.description}</p><p className="hint">请求可能产生服务费用；发生超时或未知结果不会自动重新提交。</p><div className="actions"><button autoFocus onClick={onCancel}>取消</button><button className="primary" onClick={onAccept}>确认并提交一次</button></div></dialog>; }
 async function fileBase64(file: File) { if (file.size > 16 * 1024 * 1024)
     throw new Error("图片不得超过 16 MB。"); return new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onerror = () => reject(new Error("文件读取失败。")); reader.onload = () => resolve(String(reader.result).split(",")[1]); reader.readAsDataURL(file); }); }
-export default function Workbench({ api, native, input, setInput, replaySignal, connectionSignal, onConnections, onTasks }: {
+export default function Workbench({ api, native, input, setInput, replaySignal, connectionSignal, onOpenSettings, onTasks }: {
     api: DesktopApi;
     native: boolean;
     input: GenerationInput;
     setInput: (i: GenerationInput) => void;
     replaySignal: number;
     connectionSignal: number;
-    onConnections: () => void;
+    onOpenSettings: () => void;
     onTasks: () => void;
 }) {
     const [busy, setBusy] = useState(false), [message, setMessage] = useState(""), [error, setError] = useState(""), [image, setImage] = useState<ImageAsset>(), [rows, setRows] = useState<Row[]>([]), [result, setResult] = useState<GenerationResult>(), [confirmation, setConfirmation] = useState<Confirmation>();
+    const [retention, setRetention] = useState(readPromptRetention);
+    useEffect(() => { rememberPromptRetention(retention); }, [retention]);
     const lock = useRef(false);
     const workbenchRef = useRef<HTMLDivElement>(null);
     const [available, setAvailable] = useState(1000);
@@ -127,8 +128,6 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
                 updateRows(next);
         });
     }
-    function selectConnection(id: string) { if (id === (input.connectionId ?? "default-novelai"))
-        return; patch({ connectionId: id, vibes: [] }); setRows([]); setMessage("已切换生成连接，氛围参考已移除。后续请求使用所选账号。"); }
     async function resultAsSource() { if (!result)
         return; await run(async () => { const a = await api.importImage(await api.readArtifact(result.artifactId)); setImage(a); patch({ imageId: a.id, mode: "i2i" }); setMessage("已将生成结果导入为图生图底图，尚未发送新请求。"); }); }
     function ready(r: Row) { return !!r.encoding && r.encoding.model === input.model && (r.information === -1 || r.encoding.informationExtracted === r.information); }
@@ -146,7 +145,7 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
             if (issue)
                 throw new Error(issue);
             if (rows.some(r => !ready(r))) {
-                setError("有氛围参考尚未编码或已过期。请显式编码，或移除该参考；不会静默忽略。");
+                setError("有氛围参考尚未编码或已过期。请先进行信息提取，或移除该参考。参考状态有效前无法提交生成请求。");
                 return;
             }
             if (input.mode === "i2i" && !input.imageId) {
@@ -160,7 +159,7 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
             const tasks = await api.listTasks();
             if (tasks.some(t => !t.acknowledged && ["submitting", "running", "outcome_unknown"].includes(t.state))) {
                 onTasks();
-                throw new Error("存在未核对的付费任务；请先打开连接与任务，核对官网后再操作。");
+                throw new Error("存在未核对的付费任务；请在设置中核对所选服务的任务结果及费用。");
             }
             if (!connections.some(c => c.profile.id === (input.connectionId ?? "default-novelai")))
                 throw new Error("连接配置未读取或已删除，不能提交收费请求。");
@@ -187,14 +186,14 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
             setPanel(kind, current.startValue + (e.clientX - current.startX) * (kind === "editor" ? 1 : -1)); }} onPointerUp={() => { drag.current = null; }} onPointerCancel={() => { drag.current = null; }} onLostPointerCapture={() => { drag.current = null; }} onDoubleClick={() => setRatios(readWidths(null))} onKeyDown={e => { if (e.key !== "ArrowLeft" && e.key !== "ArrowRight")
             return; e.preventDefault(); setPanel(kind, value + (e.key === "ArrowRight" ? 1 : -1) * (kind === "editor" ? 1 : -1) * (e.shiftKey ? 40 : 10)); }}/>;
     }
-    return <><ConnectionPicker api={api} native={native} rows={connections} id={input.connectionId ?? "default-novelai"} disabled={disabled} error={connectionError} onSelect={selectConnection} onChanged={onConnections}/><div className="workbench" ref={workbenchRef} style={workbenchStyle}>
+    return <><section className="connection-toolbar" aria-label="API 连接状态"><span>API 配置：</span><strong>{selected?.name ?? "未选择"}</strong><button type="button" disabled={disabled} onClick={onOpenSettings}>API 设置</button>{connectionError && <p className="connection-error" role="alert">API 配置：{connectionError}</p>}</section><div className="workbench" ref={workbenchRef} style={workbenchStyle}>
     <div className="editor-column">
-      <DrawingPresets api={api} native={native} input={input} disabled={disabled} onApply={p => { setRows([]); setInput(applyDrawingPreset(input, p)); setMessage("已应用生图预设；连接与底图保持不变。"); }}/>
+      <DrawingPresets api={api} native={native} input={input} disabled={disabled} retention={retention} onRetention={setRetention} onArtist={p => { setInput(applyArtistString(input, p)); setMessage("已应用画师串；其余提示词与图像生成参数保持不变。"); }} onApply={p => { setRows([]); setInput(applyDrawingPreset(input, p, retention)); setMessage("已应用绘图配置；连接与底图保持不变。"); }}/>
       <PromptEditor doc={doc} disabled={disabled} onChange={d => patch({ draft: { ...input.draft, promptDocument: d, prompt: compilePrompt(d) } })}/>
       <section className="panel negative-panel">
         <label htmlFor="negative">负向提示词</label>
         <ResizableTextArea initialHeight={82} minHeight={60} id="negative" className="negative" value={input.draft.negativePrompt} disabled={disabled} onChange={e => patch({ draft: { ...input.draft, negativePrompt: e.target.value } })} spellCheck={false} placeholder="输入需要排除的标签"/>
-        <div className="actions"><button disabled={!native || disabled} onClick={() => void load()}>读取草稿</button><button className="tonal" disabled={!native || disabled} onClick={() => void save()}>保存草稿</button></div>
+        <div className="actions"><button disabled={disabled} onClick={() => { if (window.confirm("清空当前提示词？画师串与负向提示词按保留选项处理；采样参数、API 配置及参考图保持不变。")) setInput(clearPromptDraft(input, retention)); }}>清空提示词</button><button disabled={!native || disabled} onClick={() => void load()}>读取草稿</button><button className="tonal" disabled={!native || disabled} onClick={() => void save()}>保存草稿</button></div>
       </section>
     </div>
     {separator("editor", "调整提示词与预览宽度")}
@@ -230,7 +229,7 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
         <details className="limits"><summary>当前版本限制</summary><p className="hint">单张生成；尺寸为 64 的倍数，总像素不超过 1,048,576；最多 28 步。暂不支持多角色独立提示词。这些是应用限制，不代表服务全部规则。</p></details>
       </section>
       <details className="panel reference-panel" open>
-        <summary>图生图（i2i）</summary><div className="reference-body">
+        <summary>图生图</summary><div className="reference-body">
           <label className="toggle"><input type="checkbox" checked={input.mode === "i2i"} disabled={disabled} onChange={e => patch({ mode: e.target.checked ? "i2i" : "txt2img" })}/>启用图生图</label>
           <p className="hint">底图按目标比例中心裁剪后缩放。</p>
           <ImageDropZone label="导入底图" disabled={!native || disabled} onFiles={files => void importSources(files, false)}/>
@@ -245,7 +244,7 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
           {rows.map((r, index) => <article className="vibe-row" key={r.key}>
             <div className="vibe-heading">{r.image && <img src={r.image.previewUrl} alt={`氛围参考 ${index + 1}`}/>}<div><strong>参考 {index + 1}</strong><small>{ready(r) ? "编码可用" : "需要编码"}</small></div><button aria-label={`移除参考 ${index + 1}`} disabled={disabled} onClick={() => updateRows(rows.filter(v => v.key !== r.key))}>移除</button></div>
             <div className="field-grid">{r.image && <label>信息提取量<input type="number" min="0" max="1" step="0.05" disabled={disabled} value={r.information} onChange={e => updateRows(rows.map(v => v.key === r.key ? { ...v, information: Number(e.target.value), encoding: undefined } : v))}/></label>}<label>参考强度<input type="number" min="0" max="1" step="0.05" disabled={disabled} value={r.strength} onChange={e => updateRows(rows.map(v => v.key === r.key ? { ...v, strength: Number(e.target.value) } : v))}/></label></div>
-            {r.image && <div className="actions"><button disabled={disabled || !native} onClick={() => void run(() => encode(r, false))}>查找缓存</button><button className="tonal" disabled={disabled || !native} onClick={() => setConfirmation({ title: "确认氛围编码", description: `连接：${selected?.name ?? "未知"} · 参考 ${index + 1} · 信息提取量 ${r.information}。未命中缓存时提交一次编码。${encodingCost()} 编码成功后即使出图失败也可能收费。`, run: () => encode(r, true) })}>编码 / 复用</button></div>}
+            {r.image && <div className="actions"><button disabled={disabled || !native} onClick={() => void run(() => encode(r, false))}>查找缓存</button><button className="tonal" disabled={disabled || !native} onClick={() => setConfirmation({ title: "确认氛围编码", description: `连接：${selected?.name ?? "未知"} · 参考 ${index + 1} · 信息提取量 ${r.information}。未命中缓存时提交一次编码。${encodingCost()} 编码成功后即使图像生成失败也可能收费。`, run: () => encode(r, true) })}>编码 / 复用</button></div>}
           </article>)}
           <p className="hint">最多 4 张，参考强度总和 ≤ 1；不自动归一化。</p>
         </div>

@@ -58,8 +58,15 @@ try{
   // Validation occurs before credentials or transport initialization. Must reject.
   const input=JSON.parse(readFileSync(new URL("../contracts/generation-v1.fixture.json",import.meta.url),"utf8")).input;
   input.confirmPaid=false;
+  input.draft.promptDocument={mode:"raw",raw:"native smoke body",stylePrompt:"artist:synthetic",blocks:[]};
+  input.draft.prompt="artist:synthetic,\nnative smoke body";
   const refusal=await page.evaluate(async input=>{try{await window.__TAURI_INTERNALS__.invoke("generation_submit",{input});return null;}catch(e){return {code:e.code,message:e.message};}},input);
   assert.equal(refusal.code,"confirmation_required");
+  assert.equal(await page.getByRole("button",{name:"设置",exact:true}).count(),1);
+  assert.equal(await page.getByRole("button",{name:"连接与任务",exact:true}).count(),0);
+  await page.getByLabel("画师串",{exact:true}).fill("artist:synthetic");
+  assert.equal(await page.getByText("图生图（i2i）",{exact:true}).count(),0);
+  assert.equal(await page.locator(".connection-toolbar select").count(),0);
   if(process.env.NATIVE_SMOKE_STORAGE==="1"){
     // Read only the new app's history shape, never record prompt/image contents.
     const historyShape=await page.evaluate(async()=>{

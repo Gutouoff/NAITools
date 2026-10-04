@@ -21,15 +21,16 @@ label{display:block;font-size:12px;color:#4f655a;line-height:1.5}input:not([type
 .textarea-resize-handle:after{content:"";width:26px;height:2px;border-radius:2px;background:var(--outline)}
 .textarea-resize-handle:hover:after,.textarea-resize-handle:focus-visible:after{background:var(--primary)}
 
-/* Current configuration stays visible above the drawing columns. */
+/* Only API status stays on the workbench; account management belongs in Settings. */
 .connection-toolbar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:7px 9px;margin-bottom:6px;background:var(--surface);border:1px solid #dce5df;border-radius:var(--radius);flex-shrink:0}
 .connection-toolbar>label{font-weight:600;white-space:nowrap}.connection-toolbar>select{width:auto;min-width:160px;max-width:340px;flex:1;margin:0;height:30px}
 .toolbar-actions{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap}.toolbar-actions button{padding:5px 8px}.connection-error{flex-basis:100%;margin:0;color:var(--danger);font-size:11px;overflow-wrap:anywhere}
-.connection-dialog{width:min(680px,94vw);max-height:90dvh;overflow:auto;border:1px solid var(--outline);border-radius:12px;background:var(--surface);color:inherit;padding:12px}.connection-dialog::backdrop{background:#21373270}
-.dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.connection-dialog .connections-panel{border:0;padding:0}.connection-dialog .connection-list{max-height:120px;margin:8px 0}.connection-actions{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0}.connections-panel strong .chip{margin-left:7px}
+.connection-actions{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0}.connections-panel strong .chip{margin-left:7px}
 .drawing-presets{flex-shrink:0;padding:0}.drawing-presets>summary{padding:8px 10px;cursor:pointer;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:space-between}.preset-body{padding:0 10px 10px}.preset-body label{margin-top:7px}
 .seed-mode>span{display:block;font-size:12px;color:#4f655a;margin-bottom:3px}.pixel-count{margin:0}.parameters .field-grid{align-items:start}.presets button:last-child{flex:0 0 30px}
 .image-drop-zone{display:flex;gap:5px;align-items:center;flex-wrap:wrap;padding:7px;margin:6px 0;border:1px dashed var(--outline);border-radius:6px;background:#f5f9f7}.image-drop-zone.drag-over,.image-drop-zone:focus-visible{border-color:var(--primary);background:var(--accent);outline:1px solid var(--primary)}.image-drop-zone input[type=file]{width:100%;max-width:100%;font-size:11px}.image-drop-zone .hint{flex:1;min-width:80px}.image-drop-zone[aria-disabled=true]{opacity:.65}
 .result-tools{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:6px;font-size:11px}.viewer-zoom{display:flex;align-items:center;gap:4px}.viewer-zoom button{padding:4px 7px}.seed-result{color:var(--muted);margin-left:auto}.result-tools .actions{margin:0}.image-stage.zoomed{cursor:grab;touch-action:none}.image-stage.zoomed:active{cursor:grabbing}.image-stage img{user-select:none}
 @media(max-width:1100px){.connection-toolbar>select{max-width:280px}.workbench{gap:6px}.prompt-editor{min-height:0}.connection-toolbar .toolbar-actions{margin-left:0}}
 @media(max-width:760px){.connection-toolbar>select{max-width:100%;min-width:120px}.connection-toolbar .chip{display:none}.workbench{flex:none}.toolbar-actions{width:100%}}
+
+.retention-options{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.preset-body fieldset{min-width:0;border:0;padding:0;margin:0}.retention-options .toggle{margin:4px 0}.connection-toolbar>strong{flex:1;overflow-wrap:anywhere}.connections-panel select{max-width:100%}

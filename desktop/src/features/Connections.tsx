@@ -3,13 +3,12 @@ import type { DesktopApi } from "../platform/desktop-api";
 import type { ConnectionProfile, ConnectionStatus } from "../platform/types";
 import { normalizeError } from "../platform/types";
 const official: ConnectionProfile = { id: "default-novelai", name: "NovelAI 默认账号", kind: "official", baseUrl: "https://image.novelai.net", generationPath: "/ai/generate-image", encodePath: "/ai/encode-vibe", generationUsd: null, encodingUsd: null };
-export default function Connections({ api, native, onChanged, selectedId, onSelect, initialAction = "edit", onBusy }: {
+export default function Connections({ api, native, onChanged, selectedId, onSelect, onBusy }: {
     api: DesktopApi;
     native: boolean;
     onChanged: () => void;
     selectedId?: string;
     onSelect?: (id: string) => void;
-    initialAction?: "edit" | "create" | "duplicate";
     onBusy?: (busy: boolean) => void;
 }) {
     const [rows, setRows] = useState<ConnectionStatus[]>([]);
@@ -25,14 +24,11 @@ export default function Connections({ api, native, onChanged, selectedId, onSele
                     return;
                 setRows(values);
                 const current = values.find(r => r.profile.id === selectedId)?.profile;
-                if (initialAction === "create")
-                    add("relay_native");
-                else if (current)
-                    choose(initialAction === "duplicate" ? { ...current, id: crypto.randomUUID(), name: current.name + " 副本" } : current);
+                if (current) choose(current);
             }, e => { if (live)
                 setError(normalizeError(e).message); });
         return () => { live = false; };
-    }, [api, native, initialAction, selectedId]);
+    }, [api, native, selectedId]);
     async function refresh() { setRows(await api.listConnections()); onChanged(); }
     async function run(f: () => Promise<void>) {
         if (lock.current)
@@ -60,8 +56,9 @@ export default function Connections({ api, native, onChanged, selectedId, onSele
     const saved = rows.find(r => r.profile.id === profile.id);
     const unchanged = !!saved && JSON.stringify(saved.profile) === JSON.stringify(profile);
     return <section className="panel connections-panel">
-    <div className="panel-heading"><h2>连接配置</h2><span className="chip">{rows.length} 套</span></div>
-    <p className="hint">每套配置对应一个账号或 API Key，可保存多个 NAI 账号和中转站。选择一套后点“使用此配置”切换；复制配置不复制密钥。密钥仅存入 Windows 凭据管理器。</p>
+    <div className="panel-heading"><h2>API 配置</h2><span className="chip">{rows.length} 套</span></div>
+    <p className="hint">每套配置对应一个账号或 API Key，可保存多个 NAI 账号和中转站。选择配置后，通过“使用此配置”切换当前 API；复制配置不复制密钥。密钥仅存入 Windows 凭据管理器。</p>
+    <label>当前 API 配置<select aria-label="当前 API 配置" value={selectedId ?? ""} disabled={!native || busy || !rows.length} onChange={e => { if (!unchanged && !window.confirm("当前 API 配置存在未保存的修改。放弃修改并切换配置？")) return; onSelect?.(e.target.value); }}>{!rows.some(r => r.profile.id === selectedId) && <option value={selectedId ?? ""}>配置不可用</option>}{rows.map(r => <option key={r.profile.id} value={r.profile.id}>{r.profile.name}</option>)}</select></label>
     <div className="connection-list">{rows.map(r => <button type="button" key={r.profile.id} disabled={busy} className={r.profile.id === profile.id ? "selected" : ""} onClick={() => choose(r.profile)}><strong>{r.profile.name}{r.profile.id === selectedId && <span className="chip">当前使用</span>}</strong><small>{r.profile.kind === "official" ? "NovelAI 官方" : "原生兼容中转"} · {r.hasToken === true ? "凭据已保存" : r.hasToken === false ? "缺少凭据" : "凭据状态不可读"}</small></button>)}</div>
     <div className="connection-actions"><button type="button" className="tonal" disabled={!native || busy || !unchanged || !onSelect} title={saved && !unchanged ? "请先保存配置更改" : undefined} onClick={() => onSelect?.(profile.id)}>使用此配置</button><button type="button" disabled={!native || busy || !saved} onClick={() => choose({ ...profile, id: crypto.randomUUID(), name: profile.name + " 副本" })}>复制配置</button></div>
     <div className="actions"><button type="button" disabled={!native || busy} onClick={() => add("official")}>添加 NAI 账号</button><button type="button" disabled={!native || busy} onClick={() => add("relay_native")}>添加中转站</button></div>
@@ -70,17 +67,17 @@ export default function Connections({ api, native, onChanged, selectedId, onSele
       <label>接口协议<select value={profile.kind} disabled={profile.id === "default-novelai"} onChange={e => { const kind = e.target.value as ConnectionProfile["kind"]; choose(kind === "official" ? { ...official, id: profile.id, name: profile.name } : { ...profile, kind, baseUrl: "", generationPath: "", encodePath: null }); }}><option value="official">NovelAI 官方</option><option value="relay_native">NovelAI 原生兼容（JSON → ZIP）</option></select></label>
       <label>服务地址<input value={profile.baseUrl} type="url" required disabled={profile.kind === "official"} placeholder="https://example.com" onChange={e => edit({ baseUrl: e.target.value.replace(/\/$/, "") })}/></label>
       {profile.kind === "relay_native" && <><p className="notice">仅适用于服务商明确支持的 NovelAI 原生格式：Bearer 认证、JSON 请求、ZIP 图片响应。请按文档填写路径；不自动猜测 /v1、OpenAI Images 或 Chat 格式。</p>
-      <label>生图接口路径<input value={profile.generationPath} required placeholder="填写服务商文档中的路径" onChange={e => edit({ generationPath: e.target.value })}/></label>
+      <label>图像生成接口路径<input value={profile.generationPath} required placeholder="填写服务商文档中的路径" onChange={e => edit({ generationPath: e.target.value })}/></label>
       <label>氛围编码接口路径（可选）<input value={profile.encodePath ?? ""} placeholder="未提供则禁用远程编码" onChange={e => edit({ encodePath: e.target.value || null })}/></label>
       <div className="field-grid"><label>单图预计费用（美元）<input type="number" min="0" max="100" step="0.001" value={profile.generationUsd ?? ""} placeholder="未核实" onChange={e => edit({ generationUsd: e.target.value === "" ? null : Number(e.target.value) })}/></label><label>首次氛围编码费用（美元）<input type="number" min="0" max="100" step="0.001" value={profile.encodingUsd ?? ""} placeholder="未核实" onChange={e => edit({ encodingUsd: e.target.value === "" ? null : Number(e.target.value) })}/></label></div>
-      <p className="hint">费用是手动设置的预估值，不代表实时余额或服务商最终扣费。新图和提取参数变化可能重新收费，编码成功后出图失败也可能产生编码费用。</p></>}
+      <p className="hint">费用是手动设置的预估值，不代表实时余额或服务商最终扣费。新图和提取参数变化可能重新收费，编码成功后图像生成失败也可能产生编码费用。</p></>}
       <div className="actions"><button type="button" disabled={!saved || profile.id === "default-novelai"} onClick={() => {
             if (!window.confirm("删除此连接及其保存的凭据？历史、草稿和图片不会删除。"))
                 return;
             void run(async () => { await api.deleteConnection(profile.id); choose(official); await refresh(); setMessage("连接已删除；历史与图片保留。"); });
         }}>删除配置</button><button className="primary">保存配置</button></div></fieldset>
     </form>
-    <form onSubmit={e => { e.preventDefault(); const secret = token; setToken(""); void run(async () => { await api.setConnectionToken(profile.id, secret); await refresh(); setMessage("凭据已保存；输入框已清空。"); }); }}><fieldset disabled={!native || busy || !saved}><label htmlFor="token">API Key / Persistent API Token</label><input id="token" type="password" autoComplete="off" spellCheck={false} value={token} onChange={e => setToken(e.target.value)} placeholder="只输入密钥，不加 Bearer"/><div className="actions"><button type="button" disabled={!saved?.hasToken} onClick={() => {
+    <form onSubmit={e => { e.preventDefault(); const secret = token; setToken(""); void run(async () => { await api.setConnectionToken(profile.id, secret); await refresh(); setMessage("凭据已保存；输入框已清空。"); }); }}><fieldset disabled={!native || busy || !saved}><label htmlFor="token">API Key / Persistent API Token</label><input id="token" type="password" autoComplete="off" spellCheck={false} value={token} onChange={e => setToken(e.target.value)} placeholder="输入密钥正文，不包含 Bearer 前缀"/><div className="actions"><button type="button" disabled={!saved?.hasToken} onClick={() => {
             if (!window.confirm("只删除此连接保存的凭据？"))
                 return;
             setToken("");

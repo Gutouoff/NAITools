@@ -95,7 +95,7 @@ impl Store {
         let tx = self.db.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate).map_err(|_|AppError::storage())?;
         let count: i64 = tx.query_row("SELECT COUNT(*) FROM drawing_presets", [], |r|r.get(0)).map_err(|_|AppError::storage())?;
         let exists: bool = tx.query_row("SELECT EXISTS(SELECT 1 FROM drawing_presets WHERE id=?1)", [&preset.id], |r|r.get(0)).map_err(|_|AppError::storage())?;
-        if count >= 32 && !exists { return Err(AppError::new("preset_limit", "最多保存 32 套生图预设。")); }
+        if count >= 32 && !exists { return Err(AppError::new("preset_limit", "最多保存 32 套绘图配置。")); }
         tx.execute("INSERT INTO drawing_presets(id,payload) VALUES(?1,?2) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload", params![preset.id, serde_json::to_string(preset).map_err(|_|AppError::invalid())?]).map_err(|_|AppError::storage())?;
         tx.commit().map_err(|_|AppError::storage())
     }
@@ -170,7 +170,7 @@ impl Store {
         let active = [TaskState::Submitting, TaskState::Running, TaskState::OutcomeUnknown].map(|s|serde_json::to_string(&s).unwrap());
         let unresolved: bool = tx.query_row("SELECT EXISTS(SELECT 1 FROM task_journal WHERE state IN (?1,?2,?3) AND acknowledged=0)",params![active[0],active[1],active[2]],|r|r.get(0)).map_err(|_| AppError::storage())?;
         tx.rollback().map_err(|_| AppError::storage())?;
-        if unresolved { return Err(AppError::new("outcome_unresolved", "存在未核对的付费任务；请先查看任务记录并核对官网。")); }
+        if unresolved { return Err(AppError::new("outcome_unresolved", "存在未核对的付费任务；请先查看任务记录并核对所选服务的任务结果及费用。")); }
         Ok(())
     }
     pub fn begin_remote_task(&mut self, id: &str, kind: &str, payload: &str, at: i64) -> Result<(), AppError> {
@@ -180,7 +180,7 @@ impl Store {
         let tx = self.db.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate).map_err(|_| AppError::storage())?;
         let active = [TaskState::Submitting, TaskState::Running, TaskState::OutcomeUnknown].map(|s|serde_json::to_string(&s).unwrap());
         let unresolved: bool = tx.query_row("SELECT EXISTS(SELECT 1 FROM task_journal WHERE state IN (?1,?2,?3) AND acknowledged=0)",params![active[0],active[1],active[2]],|r|r.get(0)).map_err(|_| AppError::storage())?;
-        if unresolved { return Err(AppError::new("outcome_unresolved", "存在未核对的付费任务；请先查看任务记录并核对官网。")); }
+        if unresolved { return Err(AppError::new("outcome_unresolved", "存在未核对的付费任务；请先查看任务记录并核对所选服务的任务结果及费用。")); }
         tx.execute("INSERT INTO task_journal(id,state,payload,kind,created_at_ms) VALUES(?1,?2,?3,?4,?5)",
             params![id, serde_json::to_string(&TaskState::Submitting).unwrap(), payload, kind, at]).map_err(|_| AppError::storage())?;
         tx.commit().map_err(|_| AppError::storage())

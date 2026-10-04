@@ -28,7 +28,7 @@ impl Transport {
         if bytes.is_empty()||bytes.len()>max{return Err(unknown("response_size"));}Ok(bytes)
     }
 }
-pub fn unknown(code:&'static str)->AppError {AppError::new(code,"请求已尝试提交，但结果未确认。请先核对所选服务账户/费用及任务记录；程序不会自动重发。")}
+pub fn unknown(code:&'static str)->AppError {AppError::new(code,"请求已尝试提交，但结果未确认。请先核对所选服务账户/费用及任务记录；程序不会自动重新提交。")}
 
 fn client_builder()->reqwest::blocking::ClientBuilder {
     Client::builder().http1_only().redirect(Policy::none()).retry(reqwest::retry::never()).connect_timeout(Duration::from_secs(10)).timeout(Duration::from_secs(180))

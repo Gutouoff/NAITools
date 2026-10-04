@@ -50,7 +50,7 @@ pub fn import(root:&Path, base64:&str)->Result<ImageAsset,AppError>{
     Ok(ImageAsset{id,width:image.width(),height:image.height(),preview_url:thumbnail(&bytes)?})
 }
 pub fn output_from_zip(bytes:&[u8],width:u32,height:u32)->Result<Vec<u8>,AppError>{
-    let bad=||AppError::new("response_invalid","服务返回图像未通过验证；付费结果待核对，不会自动重发。");
+    let bad=||AppError::new("response_invalid","服务返回图像未通过验证；付费结果待核对，不会自动重新提交。");
     let mut zip=zip::ZipArchive::new(Cursor::new(bytes)).map_err(|_|bad())?;
     if zip.len()>16{return Err(bad());}let mut result=None;
     for i in 0..zip.len(){let mut f=zip.by_index(i).map_err(|_|bad())?;let name=f.name().to_owned();
