@@ -52,7 +52,11 @@ try {
   await page.getByLabel("负向提示词",{exact:true}).fill("local negative draft");
   assert.equal(await page.getByRole("button", { name: "保存草稿" }).isEnabled(), false);
   assert.equal(await page.getByRole("button", { name: "生成图像（仅桌面端）" }).isEnabled(), false);
+  assert.equal(await page.getByRole("radio", {name:"文生图",exact:true}).isChecked(), true);
+  assert.equal(await page.getByLabel("导入图生图底图", {exact:true}).count(), 0);
+  await page.getByRole("radio", {name:"图生图",exact:true}).check();
   assert.equal(await page.getByLabel("导入图生图底图", {exact:true}).isEnabled(), false);
+  assert.equal(await page.getByLabel("导入图生图底图", {exact:true}).isVisible(), false);
   assert.equal(await page.getByLabel("添加氛围参考", {exact:true}).isEnabled(), false);
   await page.getByRole("button", {name:"分层编辑",exact:true}).click();
   await resizePrompt("画师串", "调整画师串高度");
@@ -117,7 +121,7 @@ try {
       window.__SMOKE_CALLS__.push(command);
       if(command === "desktop_bootstrap" || command === "desktop_mark_ready")return boot;
       if(command === "connections_list")return window.__SMOKE_PROFILES__.map(profile => ({profile, hasToken: window.__SMOKE_CASE__ === "credentials-failed" ? null : true}));
-      if(command === "connection_save"){window.__SMOKE_PROFILES__ = [...window.__SMOKE_PROFILES__.filter(p=>p.id!==args.profile.id), args.profile]; return;}
+      if(command === "connection_save"){if(window.__SMOKE_CONFIG_FAIL__)throw {code:"storage_access_denied",message:"测试：当前进程无权读写本地数据。",retryable:false};window.__SMOKE_PROFILES__ = [...window.__SMOKE_PROFILES__.filter(p=>p.id!==args.profile.id), args.profile]; return;}
       if(command === "connection_token_set"){
         if(window.__SMOKE_TOKEN_FAIL__) throw {code:"credentials_unavailable",message:"测试：凭据保存失败。",retryable:false};
         return;
@@ -129,7 +133,7 @@ try {
       if(command === "drawing_presets_list") return window.__SMOKE_PRESETS__??[];
       if(command === "drawing_preset_save"){window.__SMOKE_PRESETS__=[...(window.__SMOKE_PRESETS__??[]).filter(p=>p.id!==args.preset.id),args.preset];return;}
       if(command === "drawing_preset_delete"){window.__SMOKE_PRESETS__=(window.__SMOKE_PRESETS__??[]).filter(p=>p.id!==args.id);return;}
-      if(command === "image_import"){window.__SMOKE_IMAGE_NUMBER__=(window.__SMOKE_IMAGE_NUMBER__??0)+1;return {id:"input-"+window.__SMOKE_IMAGE_NUMBER__,width:256,height:256,previewUrl:"data:image/png;base64,"+args.base64};}
+      if(command === "image_import"){if(window.__SMOKE_IMAGE_FAIL__)throw {code:"storage_access_denied",message:"测试：当前进程无权读写本地数据。",retryable:false};window.__SMOKE_IMAGE_NUMBER__=(window.__SMOKE_IMAGE_NUMBER__??0)+1;return {id:"input-"+window.__SMOKE_IMAGE_NUMBER__,width:256,height:256,previewUrl:"data:image/png;base64,"+args.base64};}
       if(command === "history_list"){
         window.__SMOKE_HISTORY_QUERIES__ = [...(window.__SMOKE_HISTORY_QUERIES__ ?? []), args.query];
         if(args.query.before && window.__SMOKE_HISTORY_FAIL__) throw {code:"storage_unavailable",message:"测试：下一页读取失败。",retryable:false};
@@ -260,6 +264,14 @@ try {
   assert.equal(await editor.getByLabel("配置名称",{exact:true}).inputValue(),"Synthetic relay 副本");
   assert.equal(await editor.getByLabel("API Key / Persistent API Token",{exact:true}).inputValue(),"");
   assert.equal(await editor.getByRole("button",{name:"使用此配置",exact:true}).isEnabled(),false);
+  await mocked.evaluate(()=>{window.__SMOKE_CONFIG_FAIL__=true;});
+  await editor.getByRole("button",{name:"保存配置",exact:true}).click();
+  await editor.getByText("本地数据存储不可用",{exact:true}).waitFor();
+  assert.equal(await editor.getByLabel("配置名称",{exact:true}).inputValue(),"Synthetic relay 副本");
+  assert.equal(await editor.getByRole("button",{name:"使用此配置",exact:true}).isEnabled(),false);
+  await mocked.evaluate(()=>{window.__SMOKE_CONFIG_FAIL__=false;});
+  await editor.getByRole("button",{name:"重新读取本地配置",exact:true}).click();
+  assert.equal(await editor.getByLabel("配置名称",{exact:true}).inputValue(),"Synthetic relay 副本");
   await editor.getByRole("button",{name:"保存配置",exact:true}).click();
   await editor.getByText("连接配置已保存。密钥请在下方单独保存。",{exact:true}).waitFor();
   await editor.getByRole("button",{name:"使用此配置",exact:true}).click();
@@ -267,14 +279,47 @@ try {
   assert.equal(await mocked.evaluate(()=>localStorage.getItem("naitools.activeConnection")),await mocked.getByLabel("当前 API 配置",{exact:true}).inputValue());
   await mocked.getByRole("button",{name:"工作台",exact:true}).click();
   const png=await mocked.evaluate(()=>{const canvas=document.createElement("canvas");canvas.width=canvas.height=256;const c=canvas.getContext("2d");c.fillStyle="#d4ebe4";c.fillRect(0,0,256,256);window.__SMOKE_PNG__=canvas.toDataURL("image/png").split(",")[1];return window.__SMOKE_PNG__;});
+  // Modes are mutually exclusive; source controls only belong to image-to-image.
+  assert.equal(await mocked.getByRole("radio", {name:"文生图",exact:true}).isChecked(), true);
+  assert.equal(await mocked.getByLabel("导入图生图底图",{exact:true}).count(), 0);
+  await mocked.getByRole("radio", {name:"图生图",exact:true}).check();
+  assert.equal(await mocked.getByRole("radio", {name:"文生图",exact:true}).isChecked(), false);
+  assert.equal(await mocked.getByLabel("导入图生图底图",{exact:true}).isVisible(), false, "Only the styled file picker is visible");
+  await mocked.getByLabel("导入图生图底图",{exact:true}).setInputFiles({name:"broken.png",mimeType:"image/png",buffer:Buffer.from("invalid")});
+  await mocked.getByRole("alert").filter({hasText:"图像文件无法解码"}).waitFor();
+  assert.equal(await mocked.getByAltText("图生图底图",{exact:true}).count(), 0);
+  await mocked.evaluate(()=>{window.__SMOKE_IMAGE_FAIL__=true;});
+  const importCountBefore = await mocked.evaluate(()=>window.__SMOKE_CALLS__.filter(c=>c==="image_import").length);
   await mocked.getByLabel("导入图生图底图",{exact:true}).setInputFiles({name:"synthetic-source.png",mimeType:"image/png",buffer:Buffer.from(png,"base64")});
+  await mocked.getByRole("alert").filter({hasText:"底图未保存："}).waitFor();
+  await mocked.waitForFunction(()=>document.querySelector(".source-thumb")?.naturalWidth === 256);
+  await mocked.locator(".source-selection").getByText("256 × 256 · 未保存",{exact:true}).waitFor();
+  assert.equal(await mocked.evaluate(()=>window.__SMOKE_CALLS__.filter(c=>c==="image_import").length),importCountBefore+1);
+  await mocked.getByRole("button",{name:"生成图像",exact:true}).click();
+  await mocked.getByRole("alert").filter({hasText:"请先导入图生图底图。"}).waitFor();
+  assert.equal(await mocked.getByRole("dialog").count(),0, "Unsaved sources cannot generate");
+  await mocked.evaluate(()=>{window.__SMOKE_IMAGE_FAIL__=false;});
+  await mocked.getByRole("button",{name:"重新导入底图",exact:true}).click();
+  await mocked.locator(".source-selection").getByText("256 × 256 · 已保存",{exact:true}).waitFor();
+  await mocked.getByRole("radio",{name:"文生图",exact:true}).check();
+  assert.equal(await mocked.getByAltText("图生图底图",{exact:true}).count(),0);
+  await mocked.getByRole("radio",{name:"图生图",exact:true}).check();
   await mocked.getByAltText("图生图底图",{exact:true}).waitFor();
-  assert.equal(await mocked.getByLabel("启用图生图",{exact:true}).isChecked(),true);
+  // Storage-denied references still show a decodable thumbnail but cannot encode.
+  await mocked.evaluate(()=>{window.__SMOKE_IMAGE_FAIL__=true;});
   await mocked.getByRole("group",{name:"添加参考图拖放与粘贴区",exact:true}).evaluate((zone,base64)=>{const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));const dt=new DataTransfer();dt.items.add(new File([bytes],"synthetic-vibe.png",{type:"image/png"}));zone.dispatchEvent(new DragEvent("drop",{bubbles:true,cancelable:true,dataTransfer:dt}));},png);
-  await mocked.getByAltText("氛围参考 1",{exact:true}).waitFor();
+  await mocked.getByRole("alert").filter({hasText:"参考图未保存："}).waitFor();
+  await mocked.waitForFunction(()=>document.querySelector(".vibe-heading img")?.naturalWidth === 256);
+  assert.equal(await mocked.getByRole("button",{name:"查找缓存",exact:true}).isEnabled(),false);
+  assert.equal(await mocked.getByRole("button",{name:"编码 / 复用",exact:true}).isEnabled(),false);
+  await mocked.evaluate(()=>{window.__SMOKE_IMAGE_FAIL__=false;});
+  await mocked.getByRole("button",{name:"重新导入参考 1",exact:true}).click();
+  await mocked.getByText("256 × 256 · 已保存，待提取",{exact:true}).waitFor();
+  assert.equal(await mocked.getByRole("button",{name:"编码 / 复用",exact:true}).isEnabled(),true);
+  if(process.env.IMAGE_IMPORT_SMOKE_SCREENSHOT) await mocked.screenshot({path:process.env.IMAGE_IMPORT_SMOKE_SCREENSHOT,fullPage:true});
   await mocked.getByRole("button",{name:"移除参考 1",exact:true}).click();
   await mocked.getByRole("group",{name:"添加参考图拖放与粘贴区",exact:true}).evaluate((zone,base64)=>{const dt=new DataTransfer();dt.items.add(new File([Uint8Array.from(atob(base64),c=>c.charCodeAt(0))],"synthetic-paste.png",{type:"image/png"}));zone.dispatchEvent(new ClipboardEvent("paste",{bubbles:true,cancelable:true,clipboardData:dt}));},png);
-  await mocked.getByAltText("氛围参考 1",{exact:true}).waitFor();
+  await mocked.getByText("256 × 256 · 已保存，待提取",{exact:true}).waitFor();
   await mocked.getByRole("button",{name:"移除参考 1",exact:true}).click();
   await mocked.evaluate(()=>{window.__SMOKE_ALLOW_RESULT__=true;});
   await mocked.getByRole("button",{name:"生成图像",exact:true}).click();
@@ -411,7 +456,7 @@ try {
   await deniedLayout.getByLabel("正向提示词", {exact:true}).fill("layout preferences are optional");
   await deniedLayout.close();
   assert.deepEqual(external, []); assert.deepEqual(errors, []);
-  console.log("PASS: pointer/keyboard column and raw/layered/negative textarea resize, optional layout storage, 1440/1101/900px layouts, multi-profile switching/duplicate editor, drawing presets, resolution/seed controls, source import, atmosphere drop/paste and result viewer with synthetic IPC; reference import, category isolation, reload persistence, deletion, invalid images and storage failures under production CSP; history pagination, failed thumbnails/export and actual/absent metadata with synthetic IPC; no external HTTP requests or page errors.");
+  console.log("PASS: pointer/keyboard column and raw/layered/negative textarea resize, optional layout storage, 1440/1101/900px layouts, multi-profile switching/duplicate editor, drawing presets, resolution/seed controls, mutually exclusive generation modes, decoded local previews, failed imports and explicit retries, atmosphere drop/paste and result viewer with synthetic IPC; reference import, category isolation, reload persistence, deletion, invalid images and storage failures under production CSP; history pagination, failed thumbnails/export and actual/absent metadata with synthetic IPC; no external HTTP requests or page errors.");
 } catch(error) {
   for(const p of context.pages()) console.error("SMOKE failure state:",await p.evaluate(()=>({alerts:Array.from(document.querySelectorAll('[role="alert"]')).map(n=>n.textContent),calls:window.__SMOKE_CALLS__,presets:window.__SMOKE_PRESETS__})).catch(()=>null));
   throw error;

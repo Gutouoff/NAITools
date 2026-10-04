@@ -1,19 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties, PointerEvent } from "react";
+import type { CSSProperties, PointerEvent, Dispatch, SetStateAction } from "react";
 import { readWidths, fitWidths } from "./workbench-layout";
 import DrawingPresets from "./DrawingPresets";
 import ImageDropZone from "./ImageDropZone";
+import { prepareImage, fileBase64, type SelectedImage } from "./image-import";
 import ResultViewer from "./ResultViewer";
 import { SIZE_PRESETS, localParameterError, applyDrawingPreset, applyArtistString, clearPromptDraft, readPromptRetention, rememberPromptRetention } from "./generation-tools";
 import ResizableTextArea from "./ResizableTextArea";
 import type { DesktopApi } from "../platform/desktop-api";
-import type { GenerationInput, GenerationResult, ImageAsset, VibeAsset, ConnectionStatus } from "../platform/types";
+import type { GenerationInput, GenerationResult, VibeAsset, ConnectionStatus } from "../platform/types";
 import { normalizeError } from "../platform/types";
 import PromptEditor from "./PromptEditor";
 import { compilePrompt, newPromptDocument } from "./prompt";
 interface Row {
     key: string;
-    image?: ImageAsset;
+    image?: SelectedImage;
     encoding?: VibeAsset;
     information: number;
     strength: number;
@@ -28,19 +29,17 @@ function Confirm({ value, onCancel, onAccept }: {
     onCancel: () => void;
     onAccept: () => void;
 }) { const ref = useRef<HTMLDialogElement>(null); useEffect(() => { ref.current?.showModal(); }, []); return <dialog ref={ref} onCancel={onCancel} className="confirm-dialog"><h2>{value.title}</h2><p>{value.description}</p><p className="hint">请求可能产生服务费用；发生超时或未知结果不会自动重新提交。</p><div className="actions"><button autoFocus onClick={onCancel}>取消</button><button className="primary" onClick={onAccept}>确认并提交一次</button></div></dialog>; }
-async function fileBase64(file: File) { if (file.size > 16 * 1024 * 1024)
-    throw new Error("图片不得超过 16 MB。"); return new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onerror = () => reject(new Error("文件读取失败。")); reader.onload = () => resolve(String(reader.result).split(",")[1]); reader.readAsDataURL(file); }); }
 export default function Workbench({ api, native, input, setInput, replaySignal, connectionSignal, onOpenSettings, onTasks }: {
     api: DesktopApi;
     native: boolean;
     input: GenerationInput;
-    setInput: (i: GenerationInput) => void;
+    setInput: Dispatch<SetStateAction<GenerationInput>>;
     replaySignal: number;
     connectionSignal: number;
     onOpenSettings: () => void;
     onTasks: () => void;
 }) {
-    const [busy, setBusy] = useState(false), [message, setMessage] = useState(""), [error, setError] = useState(""), [image, setImage] = useState<ImageAsset>(), [rows, setRows] = useState<Row[]>([]), [result, setResult] = useState<GenerationResult>(), [confirmation, setConfirmation] = useState<Confirmation>();
+    const [busy, setBusy] = useState(false), [message, setMessage] = useState(""), [error, setError] = useState(""), [image, setImage] = useState<SelectedImage>(), [rows, setRows] = useState<Row[]>([]), [result, setResult] = useState<GenerationResult>(), [confirmation, setConfirmation] = useState<Confirmation>();
     const [retention, setRetention] = useState(readPromptRetention);
     useEffect(() => { rememberPromptRetention(retention); }, [retention]);
     const lock = useRef(false);
@@ -93,7 +92,7 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
     }
     useEffect(() => { setRows(input.vibes.map((v, index) => ({ key: `replay-${replaySignal}-${index}`, encoding: { id: v.encodingId, model: input.model, informationExtracted: -1, cacheHit: true }, information: -1, strength: v.strength }))); setImage(undefined); }, [replaySignal]);
     const doc = input.draft.promptDocument ?? newPromptDocument(input.draft.prompt);
-    function patch(p: Partial<GenerationInput>) { setInput({ ...input, ...p }); }
+    function patch(p: Partial<GenerationInput>) { setInput(current => ({ ...current, ...p })); }
     function updateRows(next: Row[]) { setRows(next); patch({ vibes: next.filter(r => r.encoding).map(r => ({ encodingId: r.encoding!.id, strength: r.strength })) }); }
     async function run(operation: () => Promise<void>) { if (lock.current)
         return; lock.current = true; setBusy(true); setError(""); setMessage(""); try {
@@ -108,31 +107,78 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
     } }
     async function load() { await run(async () => { const draft = await api.loadDraft(); patch({ draft }); setMessage("已读取提示词草稿。"); }); }
     async function save() { await run(async () => { await api.saveDraft(input.draft); setMessage("已保存提示词草稿。"); }); }
+    async function persistImage(selectedImage: SelectedImage): Promise<SelectedImage> {
+        if (!selectedImage.file) throw new Error("原始图像文件不可用，请重新选择。");
+        const asset = await api.importImage(await fileBase64(selectedImage.file));
+        return { ...selectedImage, file: undefined, asset, error: undefined };
+    }
     async function importSources(files: File[], vibe: boolean) {
         await run(async () => {
-            if (vibe && rows.length + files.length > 4)
-                throw new Error("最多导入 4 张氛围参考；此次没有导入。");
-            const next = [...rows];
-            for (const file of files) {
-                const a = await api.importImage(await fileBase64(file));
-                if (vibe) {
-                    if (!next.some(r => r.image?.id === a.id))
-                        next.push({ key: a.id, image: a, information: 0.8, strength: 0.5 });
+            if (vibe && rows.length + files.length > 4) throw new Error("最多导入 4 张氛围参考；此次未导入。");
+            // Validate the complete selection before changing rows or writing any originals.
+            const prepared: SelectedImage[] = [];
+            for (const file of files) prepared.push(await prepareImage(file));
+            if (!vibe) {
+                const source = prepared[0];
+                if (!source) return;
+                setImage(source);
+                patch({ imageId: null, mode: "i2i" });
+                try {
+                    const saved = await persistImage(source);
+                    setImage(saved);
+                    patch({ imageId: saved.asset!.id, mode: "i2i" });
+                } catch (e) {
+                    setImage({ ...source, error: normalizeError(e).message });
+                    throw e;
                 }
-                else {
-                    setImage(a);
-                    patch({ imageId: a.id, mode: "i2i" });
+            } else {
+                const added = prepared.map(image => ({ key: crypto.randomUUID(), image, information: 0.8, strength: 0.5 } satisfies Row));
+                let next: Row[] = [...rows, ...added];
+                updateRows(next);
+                for (const row of added) {
+                    try {
+                        const saved = await persistImage(row.image);
+                        next = next.map(r => r.key === row.key ? { ...r, image: saved } : r);
+                        updateRows(next);
+                    } catch (e) {
+                        next = next.map(r => r.key === row.key ? { ...r, image: { ...row.image, error: normalizeError(e).message } } : r);
+                        updateRows(next);
+                        // Stop after the first failure. Remaining selections stay explicitly unsaved.
+                        throw e;
+                    }
                 }
             }
-            if (vibe)
-                updateRows(next);
         });
     }
-    async function resultAsSource() { if (!result)
-        return; await run(async () => { const a = await api.importImage(await api.readArtifact(result.artifactId)); setImage(a); patch({ imageId: a.id, mode: "i2i" }); setMessage("已将生成结果导入为图生图底图，尚未发送新请求。"); }); }
+    async function retrySource() {
+        if (!image?.file) return;
+        await run(async () => {
+            try {
+                const saved = await persistImage(image);
+                setImage(saved);
+                patch({ imageId: saved.asset!.id });
+            } catch (e) { setImage({ ...image, error: normalizeError(e).message }); throw e; }
+        });
+    }
+    async function retryReference(row: Row) {
+        if (!row.image?.file) return;
+        await run(async () => {
+            try { const saved = await persistImage(row.image!); updateRows(rows.map(r => r.key === row.key ? { ...r, image: saved } : r)); }
+            catch (e) { updateRows(rows.map(r => r.key === row.key ? { ...r, image: { ...row.image!, error: normalizeError(e).message } } : r)); throw e; }
+        });
+    }
+    async function resultAsSource() {
+        if (!result) return;
+        await run(async () => {
+            const asset = await api.importImage(await api.readArtifact(result.artifactId));
+            setImage({ name: "生成结果", width: asset.width, height: asset.height, previewUrl: asset.previewUrl, asset });
+            patch({ imageId: asset.id, mode: "i2i" });
+            setMessage("已将生成结果导入为图生图底图，尚未发送新请求。");
+        });
+    }
     function ready(r: Row) { return !!r.encoding && r.encoding.model === input.model && (r.information === -1 || r.encoding.informationExtracted === r.information); }
-    async function encode(row: Row, paid: boolean) { let v: VibeAsset; try {
-        v = await api.encodeVibe({ connectionId: input.connectionId, imageId: row.image!.id, model: input.model, informationExtracted: row.information, confirmPaid: paid });
+    async function encode(row: Row, paid: boolean) { if (!row.image?.asset) throw new Error("参考图尚未保存，请先完成导入。"); let v: VibeAsset; try {
+        v = await api.encodeVibe({ connectionId: input.connectionId, imageId: row.image.asset.id, model: input.model, informationExtracted: row.information, confirmPaid: paid });
     }
     catch (e) {
         if (paid)
@@ -211,7 +257,11 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
     {separator("controls", "调整预览与参数宽度")}
     <div className="controls-column" aria-label="生成参数与参考图">
       <section className="panel parameters"><div className="panel-heading"><h2>生成参数</h2></div>
-        <fieldset disabled={disabled}><div className="field-grid">
+        <fieldset disabled={disabled}>
+          <div className="generation-mode" role="group" aria-label="生成模式">
+            <label><input type="radio" name="generation-mode" value="txt2img" checked={input.mode === "txt2img"} onChange={() => patch({ mode: "txt2img" })}/>文生图</label>
+            <label><input type="radio" name="generation-mode" value="i2i" checked={input.mode === "i2i"} onChange={() => patch({ mode: "i2i" })}/>图生图</label>
+          </div><div className="field-grid">
           <label className="wide">模型<select value={input.model} onChange={e => patch({ model: e.target.value })}><option value="nai-diffusion-4-5-full">NAI V4.5 Full</option><option value="nai-diffusion-4-5-curated">NAI V4.5 Curated</option></select></label>
           <label>宽度（px）<input type="number" min="256" max="1536" step="64" value={input.width} onChange={e => patch({ width: Number(e.target.value) })}/></label>
           <label>高度（px）<input type="number" min="256" max="1536" step="64" value={input.height} onChange={e => patch({ height: Number(e.target.value) })}/></label>
@@ -228,23 +278,25 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
         {localParameterError(input) && <p className="error" role="alert">{localParameterError(input)}</p>}
         <details className="limits"><summary>当前版本限制</summary><p className="hint">单张生成；尺寸为 64 的倍数，总像素不超过 1,048,576；最多 28 步。暂不支持多角色独立提示词。这些是应用限制，不代表服务全部规则。</p></details>
       </section>
-      <details className="panel reference-panel" open>
-        <summary>图生图</summary><div className="reference-body">
-          <label className="toggle"><input type="checkbox" checked={input.mode === "i2i"} disabled={disabled} onChange={e => patch({ mode: e.target.checked ? "i2i" : "txt2img" })}/>启用图生图</label>
+      {input.mode === "i2i" && <details className="panel reference-panel" open>
+        <summary>图生图底图</summary><div className="reference-body">
           <p className="hint">底图按目标比例中心裁剪后缩放。</p>
           <ImageDropZone label="导入底图" disabled={!native || disabled} onFiles={files => void importSources(files, false)}/>
-          {image && <img className="source-thumb" src={image.previewUrl} alt="图生图底图"/>}{input.imageId && !image && <p className="hint">已恢复底图引用。</p>}
+          {image && <div className="source-selection"><img className="source-thumb" src={image.previewUrl} alt="图生图底图"/><div><strong title={image.name}>{image.name}</strong><small>{image.width} × {image.height} · {image.asset ? "已保存" : "未保存"}</small></div><div className="actions">{image.file && <button disabled={disabled} onClick={() => void retrySource()}>重新导入底图</button>}<button disabled={disabled} onClick={() => { setImage(undefined); patch({ imageId: null }); }}>移除底图</button></div>{image.error && <p className="error" role="alert">底图未保存：{image.error}</p>}</div>}{input.imageId && !image && <p className="hint">已恢复底图引用。</p>}
           <div className="field-grid"><label title="Strength">重绘强度<input type="number" min="0" max="1" step="0.05" value={input.strength} disabled={disabled} onChange={e => patch({ strength: Number(e.target.value) })}/></label><label title="Noise">噪声强度<input type="number" min="0" max="1" step="0.05" value={input.noise} disabled={disabled} onChange={e => patch({ noise: Number(e.target.value) })}/></label></div>
         </div>
-      </details>
+      </details>}
       <details className="panel reference-panel" open>
         <summary>氛围参考<span className="chip">{rows.length}/4</span></summary><div className="reference-body">
           <p className="hint">Vibe Transfer 编码可能收费；仅在确认后提交，相同素材与参数优先复用缓存。</p>
           <ImageDropZone label="添加参考图" multiple disabled={!native || disabled || rows.length >= 4} onFiles={files => void importSources(files, true)}/>
           {rows.map((r, index) => <article className="vibe-row" key={r.key}>
-            <div className="vibe-heading">{r.image && <img src={r.image.previewUrl} alt={`氛围参考 ${index + 1}`}/>}<div><strong>参考 {index + 1}</strong><small>{ready(r) ? "编码可用" : "需要编码"}</small></div><button aria-label={`移除参考 ${index + 1}`} disabled={disabled} onClick={() => updateRows(rows.filter(v => v.key !== r.key))}>移除</button></div>
+            <div className="vibe-heading">{r.image && <img src={r.image.previewUrl} alt={`氛围参考 ${index + 1}`}/>}<div><strong>参考 {index + 1}</strong><small>{r.image ? `${r.image.width} × ${r.image.height} · ${r.image.asset ? (ready(r) ? "编码可用" : "已保存，待提取") : "未保存"}` : (ready(r) ? "编码可用" : "需要编码")}</small></div><button aria-label={`移除参考 ${index + 1}`} disabled={disabled} onClick={() => updateRows(rows.filter(v => v.key !== r.key))}>移除</button></div>
+            {r.image?.name && <p className="image-file-name" title={r.image.name}>{r.image.name}</p>}
+            {r.image?.error && <p className="error" role="alert">参考图未保存：{r.image.error}</p>}
+            {r.image?.file && <button disabled={disabled} onClick={() => void retryReference(r)}>重新导入参考 {index + 1}</button>}
             <div className="field-grid">{r.image && <label>信息提取量<input type="number" min="0" max="1" step="0.05" disabled={disabled} value={r.information} onChange={e => updateRows(rows.map(v => v.key === r.key ? { ...v, information: Number(e.target.value), encoding: undefined } : v))}/></label>}<label>参考强度<input type="number" min="0" max="1" step="0.05" disabled={disabled} value={r.strength} onChange={e => updateRows(rows.map(v => v.key === r.key ? { ...v, strength: Number(e.target.value) } : v))}/></label></div>
-            {r.image && <div className="actions"><button disabled={disabled || !native} onClick={() => void run(() => encode(r, false))}>查找缓存</button><button className="tonal" disabled={disabled || !native} onClick={() => setConfirmation({ title: "确认氛围编码", description: `连接：${selected?.name ?? "未知"} · 参考 ${index + 1} · 信息提取量 ${r.information}。未命中缓存时提交一次编码。${encodingCost()} 编码成功后即使图像生成失败也可能收费。`, run: () => encode(r, true) })}>编码 / 复用</button></div>}
+            {r.image && <div className="actions"><button disabled={disabled || !native || !r.image.asset} onClick={() => void run(() => encode(r, false))}>查找缓存</button><button className="tonal" disabled={disabled || !native || !r.image.asset} onClick={() => setConfirmation({ title: "确认氛围编码", description: `连接：${selected?.name ?? "未知"} · 参考 ${index + 1} · 信息提取量 ${r.information}。未命中缓存时提交一次编码。${encodingCost()} 编码成功后即使图像生成失败也可能收费。`, run: () => encode(r, true) })}>编码 / 复用</button></div>}
           </article>)}
           <p className="hint">最多 4 张，参考强度总和 ≤ 1；不自动归一化。</p>
         </div>

@@ -15,6 +15,7 @@ export default function Connections({ api, native, onChanged, selectedId, onSele
     const [profile, setProfile] = useState<ConnectionProfile>(official);
     const [token, setToken] = useState("");
     const [busy, setBusy] = useState(false), [error, setError] = useState(""), [message, setMessage] = useState("");
+    const [errorCode, setErrorCode] = useState("");
     const lock = useRef(false);
     useEffect(() => {
         let live = true;
@@ -25,8 +26,9 @@ export default function Connections({ api, native, onChanged, selectedId, onSele
                 setRows(values);
                 const current = values.find(r => r.profile.id === selectedId)?.profile;
                 if (current) choose(current);
-            }, e => { if (live)
-                setError(normalizeError(e).message); });
+            }, e => { if (live) {
+                const failure = normalizeError(e); setError(failure.message); setErrorCode(failure.code);
+            } });
         return () => { live = false; };
     }, [api, native, selectedId]);
     async function refresh() { setRows(await api.listConnections()); onChanged(); }
@@ -37,12 +39,13 @@ export default function Connections({ api, native, onChanged, selectedId, onSele
         setBusy(true);
         onBusy?.(true);
         setError("");
+        setErrorCode("");
         setMessage("");
         try {
             await f();
         }
         catch (e) {
-            setError(normalizeError(e).message);
+            const failure = normalizeError(e); setError(failure.message); setErrorCode(failure.code);
         }
         finally {
             lock.current = false;
@@ -86,5 +89,6 @@ export default function Connections({ api, native, onChanged, selectedId, onSele
             void run(async () => { await api.deleteConnectionToken(profile.id); await refresh(); });
         }}>删除凭据</button><button className="tonal" disabled={!token}>保存凭据</button></div></fieldset></form>
     {message && <p className="success" role="status">{message}</p>}{error && <p className="error" role="alert">{error}</p>}
+    {errorCode.startsWith("storage_") && <div className="storage-help"><strong>本地数据存储不可用</strong><p className="hint">本地配置无法读取或保存，此错误不是服务地址或密钥的有效性校验结果。错误代码：<code>{errorCode}</code>。数据位置：<code>%LOCALAPPDATA%\com.langbai.studio.pc.preview</code>。</p><p className="hint">请使用当前 Windows 账户正常启动程序，检查该目录的写入权限、可用磁盘空间及是否有其他实例占用。请勿删除 studio.sqlite3、WAL 或任务记录，也不要通过更换目录绕过待核对任务。</p><button type="button" disabled={busy || !native} onClick={() => void run(refresh)}>重新读取本地配置</button></div>}
   </section>;
 }

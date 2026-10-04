@@ -23,5 +23,16 @@ test("account management belongs in Settings and user-facing image-to-image text
   assert.ok(settings.includes('付费任务记录'));
   assert.equal(workbench.includes("ConnectionPicker"), false);
   assert.equal(workbench.includes("图生图（i2i）"), false);
-  assert.ok(workbench.includes('<summary>图生图</summary>'));
+  assert.ok(workbench.includes('<summary>图生图底图</summary>'));
+  assert.doesNotMatch(workbench, /启用图生图/);
+  assert.match(workbench, /role="group" aria-label="生成模式"/);
+  assert.equal((workbench.match(/type="radio" name="generation-mode"/g) ?? []).length, 2);
+});
+
+test("image inputs have a single visible picker and storage failures show actionable guidance", () => {
+  assert.match(read("src/features/ImageDropZone.tsx"), /<input hidden ref=/);
+  const connection = read("src/features/Connections.tsx");
+  assert.match(connection, /errorCode.startsWith\("storage_"\)/);
+  assert.match(connection, /重新读取本地配置/);
+  assert.match(connection, /请勿删除 studio.sqlite3/);
 });
