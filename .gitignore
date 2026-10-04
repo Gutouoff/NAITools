@@ -1,6 +1,7 @@
 # Only the PC rewrite is published. Legacy files stay local and in Git history.
 /*
 !/.gitignore
+!/.gitattributes
 !/LICENSE
 !/README.md
 !/CONTRIBUTING.md

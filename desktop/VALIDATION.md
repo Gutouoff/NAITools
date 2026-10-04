@@ -10,7 +10,7 @@
 | 前端测试 | `npm test`：19/19 通过；包括提示词原文/分层一致性、重复与权重保留、浏览器隔离、IPC 映射、权限/CSP、错误脱敏与不重试 |
 | Rust 测试 | `cargo test --workspace --locked --offline`：27/27 通过（宿主启动 3、core 13、IPC 集成 1、NAI 10）；包括不同 SQLite 连接同时提交的互斥检查 |
 | 前端生产构建 | `npm run build`：TypeScript 类型检查 + Vite 生产构建通过 |
-| 原生宿主检查 | `cargo check -p langbai-studio-pc --locked --offline` 成功；Tauri 宿主和权限生成能编译 |
+| 原生宿主检查 | `cargo check -p naitools --locked --offline` 成功；Tauri 宿主和权限生成能编译 |
 | Windows release 构建 | 首次、SQLite 修复与本轮 WebView2 启动修复后的构建均成功；`custom-protocol` 嵌入生产页面，不依赖开发服务器 |
 | 生产页面浏览器 smoke | Chrome 独立 context；提示词编辑/分层预览/原文保持、按需页面切换、浏览器禁用 Token/生图/上传、1440/900px 无横向溢出，全部通过 |
 | 浏览器网络与脚本 | 上述 smoke 中外部 HTTP 请求 0，页面脚本错误 0；未使用个人 Chrome profile |
@@ -21,7 +21,7 @@ Rust HTTP 测试使用本机 TCP mock server，不是 NovelAI 服务。验证单
 
 ## 实际产物
 
-- Windows EXE：`target/release/langbai-studio-pc.exe`，14,361,600 bytes（约 13.70 MiB）。
+- Windows EXE：`target/release/naitools.exe`，14,361,600 bytes（约 13.70 MiB）。
 - 便捷启动：本目录的 `启动PC新版.cmd`；不调用旧版入口，不需要先开 Vite/Node 服务。
 - 主 JS：213,522 bytes（构建报告 gzip 68.46 kB）；CSS：9,473 bytes。
 - 历史、设置、诊断页面分别拆包，按需加载。
@@ -41,7 +41,7 @@ EXE 大小、前端大小和诊断页面的计时均不能直接当作总内存�
 
 - 最新 release EXE，没有 `WEBVIEW2_USER_DATA_FOLDER` 或额外浏览器参数，没有调试端口。
 - 工作目录刻意设为项目根，而非 EXE 目录；浏览器缓存仍跟随 EXE 目录。
-- 运行 10 秒后主窗口仍存活、响应正常，标题 `Langbai Studio · PC Preview`；stderr 为空。
+- 运行 10 秒后主窗口仍存活、响应正常，标题 `NAITools`；stderr 为空。
 - 这是本机进程启动验证，不是资源管理器双击验收，也不是“启动耗时 10 秒”的测量。ShellExecute 测试出现系统“打开文件 - 安全警告”，已取消本次测试弹窗；后续通过重定向输出的直接进程启动验收，未取消系统安全设置。
 
 ### 同一生产缓存下的原生界面 / IPC：已通过

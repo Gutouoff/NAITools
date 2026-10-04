@@ -1,4 +1,4 @@
-# 岚白 Studio · PC Preview
+# NAITools · PC Preview
 
 独立 Windows PC 重构目录：Rust + Tauri 2 + React/TypeScript。旧版入口、账号与图像目录不迁移、不扫描、不覆盖。
 
@@ -30,12 +30,12 @@
 ```powershell
 npm run build
 & .\scripts\windows-cargo.ps1 -CargoArgs @('test','-p','studio-core','-p','studio-nai','--locked','--offline')
-& .\scripts\windows-cargo.ps1 -CargoArgs @('build','-p','langbai-studio-pc','--release','--features','custom-protocol','--locked','--offline')
+& .\scripts\windows-cargo.ps1 -CargoArgs @('build','-p','naitools','--release','--features','custom-protocol','--locked','--offline')
 ```
 
 辅助脚本只在本进程加载 VS2022 x64 环境，将临时目录放在 `target/build-tmp`，不改全局 PATH。参数使用数组，避免 PowerShell 的 `-p` 通用参数歧义。开发模式用 `npm run desktop:dev`，需要对应的编译环境；生产模式使用 `custom-protocol` 内嵌构建后的界面，不依赖 Vite 服务。
 
-本轮已重新编译 release EXE：`target/release/langbai-studio-pc.exe`（14,361,600 bytes，约 13.70 MiB；不是运行内存）。可双击本目录 `启动PC新版.cmd`，或直接打开 EXE，不需要运行终端命令、Vite 或 Node 服务。当前未制作安装包、签名或自动更新，运行依赖本机已安装的 WebView2。
+本轮已重新编译 release EXE：`target/release/naitools.exe`（14,361,600 bytes，约 13.70 MiB；不是运行内存）。可双击本目录 `启动PC新版.cmd`，或直接打开 EXE，不需要运行终端命令、Vite 或 Node 服务。当前未制作安装包、签名或自动更新，运行依赖本机已安装的 WebView2。
 
 白屏闪退修复：由宿主显式创建窗口，将可丢弃的 WebView2 缓存放在 **EXE 同目录 `.webview2-cache`**，不再使用原先启动失败的浏览器缓存位置。普通 EXE 无环境覆盖、无调试端口启动后，窗口持续运行 10 秒且响应正常；使用同一生产缓存的原生界面 / IPC smoke 通过。这是稳定性检查，不是启动耗时测量。
 

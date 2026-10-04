@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Langbai Studio PC Preview",
+  "productName": "NAITools",
   "version": "0.1.0",
   "identifier": "com.langbai.studio.pc.preview",
   "build": {
@@ -14,11 +14,11 @@
     "windows": [
       {
         "label": "main",
-        "title": "Langbai Studio · PC Preview",
-        "width": 1240,
-        "height": 840,
-        "minWidth": 800,
-        "minHeight": 600,
+        "title": "NAITools",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 900,
+        "minHeight": 640,
         "create": false
       }
     ],

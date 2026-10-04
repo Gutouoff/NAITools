@@ -1,6 +1,6 @@
 @echo off
 setlocal
-set "APP=%~dp0target\release\langbai-studio-pc.exe"
+set "APP=%~dp0target\release\naitools.exe"
 if not exist "%APP%" (
   echo PC Preview EXE not found. See README.md for build instructions.
   pause

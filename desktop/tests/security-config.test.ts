@@ -74,3 +74,12 @@ test("host owns window creation and separates disposable WebView cache from dura
   assert.match(startup, /startup-error\.log/);
   assert.doesNotMatch(startup, /credentials::|generation_submit|disable-web-security|--no-sandbox/);
 });
+
+test("branding changes preserve durable data and credential identity", () => {
+  assert.equal(config.productName, "NAITools");
+  assert.equal(config.app.windows[0].title, "NAITools");
+  assert.equal(config.identifier, "com.langbai.studio.pc.preview");
+  assert.match(read("crates/studio-nai/src/credentials.rs"), /SERVICE:&str="com\.langbai\.studio\.pc\.preview"/);
+  assert.match(read("src-tauri/Cargo.toml"), /name = "naitools"/);
+  assert.match(read("启动PC新版.cmd"), /naitools\.exe/);
+});
