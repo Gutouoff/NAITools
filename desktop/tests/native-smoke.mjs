@@ -14,12 +14,12 @@ try{
   let page;
   while(!page){page=context.pages().find(p=>p.url().includes("tauri.localhost")||p.url().startsWith("tauri://"));if(Date.now()>deadline)throw new Error("Native app page missing");if(!page)await new Promise(r=>setTimeout(r,250));}
   const errors=[];page.on("pageerror",e=>errors.push(e.message));
-  await page.getByText("Rust + Tauri",{exact:true}).waitFor();
+  await page.getByRole("heading",{name:"图像生成",exact:true}).waitFor();
   const boot=await page.evaluate(()=>window.__TAURI_INTERNALS__.invoke("desktop_bootstrap"));
   assert.equal(boot.runtime,"tauri");assert.equal(boot.schemaVersion,2);assert.equal(boot.naiContract.verification,"observed_subset");
   if(process.env.NATIVE_WORKBENCH_SCREENSHOT)await page.screenshot({path:process.env.NATIVE_WORKBENCH_SCREENSHOT,fullPage:true});
   await page.getByLabel("正向提示词").fill("local native UI smoke only");
-  assert.equal(await page.getByRole("button",{name:"生成一张图片",exact:true}).isEnabled(),true);
+  assert.equal(await page.getByRole("button",{name:"生成图像",exact:true}).isEnabled(),true);
   // Validation occurs before credentials or transport initialization. Must reject.
   const input=JSON.parse(readFileSync(new URL("../contracts/generation-v1.fixture.json",import.meta.url),"utf8")).input;
   input.confirmPaid=false;
@@ -37,8 +37,9 @@ try{
     });
     assert.equal(historyShape.itemsArray,true,`Native storage smoke failed: ${historyShape.errorCode||"invalid_history_shape"}`);
   }
-  await page.getByRole("button",{name:/框架状态/}).click();
-  await page.getByRole("heading",{name:"可核验的框架状态"}).waitFor();
+  await page.getByRole("button",{name:"关于",exact:true}).click();
+  await page.getByRole("heading",{name:"NAITools"}).waitFor();
+  await page.getByText("运行诊断",{exact:true}).click();
   assert.equal(await page.getByText("tauri",{exact:true}).count(),1);
   if(process.env.NATIVE_SMOKE_SCREENSHOT)await page.screenshot({path:process.env.NATIVE_SMOKE_SCREENSHOT});
   // Catch delayed white-screen/exit regressions, not just first render.
