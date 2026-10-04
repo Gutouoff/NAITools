@@ -30,6 +30,11 @@ try{
     catch(e){return {errorCode:e.code};}
   });
   assert.ok(presetRead.shape || presetRead.errorCode === "storage_unavailable", "Preset listing IPC must have native permission");
+  const invalidMetadata = await page.evaluate(async()=> {
+    try {await window.__TAURI_INTERNALS__.invoke("artifact_metadata",{id:"../../invalid"});return null;}
+    catch(e){return e.code;}
+  });
+  assert.ok(["invalid_input","storage_unavailable"].includes(invalidMetadata), "Metadata IPC must be permitted, without accepting unsafe artifact paths");
   const invalidPreset = await page.evaluate(async()=> {
     const preset={id:"validation-only",name:"",draft:{prompt:"local-only",negativePrompt:"",promptDocument:null},model:"nai-diffusion-4-5-full",width:512,height:512,steps:1,guidance:5,sampler:"k_euler",seed:null,strength:0.7,noise:0};
     try {await window.__TAURI_INTERNALS__.invoke("drawing_preset_save",{preset});return null;}
@@ -88,5 +93,5 @@ try{
   await page.waitForTimeout(5000);
   assert.equal((await page.evaluate(()=>window.__TAURI_INTERNALS__.invoke("desktop_bootstrap"))).runtime,"tauri");
   assert.deepEqual(errors,[]);
-  console.log("PASS: release WebView2 render, IPC 2 native handshake, local prompt/resize editing, connection/preset ACL and validation and unconfirmed-generation rejection. No credential reads or paid submissions; not a performance benchmark.");
+  console.log("PASS: release WebView2 render, IPC 2 native handshake, local prompt/resize editing, connection/preset/metadata ACL and validation and unconfirmed-generation rejection. No credential reads or paid submissions; not a performance benchmark.");
 }finally{await browser.close();}

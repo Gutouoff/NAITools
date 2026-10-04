@@ -117,3 +117,14 @@ SQLite、付费任务 journal、图像仍保留在原 AppData 数据身份；Tok
 ## 协议证据
 
 公开 Swagger、官网公开客户端观察、用户文档的来源 / 获取日期 / 哈希 / 已知缺口见 `contracts/novelai-evidence.json` 及 `contracts/README.md`。没有改写接口字段或臆造新规则。fixture 是应用自编期望请求，不是官方付费示例；当前只实现已观察的 V4.5 单图子集，不宣称完整官方 API 或最新模型覆盖。
+
+
+## 2026-10-04 历史与参考预设增量回归
+
+- `npm --prefix desktop test`：44 / 44 通过；`npm --prefix desktop run build`：TypeScript 与生产构建通过。
+- Windows Rust workspace：52 / 52 通过（host 3、core 26、IPC 1、NAI 22），使用锁定依赖及离线缓存。
+- 生产 CSP 下的隔离浏览器回归通过：未保存配置凭据输入、保存失败保留输入和重试；真实 IndexedDB 导入 / 重载 / 分类 / 删除确认；非法图像及存储不可用错误。
+- 历史使用合成 IPC 数据验证游标分页、重复标识去重、失败下一页保留数据与重试、缩略图单项失败、导出失败、预览实际解码和存在 / 缺失元数据；没有连接用户账号或数据库。此项不代表原生历史存储验收。
+- PNG 单元测试覆盖 tEXt Latin-1、未压缩 iTXt 中文 / emoji / 语言字段、原始空白 / 空值与非法 / 不支持内容。仅解析文本块；压缩与隐写元数据尚未实现。
+- 本轮收费调用 0 次，费用 $0。参考库目前是 WebView 本地图像归档，不支持工作台应用、.nairp 或已提取氛围文件；缓存清理仍可能丢失预设。
+- 最终 release 重建成功，使用上述最新前端产物和 PNG 解析修复。原生启动 / WebView2 回归调用被执行策略阻止，本次未运行，不能记录为通过；新增 metadata ACL 回归脚本仅通过语法检查。前次默认存储的 `storage_unavailable` 限制尚未解除，真实生图仍未验收。

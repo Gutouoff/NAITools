@@ -118,7 +118,10 @@ try {
       if(command === "desktop_bootstrap" || command === "desktop_mark_ready")return boot;
       if(command === "connections_list")return window.__SMOKE_PROFILES__.map(profile => ({profile, hasToken: window.__SMOKE_CASE__ === "credentials-failed" ? null : true}));
       if(command === "connection_save"){window.__SMOKE_PROFILES__ = [...window.__SMOKE_PROFILES__.filter(p=>p.id!==args.profile.id), args.profile]; return;}
-      if(command === "connection_token_set")return;
+      if(command === "connection_token_set"){
+        if(window.__SMOKE_TOKEN_FAIL__) throw {code:"credentials_unavailable",message:"测试：凭据保存失败。",retryable:false};
+        return;
+      }
       if(command === "credentials_status"){
         if(window.__SMOKE_CASE__ === "credentials-failed")throw {code:"credentials_unavailable",message:"测试：凭据读取失败。",retryable:false};
         return true;
@@ -127,8 +130,25 @@ try {
       if(command === "drawing_preset_save"){window.__SMOKE_PRESETS__=[...(window.__SMOKE_PRESETS__??[]).filter(p=>p.id!==args.preset.id),args.preset];return;}
       if(command === "drawing_preset_delete"){window.__SMOKE_PRESETS__=(window.__SMOKE_PRESETS__??[]).filter(p=>p.id!==args.id);return;}
       if(command === "image_import"){window.__SMOKE_IMAGE_NUMBER__=(window.__SMOKE_IMAGE_NUMBER__??0)+1;return {id:"input-"+window.__SMOKE_IMAGE_NUMBER__,width:256,height:256,previewUrl:"data:image/png;base64,"+args.base64};}
-      if(command === "artifact_read")return window.__SMOKE_PNG__;
-      if(command === "artifact_export")return true;
+      if(command === "history_list"){
+        window.__SMOKE_HISTORY_QUERIES__ = [...(window.__SMOKE_HISTORY_QUERIES__ ?? []), args.query];
+        if(args.query.before && window.__SMOKE_HISTORY_FAIL__) throw {code:"storage_unavailable",message:"测试：下一页读取失败。",retryable:false};
+        const items = [
+          {id:"history-03",createdAtMs:172800000,prompt:"synthetic history newest",artifactId:"history-artifact-03"},
+          {id:"history-02",createdAtMs:86400000,prompt:"synthetic history middle",artifactId:"history-artifact-02"},
+          {id:"history-01",createdAtMs:1,prompt:"synthetic history oldest",artifactId:"history-artifact-01"},
+        ];
+        return args.query.before ? {items:items.slice(1),nextCursor:null} : {items:items.slice(0,2),nextCursor:{createdAtMs:86400000,id:"history-02"}};
+      }
+      if(command === "artifact_read"){
+        if(args.thumbnail && args.id === "history-artifact-02") throw {code:"artifact_missing",message:"测试：缩略图缺失。",retryable:false};
+        return "data:image/png;base64," + window.__SMOKE_PNG__;
+      }
+      if(command === "artifact_metadata") return {width:256,height:256,format:"PNG",entries:args.id === "history-artifact-03" ? [{key:"Comment",value:'{"prompt":"synthetic metadata only","seed":42}'}] : []};
+      if(command === "artifact_export"){
+        if(window.__SMOKE_EXPORT_FAIL__) throw {code:"storage_unavailable",message:"测试：图像导出失败。",retryable:false};
+        return true;
+      }
       if(command === "generation_submit"&&window.__SMOKE_ALLOW_RESULT__){window.__SMOKE_SUBMITTED__=args.input;return {taskId:"mock-task",artifactId:"mock-output",seed:42,imageUrl:"data:image/png;base64,"+window.__SMOKE_PNG__};}
       if(command === "task_list"){
         if(window.__SMOKE_CASE__ === "storage-failed")throw {code:"storage_unavailable",message:"测试：存储不可用。",retryable:false};
@@ -176,6 +196,11 @@ try {
   await mocked.getByRole("button", {name:"保存配置", exact:true}).click();
   await mocked.getByText("连接配置已保存。密钥请在下方单独保存。", {exact:true}).waitFor();
   await mocked.getByLabel("API Key / Persistent API Token", {exact:true}).fill("synthetic-test-only-not-a-real-key");
+  await mocked.evaluate(()=>{window.__SMOKE_TOKEN_FAIL__ = true;});
+  await mocked.getByRole("button", {name:"保存凭据", exact:true}).click();
+  await mocked.getByRole("alert").filter({hasText:"测试：凭据保存失败。"}).waitFor();
+  assert.equal(await mocked.getByLabel("API Key / Persistent API Token", {exact:true}).inputValue(), "synthetic-test-only-not-a-real-key", "Failed credential saves preserve input");
+  await mocked.evaluate(()=>{window.__SMOKE_TOKEN_FAIL__ = false;});
   await mocked.getByRole("button", {name:"保存凭据", exact:true}).click();
   await mocked.getByText("配置与凭据已保存；输入框已清空。", {exact:true}).waitFor();
   assert.equal(await mocked.getByLabel("API Key / Persistent API Token", {exact:true}).inputValue(), "");
@@ -284,6 +309,36 @@ try {
   assert.equal(await mocked.getByRole("button",{name:"使用此配置",exact:true}).isEnabled(),true);
   if(process.env.CONNECTION_SMOKE_SCREENSHOT)await mocked.screenshot({path:process.env.CONNECTION_SMOKE_SCREENSHOT,fullPage:true});
   await mocked.getByRole("button",{name:"工作台",exact:true}).click();
+  await mocked.getByRole("button", {name:"历史记录", exact:true}).click();
+  await mocked.getByText("1 张缩略图读取失败；历史记录仍可浏览。", {exact:true}).waitFor();
+  const records = mocked.locator(".history-card:not(.demo-card)");
+  assert.equal(await records.count(), 2, "A missing thumbnail cannot hide history rows");
+  await mocked.getByText("缩略图不可用", {exact:true}).waitFor();
+  await records.filter({hasText:"synthetic history newest"}).click();
+  await mocked.waitForFunction(() => {
+    const image = document.querySelector(".detail-preview img");
+    return image?.complete && image.naturalWidth === 256;
+  });
+  await mocked.locator(".metadata-list").getByText('{"prompt":"synthetic metadata only","seed":42}', {exact:true}).waitFor();
+  await mocked.evaluate(()=>{window.__SMOKE_EXPORT_FAIL__ = true;});
+  await mocked.getByRole("button", {name:"导出原始 PNG", exact:true}).click();
+  await mocked.getByRole("alert").filter({hasText:"测试：图像导出失败。"}).waitFor();
+  await mocked.evaluate(()=>{window.__SMOKE_HISTORY_FAIL__ = true;});
+  await mocked.getByRole("button", {name:"加载更多", exact:true}).click();
+  await mocked.getByRole("alert").filter({hasText:"测试：下一页读取失败。"}).waitFor();
+  assert.equal(await records.count(), 2, "Failed next pages preserve loaded rows and cursor");
+  await mocked.evaluate(()=>{window.__SMOKE_HISTORY_FAIL__ = false;});
+  await mocked.getByRole("button", {name:"加载更多", exact:true}).click();
+  await mocked.getByText("已加载 3 项", {exact:true}).waitFor();
+  assert.equal(await records.count(), 3, "Appending history pages deduplicates stable IDs");
+  assert.equal(await mocked.getByRole("button", {name:"加载更多", exact:true}).count(), 0);
+  const queries = await mocked.evaluate(()=>window.__SMOKE_HISTORY_QUERIES__);
+  assert.deepEqual(queries, [{limit:60,before:null}, {limit:60,before:{createdAtMs:86400000,id:"history-02"}}, {limit:60,before:{createdAtMs:86400000,id:"history-02"}}]);
+  await records.filter({hasText:"synthetic history oldest"}).click();
+  await mocked.getByText("未读取到 NovelAI 元数据。", {exact:true}).waitFor();
+  assert.equal(await mocked.locator(".metadata-list").count(), 0, "Missing metadata must not retain another image's fields");
+  if(process.env.HISTORY_SMOKE_SCREENSHOT) await mocked.screenshot({path:process.env.HISTORY_SMOKE_SCREENSHOT,fullPage:true});
+  assert.equal(await mocked.evaluate(()=>window.__SMOKE_CALLS__.filter(c=>c==="generation_submit").length), 1);
   await mocked.close();
   // Real IndexedDB in an isolated browser context under the shipped CSP: no user data or API access.
   const library = await context.newPage();
@@ -356,7 +411,7 @@ try {
   await deniedLayout.getByLabel("正向提示词", {exact:true}).fill("layout preferences are optional");
   await deniedLayout.close();
   assert.deepEqual(external, []); assert.deepEqual(errors, []);
-  console.log("PASS: pointer/keyboard column and raw/layered/negative textarea resize, optional layout storage, 1440/1101/900px layouts, multi-profile switching/duplicate editor, drawing presets, resolution/seed controls, source import, atmosphere drop/paste and result viewer with synthetic IPC; reference import, category isolation, reload persistence, deletion, invalid images and storage failures under production CSP; no external HTTP requests or page errors.");
+  console.log("PASS: pointer/keyboard column and raw/layered/negative textarea resize, optional layout storage, 1440/1101/900px layouts, multi-profile switching/duplicate editor, drawing presets, resolution/seed controls, source import, atmosphere drop/paste and result viewer with synthetic IPC; reference import, category isolation, reload persistence, deletion, invalid images and storage failures under production CSP; history pagination, failed thumbnails/export and actual/absent metadata with synthetic IPC; no external HTTP requests or page errors.");
 } catch(error) {
   for(const p of context.pages()) console.error("SMOKE failure state:",await p.evaluate(()=>({alerts:Array.from(document.querySelectorAll('[role="alert"]')).map(n=>n.textContent),calls:window.__SMOKE_CALLS__,presets:window.__SMOKE_PRESETS__})).catch(()=>null));
   throw error;
