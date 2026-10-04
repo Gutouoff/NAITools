@@ -1,0 +1,11 @@
+{
+  "name": "langbai-novelai-studio",
+  "version": "2.4.4",
+  "private": true,
+  "author": "Langbai",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2786886095/novelai-image-desktop.git"
+  }
+}

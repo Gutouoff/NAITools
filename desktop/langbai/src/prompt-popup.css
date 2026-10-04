@@ -1,0 +1,15 @@
+html, body, #root { height: 100%; }
+.prompt-popup { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--bg-panel); color: var(--text-primary); }
+.prompt-popup-header { display: flex; align-items: baseline; gap: 12px; min-height: 42px; padding: 10px 18px; border-bottom: 1px solid var(--border); }
+.prompt-popup-header strong { font-size: 14px; }
+.prompt-popup-header span { font-size: 11px; color: var(--text-secondary); }
+.prompt-popup-controls { display: flex; align-items: center; gap: 14px; padding: 7px 18px; border-bottom: 1px solid var(--border); }
+.prompt-popup-tabs { display: flex; gap: 3px; }
+.prompt-popup-tabs button { padding: 6px 10px; border: 0; background: transparent; border-radius: 4px; color: var(--text-secondary); cursor: pointer; }
+.prompt-popup-tabs button.active { background: var(--bg-subtle); color: var(--text-primary); font-weight: 600; }
+.prompt-popup-loading { padding: 18px; font-size: 12px; color: var(--text-secondary); }
+.prompt-popup-body { flex: 1; min-height: 0; overflow: auto; padding: 12px 18px 28px; }
+.prompt-popup-field { display: flex; flex-direction: column; gap: 8px; font-size: 12px; font-weight: 600; height: min(480px, 75%); }
+.prompt-popup-field textarea { flex: 1; min-height: 120px; width: 100%; resize: vertical; padding: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-input); color: var(--text-primary); font: 13px/1.5 ui-monospace, Consolas, monospace; }
+.prompt-popup-style { height: 130px; margin-top: 14px; }
+@media (max-width: 700px) { .prompt-popup-controls { gap: 6px; padding-inline: 10px; } .prompt-popup-body { padding-inline: 10px; } }

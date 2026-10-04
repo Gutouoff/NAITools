@@ -1,0 +1,3349 @@
+{
+  "schemaVersion": 1,
+  "sourceVersion": "2.4.4",
+  "methodCount": 244,
+  "referencedDirectly": 209,
+  "dependencies": [
+    "@tanstack/react-virtual",
+    "clsx",
+    "date-fns",
+    "react",
+    "react-dom",
+    "react-dom/client",
+    "react-icons/fi",
+    "react-icons/md",
+    "react-markdown",
+    "rehype-sanitize",
+    "remark-gfm",
+    "zustand"
+  ],
+  "dynamicAccess": [
+    {
+      "file": "src\\HarnessPage.tsx",
+      "expression": "window.naiDesktop[`harness${kind}`]"
+    }
+  ],
+  "members": [
+    {
+      "name": "favoritesStatus",
+      "optional": false,
+      "signature": "favoritesStatus: (src:string) => Promise<import('./favorites-types').ImageFavorite|null>;",
+      "uses": [
+        {
+          "file": "src/components/ImageFavoriteButton.tsx",
+          "line": 10
+        },
+        {
+          "file": "src/components/ImageFavoriteButton.tsx",
+          "line": 37
+        }
+      ]
+    },
+    {
+      "name": "favoritesList",
+      "optional": false,
+      "signature": "favoritesList: () => Promise<import('./favorites-types').ImageFavoriteLibrary>;",
+      "uses": [
+        {
+          "file": "src/components/LocalFavorites.tsx",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "name": "favoritesAdd",
+      "optional": false,
+      "signature": "favoritesAdd: (src:string) => Promise<{item:import('./favorites-types').ImageFavorite;duplicate:boolean}>;",
+      "uses": [
+        {
+          "file": "src/components/ImageFavoriteButton.tsx",
+          "line": 38
+        }
+      ]
+    },
+    {
+      "name": "favoritesRename",
+      "optional": false,
+      "signature": "favoritesRename: (id:string,name:string) => Promise<import('./favorites-types').ImageFavorite>;",
+      "uses": [
+        {
+          "file": "src/components/LocalFavorites.tsx",
+          "line": 33
+        }
+      ]
+    },
+    {
+      "name": "favoritesRemove",
+      "optional": false,
+      "signature": "favoritesRemove: (id:string) => Promise<{removed:boolean;filesRetained:boolean}>;",
+      "uses": [
+        {
+          "file": "src/components/ImageFavoriteButton.tsx",
+          "line": 38
+        },
+        {
+          "file": "src/components/LocalFavorites.tsx",
+          "line": 33
+        }
+      ]
+    },
+    {
+      "name": "favoritesChooseDirectory",
+      "optional": false,
+      "signature": "favoritesChooseDirectory: () => Promise<string|null>;",
+      "uses": [
+        {
+          "file": "src/components/LocalFavorites.tsx",
+          "line": 28
+        }
+      ]
+    },
+    {
+      "name": "onFavoritesChanged",
+      "optional": false,
+      "signature": "onFavoritesChanged: (callback:(notice:{message:string})=>void) => ()=>void;",
+      "uses": [
+        {
+          "file": "src/components/ImageFavoriteButton.tsx",
+          "line": 16
+        },
+        {
+          "file": "src/components/LocalFavorites.tsx",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "name": "onStudioAgentRequest",
+      "optional": true,
+      "signature": "onStudioAgentRequest?: (callback:(request:import('./studio-agent-contract').StudioAgentRequest)=>void) => ()=>void;",
+      "uses": [
+        {
+          "file": "src/studio-agent.ts",
+          "line": 227
+        },
+        {
+          "file": "src/studio-agent.ts",
+          "line": 229
+        }
+      ]
+    },
+    {
+      "name": "replyStudioAgent",
+      "optional": false,
+      "signature": "replyStudioAgent: (id:string,reply:import('./studio-agent-contract').StudioAgentReply) => Promise<void>;",
+      "uses": [
+        {
+          "file": "src/studio-agent.ts",
+          "line": 230
+        }
+      ]
+    },
+    {
+      "name": "commitStudioSetting",
+      "optional": false,
+      "signature": "commitStudioSetting: (id:string,key:SettingKey,expected:AppSettings[SettingKey],value:AppSettings[SettingKey]) => Promise<void>;",
+      "uses": []
+    },
+    {
+      "name": "harnessSetAutoPluginUpdates",
+      "optional": false,
+      "signature": "harnessSetAutoPluginUpdates: (enabled:boolean) => Promise<import(\"./harness-types\").HarnessPluginAutoState>;",
+      "uses": [
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 155
+        }
+      ]
+    },
+    {
+      "name": "harnessCheckPluginUpdates",
+      "optional": false,
+      "signature": "harnessCheckPluginUpdates: () => Promise<import(\"./harness-types\").HarnessPluginAutoState>;",
+      "uses": [
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 148
+        }
+      ]
+    },
+    {
+      "name": "harnessSnapshot",
+      "optional": false,
+      "signature": "harnessSnapshot: () => Promise<import(\"./harness-types\").HarnessSnapshot>;",
+      "uses": [
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 35
+        },
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 63
+        },
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 156
+        }
+      ]
+    },
+    {
+      "name": "harnessStart",
+      "optional": false,
+      "signature": "harnessStart: () => Promise<import(\"./harness-types\").HarnessSnapshot>;",
+      "uses": []
+    },
+    {
+      "name": "harnessStop",
+      "optional": false,
+      "signature": "harnessStop: () => Promise<import(\"./harness-types\").HarnessSnapshot>;",
+      "uses": []
+    },
+    {
+      "name": "harnessPlanDownload",
+      "optional": false,
+      "signature": "harnessPlanDownload: (kind: 'component' | 'official', reinstall?: boolean) => Promise<{token:string;version:string;bytes:number;official?:boolean;pluginUpdates?:import(\"./harness-types\").HarnessPluginChoice[];current?:boolean;blocked?:boolean;message?:string}>;",
+      "uses": [
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 61
+        }
+      ]
+    },
+    {
+      "name": "harnessUninstall",
+      "optional": false,
+      "signature": "harnessUninstall: (confirmed: boolean) => Promise<import(\"./harness-types\").HarnessSnapshot>;",
+      "uses": [
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 185
+        }
+      ]
+    },
+    {
+      "name": "harnessPrepareUpdate",
+      "optional": false,
+      "signature": "harnessPrepareUpdate: (kind: 'component' | 'official', token: string, disablePlugins?: string[]) => Promise<import(\"./harness-types\").HarnessUpdateProposal>;",
+      "uses": [
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 81
+        }
+      ]
+    },
+    {
+      "name": "harnessApplyPreparedUpdate",
+      "optional": false,
+      "signature": "harnessApplyPreparedUpdate: (token: string) => Promise<import(\"./harness-types\").HarnessSnapshot>;",
+      "uses": [
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 87
+        }
+      ]
+    },
+    {
+      "name": "harnessCheckUpdates",
+      "optional": false,
+      "signature": "harnessCheckUpdates: () => Promise<import(\"./harness-types\").HarnessSnapshot>;",
+      "uses": [
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 43
+        },
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 101
+        }
+      ]
+    },
+    {
+      "name": "harnessUpdate",
+      "optional": false,
+      "signature": "harnessUpdate: () => Promise<import(\"./harness-types\").HarnessSnapshot>;",
+      "uses": []
+    },
+    {
+      "name": "harnessOpenBackups",
+      "optional": false,
+      "signature": "harnessOpenBackups: () => Promise<void>;",
+      "uses": [
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 194
+        }
+      ]
+    },
+    {
+      "name": "harnessRestoreBackup",
+      "optional": false,
+      "signature": "harnessRestoreBackup: () => Promise<import(\"./harness-types\").HarnessSnapshot>;",
+      "uses": [
+        {
+          "file": "src/HarnessPage.tsx",
+          "line": 195
+        }
+      ]
+    },
+    {
+      "name": "platform",
+      "optional": false,
+      "signature": "platform: NodeJS.Platform;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 56
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6819
+        },
+        {
+          "file": "src/ToolsHub.tsx",
+          "line": 124
+        }
+      ]
+    },
+    {
+      "name": "getResourceDatabaseOverview",
+      "optional": false,
+      "signature": "getResourceDatabaseOverview: () => Promise<ResourceDatabaseOverview>;",
+      "uses": [
+        {
+          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "name": "downloadResourceDatabase",
+      "optional": false,
+      "signature": "downloadResourceDatabase: (id: ResourceDatabaseId, confirmReplace?: boolean) => Promise<ResourceDatabaseDownloadResult>;",
+      "uses": [
+        {
+          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
+          "line": 65
+        }
+      ]
+    },
+    {
+      "name": "pauseResourceDatabaseDownload",
+      "optional": false,
+      "signature": "pauseResourceDatabaseDownload: (id: ResourceDatabaseId) => Promise<{ ok: boolean; message: string }>;",
+      "uses": [
+        {
+          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
+          "line": 131
+        }
+      ]
+    },
+    {
+      "name": "restorePreviousResourceDatabase",
+      "optional": false,
+      "signature": "restorePreviousResourceDatabase: (id: ResourceDatabaseId, confirmed?: boolean) => Promise<ResourceDatabaseDownloadResult>;",
+      "uses": [
+        {
+          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
+          "line": 66
+        }
+      ]
+    },
+    {
+      "name": "openResourceDatabaseDirectory",
+      "optional": false,
+      "signature": "openResourceDatabaseDirectory: () => Promise<{ ok: boolean; message?: string }>;",
+      "uses": [
+        {
+          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
+          "line": 93
+        }
+      ]
+    },
+    {
+      "name": "clearResourceQueryCache",
+      "optional": false,
+      "signature": "clearResourceQueryCache: () => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
+          "line": 78
+        }
+      ]
+    },
+    {
+      "name": "relatedResourceTags",
+      "optional": false,
+      "signature": "relatedResourceTags: (tags: string[], limit?: number) => Promise<TagSuggestion[]>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 1598
+        }
+      ]
+    },
+    {
+      "name": "onResourceDatabaseProgress",
+      "optional": false,
+      "signature": "onResourceDatabaseProgress: (callback: (event: ResourceDatabaseProgressEvent) => void) => () => void;",
+      "uses": [
+        {
+          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
+          "line": 43
+        }
+      ]
+    },
+    {
+      "name": "listPortableRecoveries",
+      "optional": false,
+      "signature": "listPortableRecoveries: () => Promise<DataBackupRecovery[]>;",
+      "uses": [
+        {
+          "file": "src/features/settings/DataBackupSettings.tsx",
+          "line": 245
+        }
+      ]
+    },
+    {
+      "name": "openPortableRecovery",
+      "optional": false,
+      "signature": "openPortableRecovery: (kind: \"agent\" | \"detective\", id: string) => Promise<void>;",
+      "uses": [
+        {
+          "file": "src/features/settings/DataBackupSettings.tsx",
+          "line": 381
+        }
+      ]
+    },
+    {
+      "name": "activatePortableRecovery",
+      "optional": false,
+      "signature": "activatePortableRecovery: (kind: \"agent\" | \"detective\", id: string) => Promise<{preserved: string}>;",
+      "uses": [
+        {
+          "file": "src/features/settings/DataBackupSettings.tsx",
+          "line": 253
+        }
+      ]
+    },
+    {
+      "name": "exportDataBackup",
+      "optional": false,
+      "signature": "exportDataBackup: (request: DataBackupExportRequest) => Promise<DataBackupOperationResult>;",
+      "uses": [
+        {
+          "file": "src/features/settings/DataBackupSettings.tsx",
+          "line": 271
+        },
+        {
+          "file": "src/features/settings/DataBackupSettings.tsx",
+          "line": 421
+        }
+      ]
+    },
+    {
+      "name": "inspectDataBackup",
+      "optional": false,
+      "signature": "inspectDataBackup: () => Promise<DataBackupInspectResult>;",
+      "uses": [
+        {
+          "file": "src/features/settings/DataBackupSettings.tsx",
+          "line": 284
+        }
+      ]
+    },
+    {
+      "name": "importDataBackup",
+      "optional": false,
+      "signature": "importDataBackup: (request: DataBackupImportRequest) => Promise<DataBackupImportResult>;",
+      "uses": [
+        {
+          "file": "src/features/settings/DataBackupSettings.tsx",
+          "line": 300
+        }
+      ]
+    },
+    {
+      "name": "getDataBackupStatus",
+      "optional": false,
+      "signature": "getDataBackupStatus: () => Promise<DataBackupStatus>;",
+      "uses": [
+        {
+          "file": "src/features/settings/DataBackupSettings.tsx",
+          "line": 406
+        }
+      ]
+    },
+    {
+      "name": "runAutomaticBackup",
+      "optional": false,
+      "signature": "runAutomaticBackup: (workspaceData?: Record<string, string>) => Promise<DataBackupOperationResult>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 7414
+        }
+      ]
+    },
+    {
+      "name": "selectBackupDirectory",
+      "optional": false,
+      "signature": "selectBackupDirectory: () => Promise<string | null>;",
+      "uses": [
+        {
+          "file": "src/features/settings/DataBackupSettings.tsx",
+          "line": 411
+        }
+      ]
+    },
+    {
+      "name": "openBackupDirectory",
+      "optional": false,
+      "signature": "openBackupDirectory: () => Promise<{ ok: boolean; message?: string }>;",
+      "uses": [
+        {
+          "file": "src/features/settings/DataBackupSettings.tsx",
+          "line": 451
+        }
+      ]
+    },
+    {
+      "name": "getAgentWorkspace",
+      "optional": false,
+      "signature": "getAgentWorkspace: () => Promise<import(\"./agent/types\").AgentWorkspaceData>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 453
+        },
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 943
+        }
+      ]
+    },
+    {
+      "name": "saveTavernWorkspace",
+      "optional": false,
+      "signature": "saveTavernWorkspace: (workspace: import(\"./agent/types\").AgentWorkspaceData) => Promise<import(\"./agent/types\").AgentWorkspaceMutationResult>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 553
+        }
+      ]
+    },
+    {
+      "name": "createAgentConversation",
+      "optional": false,
+      "signature": "createAgentConversation: (title?: string) => Promise<import(\"./agent/types\").AgentWorkspaceMutationResult>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 591
+        },
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 662
+        }
+      ]
+    },
+    {
+      "name": "selectAgentConversation",
+      "optional": false,
+      "signature": "selectAgentConversation: (conversationId: string) => Promise<import(\"./agent/types\").AgentWorkspaceMutationResult>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 570
+        }
+      ]
+    },
+    {
+      "name": "renameAgentConversation",
+      "optional": false,
+      "signature": "renameAgentConversation: (conversationId: string, title: string) => Promise<import(\"./agent/types\").AgentWorkspaceMutationResult>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 680
+        }
+      ]
+    },
+    {
+      "name": "deleteAgentConversation",
+      "optional": false,
+      "signature": "deleteAgentConversation: (conversationId: string) => Promise<import(\"./agent/types\").AgentWorkspaceMutationResult>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 657
+        }
+      ]
+    },
+    {
+      "name": "importAgentFiles",
+      "optional": false,
+      "signature": "importAgentFiles: (conversationId: string, sourcePaths?: string[]) => Promise<import(\"./agent/types\").AgentImportFilesResult>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 941
+        }
+      ]
+    },
+    {
+      "name": "deleteAgentAttachment",
+      "optional": false,
+      "signature": "deleteAgentAttachment: (conversationId: string, attachmentId: string) => Promise<import(\"./agent/types\").AgentWorkspaceMutationResult>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 1147
+        }
+      ]
+    },
+    {
+      "name": "onImageSaveFeedback",
+      "optional": false,
+      "signature": "onImageSaveFeedback: (callback: (notices: import(\"./image-save-feedback\").ImageSaveNotice[]) => void) => () => void;",
+      "uses": [
+        {
+          "file": "src/components/ImageSaveFeedback.tsx",
+          "line": 51
+        }
+      ]
+    },
+    {
+      "name": "dismissImageSaveFeedback",
+      "optional": false,
+      "signature": "dismissImageSaveFeedback: (id: number) => void;",
+      "uses": [
+        {
+          "file": "src/components/ImageSaveFeedback.tsx",
+          "line": 53
+        }
+      ]
+    },
+    {
+      "name": "exportAgentAttachment",
+      "optional": false,
+      "signature": "exportAgentAttachment: (conversationId: string, messageId: string, attachmentId: string) => Promise<{ ok: boolean; cancelled?: boolean; message: string; filePath?: string }>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 1741
+        },
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 1798
+        }
+      ]
+    },
+    {
+      "name": "sendAgentMessage",
+      "optional": false,
+      "signature": "sendAgentMessage: (request: import(\"./agent/types\").AgentSendRequest) => Promise<{ ok: boolean; message?: string }>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 880
+        },
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 899
+        }
+      ]
+    },
+    {
+      "name": "generateTavernImage",
+      "optional": false,
+      "signature": "generateTavernImage: (request: import(\"./agent/types\").TavernImageRequest) => Promise<{ ok: boolean; message?: string }>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 969
+        }
+      ]
+    },
+    {
+      "name": "importTavernCards",
+      "optional": false,
+      "signature": "importTavernCards: (sourcePaths?: string[]) => Promise<import(\"./agent/types\").TavernCardImportResult>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 613
+        }
+      ]
+    },
+    {
+      "name": "exportTavernCard",
+      "optional": false,
+      "signature": "exportTavernCard: (request: import(\"./agent/types\").TavernCardExportRequest) => Promise<{ ok: boolean; cancelled?: boolean; message: string; filePath?: string }>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 1310
+        }
+      ]
+    },
+    {
+      "name": "importTavernVisualAsset",
+      "optional": false,
+      "signature": "importTavernVisualAsset: (kind: \"avatar\" | \"background\", sourcePath?: string) => Promise<{ ok: boolean; cancelled?: boolean; message?: string; dataUrl?: string; fileName?: string }>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 743
+        }
+      ]
+    },
+    {
+      "name": "abortAgentMessage",
+      "optional": false,
+      "signature": "abortAgentMessage: (conversationId: string) => Promise<{ ok: boolean; message?: string }>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 1233
+        }
+      ]
+    },
+    {
+      "name": "compactAgentConversation",
+      "optional": false,
+      "signature": "compactAgentConversation: (conversationId: string) => Promise<{ ok: boolean; message?: string }>;",
+      "uses": []
+    },
+    {
+      "name": "respondAgentPermission",
+      "optional": false,
+      "signature": "respondAgentPermission: (\r\n    permissionId: string,\r\n    response: \"once\" | \"always\" | \"reject\",\r\n  ) => Promise<{ ok: boolean; message?: string }>;",
+      "uses": []
+    },
+    {
+      "name": "upsertAgentSkill",
+      "optional": false,
+      "signature": "upsertAgentSkill: (skill: Partial<import(\"./agent/types\").AgentSkill> & Pick<import(\"./agent/types\").AgentSkill, \"name\" | \"instructions\">) => Promise<import(\"./agent/types\").AgentWorkspaceMutationResult>;",
+      "uses": []
+    },
+    {
+      "name": "deleteAgentSkill",
+      "optional": false,
+      "signature": "deleteAgentSkill: (skillId: string) => Promise<import(\"./agent/types\").AgentWorkspaceMutationResult>;",
+      "uses": []
+    },
+    {
+      "name": "upsertAgentMemory",
+      "optional": false,
+      "signature": "upsertAgentMemory: (memory: Partial<import(\"./agent/types\").AgentMemory> & Pick<import(\"./agent/types\").AgentMemory, \"title\" | \"content\" | \"scope\">) => Promise<import(\"./agent/types\").AgentWorkspaceMutationResult>;",
+      "uses": []
+    },
+    {
+      "name": "deleteAgentMemory",
+      "optional": false,
+      "signature": "deleteAgentMemory: (memoryId: string) => Promise<import(\"./agent/types\").AgentWorkspaceMutationResult>;",
+      "uses": []
+    },
+    {
+      "name": "getAgentRuntimeStatus",
+      "optional": false,
+      "signature": "getAgentRuntimeStatus: () => Promise<import(\"./agent/types\").AgentRuntimeStatus>;",
+      "uses": []
+    },
+    {
+      "name": "getAgentPendingPermissions",
+      "optional": false,
+      "signature": "getAgentPendingPermissions: () => Promise<import(\"./agent/types\").AgentPermissionRequest[]>;",
+      "uses": []
+    },
+    {
+      "name": "restartAgentRuntime",
+      "optional": false,
+      "signature": "restartAgentRuntime: () => Promise<import(\"./agent/types\").AgentRuntimeStatus>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 993
+        }
+      ]
+    },
+    {
+      "name": "discoverAgentModels",
+      "optional": false,
+      "signature": "discoverAgentModels: (probe: import(\"./agent/types\").AgentProviderProbe) => Promise<import(\"./agent/types\").AgentModelDiscoveryResult>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 1003
+        }
+      ]
+    },
+    {
+      "name": "getAgentWorkspaceLocation",
+      "optional": false,
+      "signature": "getAgentWorkspaceLocation: () => Promise<import(\"./agent/types\").AgentWorkspaceLocation>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 7000
+        }
+      ]
+    },
+    {
+      "name": "openAgentWorkspaceDirectory",
+      "optional": false,
+      "signature": "openAgentWorkspaceDirectory: () => Promise<{ ok: boolean; message?: string }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 7018
+        }
+      ]
+    },
+    {
+      "name": "onAgentEvent",
+      "optional": false,
+      "signature": "onAgentEvent: (callback: (event: import(\"./agent/types\").AgentEvent) => void) => () => void;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 456
+        }
+      ]
+    },
+    {
+      "name": "promptCodexCache",
+      "optional": false,
+      "signature": "promptCodexCache: () => Promise<\r\n    import(\"./prompt-codex\").PromptCodexSnapshot | null\r\n  >;",
+      "uses": [
+        {
+          "file": "src/PromptCodex.tsx",
+          "line": 259
+        }
+      ]
+    },
+    {
+      "name": "promptCodexBundled",
+      "optional": false,
+      "signature": "promptCodexBundled: () => Promise<\r\n    import(\"./prompt-codex\").PromptCodexSnapshot\r\n  >;",
+      "uses": [
+        {
+          "file": "src/PromptCodex.tsx",
+          "line": 260
+        }
+      ]
+    },
+    {
+      "name": "promptCodexUpdate",
+      "optional": false,
+      "signature": "promptCodexUpdate: () => Promise<\r\n    import(\"./prompt-codex\").PromptCodexSnapshot\r\n  >;",
+      "uses": [
+        {
+          "file": "src/PromptCodex.tsx",
+          "line": 306
+        }
+      ]
+    },
+    {
+      "name": "importStylePromptPresetImages",
+      "optional": false,
+      "signature": "importStylePromptPresetImages: (\r\n    presetId: string,\r\n    availableSlots: number,\r\n    dialogTitle?: string,\r\n  ) => Promise<StylePromptPreviewImage[]>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 2412
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1893
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1935
+        },
+        {
+          "file": "src/PositivePromptPresets.tsx",
+          "line": 361
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "name": "importStylePromptPresetImagePaths",
+      "optional": false,
+      "signature": "importStylePromptPresetImagePaths: (\r\n    sourcePaths: string[],\r\n    presetId: string,\r\n    availableSlots: number,\r\n  ) => Promise<StylePromptPreviewImage[]>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 2412
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1915
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1935
+        },
+        {
+          "file": "src/components/FavoriteStyleExport.tsx",
+          "line": 25
+        },
+        {
+          "file": "src/PositivePromptPresets.tsx",
+          "line": 360
+        },
+        {
+          "file": "src/style-library-client.ts",
+          "line": 14
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 42
+        }
+      ]
+    },
+    {
+      "name": "reconcileStylePromptPresetImages",
+      "optional": false,
+      "signature": "reconcileStylePromptPresetImages: (\r\n    presetId: string,\r\n    knownImages: StylePromptPreviewImage[],\r\n  ) => Promise<StylePromptPreviewImage[]>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 2383
+        },
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 2409
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1679
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1872
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1884
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1906
+        },
+        {
+          "file": "src/PositivePromptPresets.tsx",
+          "line": 225
+        },
+        {
+          "file": "src/PositivePromptPresets.tsx",
+          "line": 350
+        }
+      ]
+    },
+    {
+      "name": "deleteStylePromptPresetImage",
+      "optional": false,
+      "signature": "deleteStylePromptPresetImage: (\r\n    presetId: string,\r\n    imageId: string,\r\n  ) => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 1941
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1952
+        },
+        {
+          "file": "src/PositivePromptPresets.tsx",
+          "line": 377
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 33
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 38
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 51
+        }
+      ]
+    },
+    {
+      "name": "deleteStylePromptPresetImages",
+      "optional": false,
+      "signature": "deleteStylePromptPresetImages: (\r\n    presetId: string,\r\n  ) => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 1843
+        },
+        {
+          "file": "src/components/FavoriteStyleExport.tsx",
+          "line": 31
+        },
+        {
+          "file": "src/PositivePromptPresets.tsx",
+          "line": 320
+        },
+        {
+          "file": "src/style-library-client.ts",
+          "line": 18
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 44
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 57
+        }
+      ]
+    },
+    {
+      "name": "listReferencePresets",
+      "optional": false,
+      "signature": "listReferencePresets: () => Promise<ReferencePresetLibrary>;",
+      "uses": [
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 211
+        },
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 293
+        }
+      ]
+    },
+    {
+      "name": "saveReferencePreset",
+      "optional": false,
+      "signature": "saveReferencePreset: (\r\n    request: ReferencePresetSaveRequest,\r\n  ) => Promise<ReferencePresetOperationResult>;",
+      "uses": [
+        {
+          "file": "src/ReferenceCatalogPanel.tsx",
+          "line": 359
+        },
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 217
+        },
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 333
+        }
+      ]
+    },
+    {
+      "name": "readReferencePreset",
+      "optional": false,
+      "signature": "readReferencePreset: (\r\n    presetId: string,\r\n  ) => Promise<ReferencePresetOperationResult>;",
+      "uses": [
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 347
+        }
+      ]
+    },
+    {
+      "name": "deleteReferencePreset",
+      "optional": false,
+      "signature": "deleteReferencePreset: (\r\n    presetId: string,\r\n  ) => Promise<ReferencePresetOperationResult>;",
+      "uses": [
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 393
+        }
+      ]
+    },
+    {
+      "name": "createReferencePresetGroup",
+      "optional": false,
+      "signature": "createReferencePresetGroup: (\r\n    name: string,\r\n  ) => Promise<ReferencePresetOperationResult>;",
+      "uses": [
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 414
+        }
+      ]
+    },
+    {
+      "name": "deleteReferencePresetGroup",
+      "optional": false,
+      "signature": "deleteReferencePresetGroup: (\r\n    name: string,\r\n  ) => Promise<ReferencePresetOperationResult>;",
+      "uses": [
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 436
+        }
+      ]
+    },
+    {
+      "name": "moveReferencePresetToGroup",
+      "optional": false,
+      "signature": "moveReferencePresetToGroup: (\r\n    presetId: string,\r\n    group: string,\r\n  ) => Promise<ReferencePresetOperationResult>;",
+      "uses": [
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 426
+        }
+      ]
+    },
+    {
+      "name": "importReferencePresets",
+      "optional": false,
+      "signature": "importReferencePresets: () => Promise<ReferencePresetOperationResult>;",
+      "uses": [
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 479
+        },
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 480
+        }
+      ]
+    },
+    {
+      "name": "exportReferencePresets",
+      "optional": false,
+      "signature": "exportReferencePresets: (\r\n    request?: ReferencePresetExportRequest,\r\n  ) => Promise<ReferencePresetOperationResult>;",
+      "uses": [
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 479
+        },
+        {
+          "file": "src/ReferencePresetManager.tsx",
+          "line": 491
+        }
+      ]
+    },
+    {
+      "name": "downloadReferenceCatalogAsset",
+      "optional": false,
+      "signature": "downloadReferenceCatalogAsset: (request: {\r\n    id: string;\r\n    urls: string[];\r\n  }) => Promise<{ ok: boolean; base64?: string; bytes?: number; message?: string }>;",
+      "uses": [
+        {
+          "file": "src/referenceCatalog.ts",
+          "line": 215
+        },
+        {
+          "file": "src/referenceCatalog.ts",
+          "line": 221
+        }
+      ]
+    },
+    {
+      "name": "onReferenceCatalogDownloadProgress",
+      "optional": false,
+      "signature": "onReferenceCatalogDownloadProgress: (callback: (event: {\r\n    id: string;\r\n    loaded: number;\r\n    total: number;\r\n  }) => void) => () => void;",
+      "uses": [
+        {
+          "file": "src/referenceCatalog.ts",
+          "line": 217
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveStatus",
+      "optional": false,
+      "signature": "artistDetectiveStatus: () => Promise<import(\"./artist-detective-contract\").DetectiveSnapshot>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 63
+        },
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 82
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveDownloadStatus",
+      "optional": false,
+      "signature": "artistDetectiveDownloadStatus: () => Promise<import(\"../electron/ipc/detective-download\").DetectiveDownloadStatus>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 64
+        },
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 124
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveDownloadStart",
+      "optional": false,
+      "signature": "artistDetectiveDownloadStart: () => Promise<import(\"../electron/ipc/detective-download\").DetectiveDownloadStatus>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 149
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveDownloadVariant",
+      "optional": false,
+      "signature": "artistDetectiveDownloadVariant: (variant: \"full\" | \"light\") => Promise<import(\"../electron/ipc/detective-download\").DetectiveDownloadStatus>;",
+      "uses": []
+    },
+    {
+      "name": "artistDetectiveDownloadCancel",
+      "optional": false,
+      "signature": "artistDetectiveDownloadCancel: () => Promise<import(\"../electron/ipc/detective-download\").DetectiveDownloadStatus>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 148
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveDownloadDirectory",
+      "optional": false,
+      "signature": "artistDetectiveDownloadDirectory: () => Promise<import(\"../electron/ipc/detective-download\").DetectiveDownloadStatus>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 147
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveConfigure",
+      "optional": false,
+      "signature": "artistDetectiveConfigure: (kind: \"python\" | \"assets\") => Promise<import(\"./artist-detective-contract\").DetectiveSnapshot>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 128
+        },
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 128
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveStart",
+      "optional": false,
+      "signature": "artistDetectiveStart: (request: import(\"./artist-detective-contract\").DetectiveRunRequest) => Promise<import(\"./artist-detective-contract\").DetectiveSnapshot>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 198
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveStop",
+      "optional": false,
+      "signature": "artistDetectiveStop: () => Promise<import(\"./artist-detective-contract\").DetectiveSnapshot>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 197
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveOpenResults",
+      "optional": false,
+      "signature": "artistDetectiveOpenResults: () => Promise<void>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 200
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveVerifyRuntime",
+      "optional": false,
+      "signature": "artistDetectiveVerifyRuntime: () => Promise<import(\"./artist-detective-contract\").DetectiveSnapshot>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 128
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveSelectModel",
+      "optional": false,
+      "signature": "artistDetectiveSelectModel: (variant:'full'|'light') => Promise<import(\"./artist-detective-contract\").DetectiveSnapshot>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 124
+        }
+      ]
+    },
+    {
+      "name": "artistDetectiveClearResults",
+      "optional": false,
+      "signature": "artistDetectiveClearResults: (request:{directory:string;deleteImages:boolean}) => Promise<import(\"./artist-detective-contract\").DetectiveSnapshot>;",
+      "uses": [
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 107
+        }
+      ]
+    },
+    {
+      "name": "artistLabPickTarget",
+      "optional": false,
+      "signature": "artistLabPickTarget: (sourcePath?: string) => Promise<{\r\n    filePath: string;\r\n    fileUrl: string;\r\n    name: string;\r\n    width: number;\r\n    height: number;\r\n  } | null>;",
+      "uses": [
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 150
+        },
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 77
+        },
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 87
+        }
+      ]
+    },
+    {
+      "name": "artistLabSearchArtists",
+      "optional": false,
+      "signature": "artistLabSearchArtists: (\r\n    query?: string,\r\n    limit?: number,\r\n  ) => Promise<import(\"./artist-lab\").ArtistTagRecord[]>;",
+      "uses": []
+    },
+    {
+      "name": "artistLabPopularArtists",
+      "optional": false,
+      "signature": "artistLabPopularArtists: (\r\n    limit?: number,\r\n    force?: boolean,\r\n  ) => Promise<import(\"./artist-lab\").ArtistTagRecord[]>;",
+      "uses": []
+    },
+    {
+      "name": "artistLabPopularArtistPool",
+      "optional": false,
+      "signature": "artistLabPopularArtistPool: (\r\n    limit?: number,\r\n    force?: boolean,\r\n  ) => Promise<import(\"./artist-lab\").ArtistPoolSnapshot>;",
+      "uses": []
+    },
+    {
+      "name": "artistLabAllArtists",
+      "optional": false,
+      "signature": "artistLabAllArtists: (requestId: string) => Promise<import(\"./artist-lab\").ArtistPoolSnapshot>;",
+      "uses": []
+    },
+    {
+      "name": "artistLabCatalogSelect",
+      "optional": false,
+      "signature": "artistLabCatalogSelect: (count:number,mode:import(\"./artist-lab\").ArtistCatalogMode,seed:number) => Promise<import(\"./artist-lab\").ArtistCatalogSelection>;",
+      "uses": [
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 944
+        }
+      ]
+    },
+    {
+      "name": "artistLabCatalogUpdate",
+      "optional": false,
+      "signature": "artistLabCatalogUpdate: (id:string) => Promise<import(\"./artist-lab\").ArtistCatalogInfo>;",
+      "uses": [
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 958
+        }
+      ]
+    },
+    {
+      "name": "artistLabCatalogCancel",
+      "optional": false,
+      "signature": "artistLabCatalogCancel: (id:string) => Promise<boolean>;",
+      "uses": [
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 972
+        },
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 1283
+        }
+      ]
+    },
+    {
+      "name": "artistLabSelectedArtists",
+      "optional": false,
+      "signature": "artistLabSelectedArtists: (requestId: string, count: number) => Promise<import(\"./artist-lab\").ArtistPoolSnapshot>;",
+      "uses": []
+    },
+    {
+      "name": "artistLabArtistTotal",
+      "optional": false,
+      "signature": "artistLabArtistTotal: (force?: boolean) => Promise<import(\"./artist-lab\").ArtistPoolTotal>;",
+      "uses": []
+    },
+    {
+      "name": "artistLabCancelArtistSync",
+      "optional": false,
+      "signature": "artistLabCancelArtistSync: (requestId: string) => Promise<boolean>;",
+      "uses": []
+    },
+    {
+      "name": "onArtistPoolSyncProgress",
+      "optional": false,
+      "signature": "onArtistPoolSyncProgress: (callback: (progress: import(\"./artist-lab\").ArtistPoolSyncProgress) => void) => () => void;",
+      "uses": [
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 965
+        }
+      ]
+    },
+    {
+      "name": "artistLabArtistRanking",
+      "optional": false,
+      "signature": "artistLabArtistRanking: (\r\n    page?: number,\r\n    pageSize?: number,\r\n    query?: string,\r\n    force?: boolean,\r\n  ) => Promise<import(\"./artist-lab\").ArtistRankingSnapshot>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 544
+        }
+      ]
+    },
+    {
+      "name": "artistLabScoreImages",
+      "optional": false,
+      "signature": "artistLabScoreImages: (\r\n    mode: import(\"./artist-lab\").ArtistLabModelMode,\r\n    targetPath: string,\r\n    candidatePath: string,\r\n  ) => Promise<import(\"./artist-lab\").ArtistLabImageScore>;",
+      "uses": [
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 189
+        },
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 195
+        },
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 259
+        }
+      ]
+    },
+    {
+      "name": "artistLabModelStatus",
+      "optional": false,
+      "signature": "artistLabModelStatus: (\r\n    mode: import(\"./artist-lab\").ArtistLabModelMode,\r\n  ) => Promise<import(\"./artist-lab\").ArtistLabModelStatus>;",
+      "uses": [
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 147
+        },
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 286
+        }
+      ]
+    },
+    {
+      "name": "artistLabDiscoverSimilar",
+      "optional": false,
+      "signature": "artistLabDiscoverSimilar: (\r\n    mode: import(\"./artist-lab\").ArtistLabModelMode,\r\n    targetPath: string,\r\n    offset?: number,\r\n    scanCount?: number,\r\n    shortlist?: number,\r\n    force?: boolean,\r\n  ) => Promise<import(\"./artist-lab\").ArtistDiscoveryResult>;",
+      "uses": [
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 212
+        }
+      ]
+    },
+    {
+      "name": "artistLabClearModels",
+      "optional": false,
+      "signature": "artistLabClearModels: () => Promise<\r\n    import(\"./artist-lab\").ArtistLabModelStatus\r\n  >;",
+      "uses": [
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 298
+        }
+      ]
+    },
+    {
+      "name": "artistLabStylePreview",
+      "optional": false,
+      "signature": "artistLabStylePreview: (tag: string) => Promise<ArtistStylePreviewResult | null>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 586
+        },
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 784
+        },
+        {
+          "file": "src/V5ArtistWeightRepair.tsx",
+          "line": 529
+        }
+      ]
+    },
+    {
+      "name": "artistLabStylePreviewPage",
+      "optional": false,
+      "signature": "artistLabStylePreviewPage: (\r\n    tag: string,\r\n    page?: number,\r\n    pageSize?: number,\r\n  ) => Promise<ArtistStylePreviewPage>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 619
+        }
+      ]
+    },
+    {
+      "name": "aitagConfig",
+      "optional": false,
+      "signature": "aitagConfig: () => Promise<unknown>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1434
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1464
+        }
+      ]
+    },
+    {
+      "name": "aitagSearch",
+      "optional": false,
+      "signature": "aitagSearch: (\r\n    request: import(\"./aitag\").AitagSearchRequest,\r\n  ) => Promise<unknown>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1379
+        }
+      ]
+    },
+    {
+      "name": "aitagSearchFresh",
+      "optional": false,
+      "signature": "aitagSearchFresh: (\r\n    request: import(\"./aitag\").AitagSearchRequest,\r\n  ) => Promise<unknown>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1435
+        }
+      ]
+    },
+    {
+      "name": "aitagSnapshot",
+      "optional": false,
+      "signature": "aitagSnapshot: () => Promise<{ config: unknown; search: unknown } | null>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1419
+        }
+      ]
+    },
+    {
+      "name": "aitagWork",
+      "optional": false,
+      "signature": "aitagWork: (id: number) => Promise<unknown>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1361
+        }
+      ]
+    },
+    {
+      "name": "aitagPrewarm",
+      "optional": false,
+      "signature": "aitagPrewarm: (\r\n    retentionDays?: number,\r\n  ) => Promise<{ works: number; images: number }>;",
+      "uses": []
+    },
+    {
+      "name": "aitagClearDataCache",
+      "optional": false,
+      "signature": "aitagClearDataCache: () => Promise<void>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1460
+        }
+      ]
+    },
+    {
+      "name": "aitagCacheImage",
+      "optional": false,
+      "signature": "aitagCacheImage: (url: string, retentionDays?: number, force?: boolean) => Promise<string>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1223
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1395
+        },
+        {
+          "file": "src/components/GalleryFavorites.tsx",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "name": "aitagCacheStats",
+      "optional": false,
+      "signature": "aitagCacheStats: () => Promise<{ bytes: number; files: number }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 5604
+        },
+        {
+          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
+          "line": 35
+        }
+      ]
+    },
+    {
+      "name": "aitagClearCache",
+      "optional": false,
+      "signature": "aitagClearCache: () => Promise<{ bytes: number; files: number }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 5710
+        },
+        {
+          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
+          "line": 79
+        }
+      ]
+    },
+    {
+      "name": "onlineGallerySearch",
+      "optional": false,
+      "signature": "onlineGallerySearch: (\r\n    request: import(\"./online-gallery\").OnlineGallerySearchRequest,\r\n  ) => Promise<import(\"./online-gallery\").OnlineGalleryPage>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 947
+        }
+      ]
+    },
+    {
+      "name": "onlineGalleryDetail",
+      "optional": false,
+      "signature": "onlineGalleryDetail: (\r\n    request: import(\"./online-gallery\").OnlineGalleryDetailRequest,\r\n  ) => Promise<import(\"./online-gallery\").OnlineGalleryDetail>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1022
+        }
+      ]
+    },
+    {
+      "name": "downloadOnlineGalleryImages",
+      "optional": false,
+      "signature": "downloadOnlineGalleryImages: (\r\n    request: import(\"./online-gallery\").OnlineGalleryDownloadRequest,\r\n  ) => Promise<import(\"./online-gallery\").OnlineGalleryDownloadResult>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 521
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1048
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1527
+        }
+      ]
+    },
+    {
+      "name": "selectOnlineGalleryDownloadDir",
+      "optional": false,
+      "signature": "selectOnlineGalleryDownloadDir: () => Promise<string | null>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 5704
+        }
+      ]
+    },
+    {
+      "name": "onlineGalleryClearDataCache",
+      "optional": false,
+      "signature": "onlineGalleryClearDataCache: () => Promise<void>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1007
+        }
+      ]
+    },
+    {
+      "name": "onlineGalleryCacheImage",
+      "optional": false,
+      "signature": "onlineGalleryCacheImage: (\r\n    source: import(\"./online-gallery\").OnlineGallerySourceId,\r\n    url: string,\r\n    retentionDays?: number,\r\n    force?: boolean,\r\n  ) => Promise<string>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 787
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 963
+        },
+        {
+          "file": "src/components/GalleryFavorites.tsx",
+          "line": 22
+        },
+        {
+          "file": "src/style-library-client.ts",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "name": "hasToken",
+      "optional": false,
+      "signature": "hasToken: () => Promise<AccountSummary>;",
+      "uses": [
+        {
+          "file": "src/comic/use-comic-generation.ts",
+          "line": 10
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1320
+        },
+        {
+          "file": "src/store.ts",
+          "line": 2371
+        },
+        {
+          "file": "src/store.ts",
+          "line": 2567
+        }
+      ]
+    },
+    {
+      "name": "accountCached",
+      "optional": false,
+      "signature": "accountCached: () => Promise<AccountSummary>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 995
+        }
+      ]
+    },
+    {
+      "name": "storedToken",
+      "optional": false,
+      "signature": "storedToken: () => Promise<string>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 5599
+        }
+      ]
+    },
+    {
+      "name": "verifyToken",
+      "optional": false,
+      "signature": "verifyToken: (token: string) => Promise<TokenStatus>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 5694
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6612
+        }
+      ]
+    },
+    {
+      "name": "clearToken",
+      "optional": false,
+      "signature": "clearToken: () => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 5886
+        }
+      ]
+    },
+    {
+      "name": "quoteAnlas",
+      "optional": false,
+      "signature": "quoteAnlas: (request: AnlasQuoteRequest) => Promise<AnlasQuoteResult>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 2710
+        },
+        {
+          "file": "src/comic/use-comic-generation.ts",
+          "line": 18
+        },
+        {
+          "file": "src/store.ts",
+          "line": 599
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1979
+        }
+      ]
+    },
+    {
+      "name": "generate",
+      "optional": false,
+      "signature": "generate: (\r\n    params: GenerateParams,\r\n    extras: GenerateExtras,\r\n    previewRequestId?: string,\r\n  ) => Promise<GenerateResult>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 2292
+        }
+      ]
+    },
+    {
+      "name": "generateCompatible",
+      "optional": false,
+      "signature": "generateCompatible: (request: CompatibleGenerationRequest) => Promise<GenerateResult>;",
+      "uses": []
+    },
+    {
+      "name": "saveCompatibleImageSettings",
+      "optional": false,
+      "signature": "saveCompatibleImageSettings: (config: CompatibleImageSettings, apiKey: string, provider: \"novelai\" | \"openai-images\", expectedRevision: string) => Promise<{ ok: boolean; message: string; code?: string; revision?: string }>;",
+      "uses": [
+        {
+          "file": "src/components/CompatibleImages.tsx",
+          "line": 36
+        }
+      ]
+    },
+    {
+      "name": "setCompatibleImageProvider",
+      "optional": false,
+      "signature": "setCompatibleImageProvider: (provider: \"novelai\", expectedRevision: string) => Promise<{ ok: boolean; message: string; code?: string; revision?: string }>;",
+      "uses": [
+        {
+          "file": "src/components/CompatibleImages.tsx",
+          "line": 51
+        }
+      ]
+    },
+    {
+      "name": "onImageServiceChanged",
+      "optional": false,
+      "signature": "onImageServiceChanged: (callback: (notice: { revision: string; version: number }) => void) => () => void;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 964
+        }
+      ]
+    },
+    {
+      "name": "onGenerationPreview",
+      "optional": false,
+      "signature": "onGenerationPreview: (\r\n    callback: (event: GenerationPreviewEvent) => void,\r\n  ) => () => void;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 951
+        }
+      ]
+    },
+    {
+      "name": "generateArtistLab",
+      "optional": false,
+      "signature": "generateArtistLab: (\r\n    params: GenerateParams,\r\n    extras: GenerateExtras,\r\n    mode: \"target\" | \"random\",\r\n  ) => Promise<GenerateResult>;",
+      "uses": [
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 192
+        },
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 252
+        },
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 1054
+        },
+        {
+          "file": "src/V5ArtistWeightRepair.tsx",
+          "line": 725
+        }
+      ]
+    },
+    {
+      "name": "artistLabPromoteFavorite",
+      "optional": false,
+      "signature": "artistLabPromoteFavorite: (item: HistoryItem) => Promise<HistoryItem>;",
+      "uses": [
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 1168
+        },
+        {
+          "file": "src/V5ArtistWeightRepair.tsx",
+          "line": 760
+        }
+      ]
+    },
+    {
+      "name": "artistLabListPromotedFavorites",
+      "optional": false,
+      "signature": "artistLabListPromotedFavorites: () => Promise<HistoryItem[]>;",
+      "uses": []
+    },
+    {
+      "name": "artistLabLoadFavoriteLibrary",
+      "optional": false,
+      "signature": "artistLabLoadFavoriteLibrary: () => Promise<{\r\n    version: 1;\r\n    updatedAt: string;\r\n    collections: Record<\r\n      \"random\" | \"v5-repair\" | \"artist-string-draw\",\r\n      unknown[]\r\n    >;\r\n  }>;",
+      "uses": []
+    },
+    {
+      "name": "artistLabSaveFavoriteCollection",
+      "optional": false,
+      "signature": "artistLabSaveFavoriteCollection: (\r\n    collection: \"random\" | \"v5-repair\" | \"artist-string-draw\",\r\n    favorites: unknown[],\r\n  ) => Promise<{ ok: boolean }>;",
+      "uses": []
+    },
+    {
+      "name": "artistLabDeleteTemporary",
+      "optional": false,
+      "signature": "artistLabDeleteTemporary: (filePath: string) => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 1020
+        },
+        {
+          "file": "src/V5ArtistWeightRepair.tsx",
+          "line": 622
+        }
+      ]
+    },
+    {
+      "name": "artistLabClearTemporary",
+      "optional": false,
+      "signature": "artistLabClearTemporary: () => Promise<{ ok: boolean }>;",
+      "uses": []
+    },
+    {
+      "name": "generateI2I",
+      "optional": false,
+      "signature": "generateI2I: (\r\n    params: GenerateParams,\r\n    i2i: I2IParams,\r\n    extras: GenerateExtras,\r\n  ) => Promise<GenerateResult>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 2505
+        }
+      ]
+    },
+    {
+      "name": "redrawImage",
+      "optional": false,
+      "signature": "redrawImage: (request: BatchRedrawRequest) => Promise<GenerateResult>;",
+      "uses": [
+        {
+          "file": "src/batch/use-batch-generation.ts",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "name": "batchRedrawPrepare",
+      "optional": false,
+      "signature": "batchRedrawPrepare: (requests: BatchRedrawRequest[]) => Promise<ComicImageService>;",
+      "uses": [
+        {
+          "file": "src/batch/use-batch-generation.ts",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "name": "batchRedrawCancel",
+      "optional": false,
+      "signature": "batchRedrawCancel: (runId: string) => Promise<{ok:boolean;requested:boolean}>;",
+      "uses": [
+        {
+          "file": "src/batch/use-batch-generation.ts",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "name": "inpaint",
+      "optional": false,
+      "signature": "inpaint: (\r\n    params: GenerateParams,\r\n    inpaintModel: NAIInpaintModel,\r\n    maskBase64: string,\r\n    strength: number,\r\n    noise: number,\r\n    region?: import(\"./focused-inpaint\").InpaintRegion,\r\n  ) => Promise<GenerateResult>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 2671
+        }
+      ]
+    },
+    {
+      "name": "upscaleImage",
+      "optional": false,
+      "signature": "upscaleImage: (scale: UpscaleScale, model: string) => Promise<SingleImageResult>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 2750
+        }
+      ]
+    },
+    {
+      "name": "augmentImage",
+      "optional": false,
+      "signature": "augmentImage: (\r\n    tool: DirectorTool,\r\n    options: AugmentOptions,\r\n  ) => Promise<GenerateResult>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 2819
+        }
+      ]
+    },
+    {
+      "name": "cancel",
+      "optional": false,
+      "signature": "cancel: () => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 317
+        },
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 1566
+        },
+        {
+          "file": "src/store.ts",
+          "line": 2859
+        },
+        {
+          "file": "src/V5ArtistWeightRepair.tsx",
+          "line": 1014
+        }
+      ]
+    },
+    {
+      "name": "readClipboardImageFiles",
+      "optional": false,
+      "signature": "readClipboardImageFiles: () => Promise<Array<{name:string;bytes:Uint8Array}>>;",
+      "uses": [
+        {
+          "file": "src/image-paste.tsx",
+          "line": 124
+        }
+      ]
+    },
+    {
+      "name": "savePastedImageFiles",
+      "optional": false,
+      "signature": "savePastedImageFiles: (images: Array<{name:string;bytes:Uint8Array}>) => Promise<string[]>;",
+      "uses": [
+        {
+          "file": "src/image-paste.tsx",
+          "line": 105
+        }
+      ]
+    },
+    {
+      "name": "loadImage",
+      "optional": false,
+      "signature": "loadImage: () => Promise<LoadImageResult>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1328
+        }
+      ]
+    },
+    {
+      "name": "loadImageFromPath",
+      "optional": false,
+      "signature": "loadImageFromPath: (filePath: string) => Promise<LoadImageResult>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1363
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1459
+        },
+        {
+          "file": "src/store.ts",
+          "line": 2600
+        }
+      ]
+    },
+    {
+      "name": "saveMetadataSnapshot",
+      "optional": false,
+      "signature": "saveMetadataSnapshot: (payload: MetadataSnapshotPayload) => Promise<MetadataSnapshotResult>;",
+      "uses": [
+        {
+          "file": "src/metadata-snapshot.ts",
+          "line": 16
+        },
+        {
+          "file": "src/metadata-snapshot.ts",
+          "line": 23
+        }
+      ]
+    },
+    {
+      "name": "saveMetadataSnapshotFromPath",
+      "optional": false,
+      "signature": "saveMetadataSnapshotFromPath: (filePath: string) => Promise<MetadataSnapshotResult>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 5387
+        }
+      ]
+    },
+    {
+      "name": "readMetadataSnapshotFromPath",
+      "optional": false,
+      "signature": "readMetadataSnapshotFromPath: (filePath: string) => Promise<MetadataSnapshotResult>;",
+      "uses": [
+        {
+          "file": "src/components/InpaintPromptSource.tsx",
+          "line": 16
+        },
+        {
+          "file": "src/components/WorksLibrary.tsx",
+          "line": 67
+        },
+        {
+          "file": "src/MetadataInspector.tsx",
+          "line": 630
+        }
+      ]
+    },
+    {
+      "name": "loadMetadataSnapshot",
+      "optional": false,
+      "signature": "loadMetadataSnapshot: () => Promise<MetadataSnapshotResult>;",
+      "uses": [
+        {
+          "file": "src/metadata-snapshot.ts",
+          "line": 38
+        },
+        {
+          "file": "src/metadata-snapshot.ts",
+          "line": 39
+        }
+      ]
+    },
+    {
+      "name": "getPathForFile",
+      "optional": false,
+      "signature": "getPathForFile: (file: File) => string;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 4026
+        },
+        {
+          "file": "src/comic/TagComicGenerator.tsx",
+          "line": 1046
+        },
+        {
+          "file": "src/drag-drop.ts",
+          "line": 10
+        },
+        {
+          "file": "src/drag-drop.ts",
+          "line": 24
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 42
+        }
+      ]
+    },
+    {
+      "name": "clearWorkbenchImage",
+      "optional": false,
+      "signature": "clearWorkbenchImage: () => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1421
+        }
+      ]
+    },
+    {
+      "name": "getHistory",
+      "optional": false,
+      "signature": "getHistory: (date?: string, groupId?: string) => Promise<HistoryItem[]>;",
+      "uses": [
+        {
+          "file": "src/components/HistoryImagePicker.tsx",
+          "line": 12
+        },
+        {
+          "file": "src/components/WorksLibrary.tsx",
+          "line": 26
+        },
+        {
+          "file": "src/components/WorksLibrary.tsx",
+          "line": 28
+        },
+        {
+          "file": "src/MetadataInspector.tsx",
+          "line": 606
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1015
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1204
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1211
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1309
+        }
+      ]
+    },
+    {
+      "name": "getHistoryDates",
+      "optional": false,
+      "signature": "getHistoryDates: () => Promise<string[]>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 997
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1304
+        }
+      ]
+    },
+    {
+      "name": "getHistoryGroups",
+      "optional": false,
+      "signature": "getHistoryGroups: () => Promise<HistoryGroup[]>;",
+      "uses": [
+        {
+          "file": "src/components/WorksLibrary.tsx",
+          "line": 28
+        },
+        {
+          "file": "src/MetadataInspector.tsx",
+          "line": 607
+        },
+        {
+          "file": "src/store.ts",
+          "line": 998
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1305
+        }
+      ]
+    },
+    {
+      "name": "createHistoryGroup",
+      "optional": false,
+      "signature": "createHistoryGroup: (name: string) => Promise<HistoryGroup[]>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1230
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1243
+        }
+      ]
+    },
+    {
+      "name": "renameHistoryGroup",
+      "optional": false,
+      "signature": "renameHistoryGroup: (id: string, name: string) => Promise<HistoryGroup[]>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1255
+        }
+      ]
+    },
+    {
+      "name": "deleteHistoryGroup",
+      "optional": false,
+      "signature": "deleteHistoryGroup: (id: string) => Promise<HistoryGroup[]>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1260
+        }
+      ]
+    },
+    {
+      "name": "exportHistoryGroup",
+      "optional": false,
+      "signature": "exportHistoryGroup: (\r\n    groupId: string,\r\n  ) => Promise<{ ok: boolean; message: string; path?: string }>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1275
+        }
+      ]
+    },
+    {
+      "name": "exportFiles",
+      "optional": false,
+      "signature": "exportFiles: (\r\n    files: BatchExportFile[],\r\n    defaultName?: string,\r\n  ) => Promise<{ ok: boolean; message: string; path?: string }>;",
+      "uses": [
+        {
+          "file": "src/ComicGenerator.tsx",
+          "line": 1148
+        }
+      ]
+    },
+    {
+      "name": "setHistoryGroup",
+      "optional": false,
+      "signature": "setHistoryGroup: (id: string, groupId?: string) => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1290
+        }
+      ]
+    },
+    {
+      "name": "deleteHistory",
+      "optional": false,
+      "signature": "deleteHistory: (id: string) => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/ComicGenerator.tsx",
+          "line": 1097
+        },
+        {
+          "file": "src/store.ts",
+          "line": 2920
+        }
+      ]
+    },
+    {
+      "name": "pruneMissingHistoryItem",
+      "optional": false,
+      "signature": "pruneMissingHistoryItem: (id: string) => Promise<boolean>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 2955
+        }
+      ]
+    },
+    {
+      "name": "renameHistoryItem",
+      "optional": false,
+      "signature": "renameHistoryItem: (\r\n    id: string,\r\n    name: string,\r\n  ) => Promise<{ ok: boolean; message?: string; item?: HistoryItem }>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 2963
+        }
+      ]
+    },
+    {
+      "name": "openInExplorer",
+      "optional": false,
+      "signature": "openInExplorer: (targetPath: string) => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 1740
+        },
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 1797
+        },
+        {
+          "file": "src/app/AppChrome.tsx",
+          "line": 89
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 5962
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 5974
+        },
+        {
+          "file": "src/components/ImageSaveFeedback.tsx",
+          "line": 53
+        },
+        {
+          "file": "src/components/LocalFavorites.tsx",
+          "line": 28
+        },
+        {
+          "file": "src/components/OutputRecoveryNotice.tsx",
+          "line": 20
+        },
+        {
+          "file": "src/components/WorksLibrary.tsx",
+          "line": 87
+        }
+      ]
+    },
+    {
+      "name": "startImageDrag",
+      "optional": false,
+      "signature": "startImageDrag: (filePath: string) => void;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 1733
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 4885
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 5409
+        },
+        {
+          "file": "src/ComicGenerator.tsx",
+          "line": 1691
+        },
+        {
+          "file": "src/ComicGenerator.tsx",
+          "line": 2011
+        }
+      ]
+    },
+    {
+      "name": "selectOutputDir",
+      "optional": false,
+      "signature": "selectOutputDir: () => Promise<string | null>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 5700
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6755
+        }
+      ]
+    },
+    {
+      "name": "getSetting",
+      "optional": false,
+      "signature": "getSetting: <K extends SettingKey>(key: K) => Promise<AppSettings[K]>;",
+      "uses": []
+    },
+    {
+      "name": "setSetting",
+      "optional": false,
+      "signature": "setSetting: <K extends SettingKey>(\r\n    key: K,\r\n    value: AppSettings[K],\r\n  ) => Promise<AppSettings[K]>;",
+      "uses": [
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 710
+        },
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 991
+        },
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 2395
+        },
+        {
+          "file": "src/AgentPage.tsx",
+          "line": 2401
+        },
+        {
+          "file": "src/app/AppChrome.tsx",
+          "line": 62
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1130
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1620
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1621
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1697
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1774
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1790
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1805
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1812
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1826
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1830
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1844
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1858
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1978
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 1986
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 3080
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 3097
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 4062
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 4376
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 5610
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 5617
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 5618
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 5688
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 5689
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6659
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6681
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6682
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6721
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6730
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6738
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6766
+        },
+        {
+          "file": "src/components/CharacterPresetControls.tsx",
+          "line": 20
+        },
+        {
+          "file": "src/components/CompletionSoundSettings.tsx",
+          "line": 12
+        },
+        {
+          "file": "src/components/FavoriteStyleExport.tsx",
+          "line": 28
+        },
+        {
+          "file": "src/components/OutputRecoveryNotice.tsx",
+          "line": 34
+        },
+        {
+          "file": "src/components/StorageDirectoryInput.tsx",
+          "line": 13
+        },
+        {
+          "file": "src/PositivePromptPresets.tsx",
+          "line": 206
+        },
+        {
+          "file": "src/PromptChunks.tsx",
+          "line": 113
+        },
+        {
+          "file": "src/store.ts",
+          "line": 846
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1176
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1210
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1217
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1233
+        },
+        {
+          "file": "src/style-library-client.ts",
+          "line": 5
+        },
+        {
+          "file": "src/style-library-client.ts",
+          "line": 8
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 48
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 48
+        }
+      ]
+    },
+    {
+      "name": "getSettings",
+      "optional": false,
+      "signature": "getSettings: () => Promise<AppSettings>;",
+      "uses": [
+        {
+          "file": "src/components/CompatibleImages.tsx",
+          "line": 21
+        },
+        {
+          "file": "src/components/FavoriteStyleExport.tsx",
+          "line": 27
+        },
+        {
+          "file": "src/store.ts",
+          "line": 965
+        },
+        {
+          "file": "src/store.ts",
+          "line": 983
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1315
+        },
+        {
+          "file": "src/style-library-client.ts",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "name": "isFirstRun",
+      "optional": false,
+      "signature": "isFirstRun: () => Promise<boolean>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 996
+        }
+      ]
+    },
+    {
+      "name": "completeSetup",
+      "optional": false,
+      "signature": "completeSetup: () => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 6606
+        }
+      ]
+    },
+    {
+      "name": "reversePrompt",
+      "optional": false,
+      "signature": "reversePrompt: (\r\n    imageBase64: string,\r\n    mode: ReversePromptMode,\r\n    scope?: ReversePromptScope,\r\n    hint?: string,\r\n    knownCharacter?: boolean,\r\n    templateVersion?: ReversePromptTemplateVersion,\r\n  ) => Promise<{\r\n    ok: boolean;\r\n    prompt?: string;\r\n    variants?: PromptVariants;\r\n      message: string;\r\n  }>;",
+      "uses": [
+        {
+          "file": "src/ArtistLab.tsx",
+          "line": 159
+        },
+        {
+          "file": "src/ComicGenerator.tsx",
+          "line": 1012
+        },
+        {
+          "file": "src/components/InpaintPromptSource.tsx",
+          "line": 18
+        },
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 98
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1739
+        }
+      ]
+    },
+    {
+      "name": "convertPrompt",
+      "optional": false,
+      "signature": "convertPrompt: (\r\n    text: string,\r\n    mode: ReversePromptMode,\r\n    knownCharacter?: boolean,\r\n    templateVersion?: ReversePromptTemplateVersion,\r\n    assistant?: import(\"./prompt-assistant\").PromptEditRequest,\r\n  ) => Promise<{\r\n    ok: boolean;\r\n    result?: string;\r\n    variants?: PromptVariants;\r\n    validation?: {total:number;tags:number;natural:number;tagPercent:number};\r\n      message: string;\r\n  }>;",
+      "uses": [
+        {
+          "file": "src/components/PromptAssistant.tsx",
+          "line": 39
+        },
+        {
+          "file": "src/store.ts",
+          "line": 1848
+        }
+      ]
+    },
+    {
+      "name": "getConvertHistory",
+      "optional": false,
+      "signature": "getConvertHistory: () => Promise<TextToolHistoryItem[]>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1903
+        }
+      ]
+    },
+    {
+      "name": "addConvertHistoryItem",
+      "optional": false,
+      "signature": "addConvertHistoryItem: (\r\n    item: TextToolHistoryItem,\r\n  ) => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1884
+        }
+      ]
+    },
+    {
+      "name": "deleteConvertHistoryItem",
+      "optional": false,
+      "signature": "deleteConvertHistoryItem: (id: string) => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1909
+        }
+      ]
+    },
+    {
+      "name": "clearConvertHistory",
+      "optional": false,
+      "signature": "clearConvertHistory: () => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1914
+        }
+      ]
+    },
+    {
+      "name": "getReverseHistory",
+      "optional": false,
+      "signature": "getReverseHistory: () => Promise<TextToolHistoryItem[]>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1799
+        }
+      ]
+    },
+    {
+      "name": "addReverseHistoryItem",
+      "optional": false,
+      "signature": "addReverseHistoryItem: (\r\n    item: TextToolHistoryItem,\r\n  ) => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1780
+        }
+      ]
+    },
+    {
+      "name": "deleteReverseHistoryItem",
+      "optional": false,
+      "signature": "deleteReverseHistoryItem: (id: string) => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1805
+        }
+      ]
+    },
+    {
+      "name": "clearReverseHistory",
+      "optional": false,
+      "signature": "clearReverseHistory: () => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1810
+        }
+      ]
+    },
+    {
+      "name": "pruneMissingReverseHistoryItem",
+      "optional": false,
+      "signature": "pruneMissingReverseHistoryItem: (id: string) => Promise<boolean>;",
+      "uses": []
+    },
+    {
+      "name": "comicConvertPanels",
+      "optional": false,
+      "signature": "comicConvertPanels: (\r\n    request: ComicConvertRequest,\r\n  ) => Promise<ComicConvertResult>;",
+      "uses": []
+    },
+    {
+      "name": "comicCheckConsistency",
+      "optional": false,
+      "signature": "comicCheckConsistency: (\r\n    request: ComicConsistencyRequest,\r\n  ) => Promise<ComicConsistencyResult>;",
+      "uses": []
+    },
+    {
+      "name": "comicReverseAsset",
+      "optional": false,
+      "signature": "comicReverseAsset: (\r\n    imageBase64: string,\r\n    mode: ReversePromptMode,\r\n    scope?: ReversePromptScope,\r\n    hint?: string,\r\n    knownCharacter?: boolean,\r\n  ) => Promise<{\r\n    ok: boolean;\r\n    prompt?: string;\r\n    variants?: PromptVariants;\r\n    message: string;\r\n  }>;",
+      "uses": []
+    },
+    {
+      "name": "comicGeneratePanel",
+      "optional": false,
+      "signature": "comicGeneratePanel: (\r\n    request: ComicGeneratePanelRequest,\r\n  ) => Promise<GenerateResult>;",
+      "uses": []
+    },
+    {
+      "name": "tagComicPrepareImageService",
+      "optional": false,
+      "signature": "tagComicPrepareImageService: (requests: TagComicGenerateRequest[]) => Promise<ComicImageService>;",
+      "uses": [
+        {
+          "file": "src/comic/use-comic-generation.ts",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "name": "tagComicGenerateCandidate",
+      "optional": false,
+      "signature": "tagComicGenerateCandidate: (\r\n    request: TagComicGenerateRequest,\r\n  ) => Promise<GenerateResult>;",
+      "uses": [
+        {
+          "file": "src/comic/use-comic-generation.ts",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "name": "tagComicCancelGeneration",
+      "optional": false,
+      "signature": "tagComicCancelGeneration: (runId: string) => Promise<{ ok: boolean; requested: boolean }>;",
+      "uses": [
+        {
+          "file": "src/comic/use-comic-generation.ts",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "name": "tagComicImportReference",
+      "optional": false,
+      "signature": "tagComicImportReference: (\r\n    request: TagComicReferenceImportRequest,\r\n  ) => Promise<TagComicReferenceImportResult>;",
+      "uses": [
+        {
+          "file": "src/comic/TagComicGenerator.tsx",
+          "line": 1044
+        },
+        {
+          "file": "src/comic/TagComicGenerator.tsx",
+          "line": 1070
+        }
+      ]
+    },
+    {
+      "name": "tagComicDeleteReference",
+      "optional": false,
+      "signature": "tagComicDeleteReference: (\r\n    projectId: string,\r\n    referenceId: string,\r\n  ) => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/comic/TagComicGenerator.tsx",
+          "line": 1176
+        }
+      ]
+    },
+    {
+      "name": "tagComicExportSelectedZip",
+      "optional": false,
+      "signature": "tagComicExportSelectedZip: (\r\n    request: TagComicExportZipRequest,\r\n  ) => Promise<ComicExportZipResult>;",
+      "uses": [
+        {
+          "file": "src/comic/TagComicGenerator.tsx",
+          "line": 1398
+        }
+      ]
+    },
+    {
+      "name": "getAiCallLog",
+      "optional": false,
+      "signature": "getAiCallLog: () => Promise<AiCallLogEntry[]>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 4526
+        }
+      ]
+    },
+    {
+      "name": "clearAiCallLog",
+      "optional": false,
+      "signature": "clearAiCallLog: () => Promise<{ ok: boolean }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 4547
+        }
+      ]
+    },
+    {
+      "name": "getReverseTemplateDefaults",
+      "optional": false,
+      "signature": "getReverseTemplateDefaults: () => Promise<ModePromptTemplates>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 5591
+        }
+      ]
+    },
+    {
+      "name": "listAiModels",
+      "optional": false,
+      "signature": "listAiModels: (kind: \"reverse\" | \"convert\" | \"translate\") => Promise<AiModelListResult>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 5746
+        }
+      ]
+    },
+    {
+      "name": "testTagServer",
+      "optional": false,
+      "signature": "testTagServer: (\r\n    query: string,\r\n  ) => Promise<{ ok: boolean; message: string; tags: TagSuggestion[] }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 5756
+        }
+      ]
+    },
+    {
+      "name": "suggestTags",
+      "optional": false,
+      "signature": "suggestTags: (model: string, prompt: string) => Promise<TagSuggestion[]>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 501
+        }
+      ]
+    },
+    {
+      "name": "searchTagServer",
+      "optional": false,
+      "signature": "searchTagServer: (query: string, limit?: number) => Promise<TagSuggestion[]>;",
+      "uses": []
+    },
+    {
+      "name": "danbooruStatus",
+      "optional": false,
+      "signature": "danbooruStatus: () => Promise<{\r\n    downloaded: boolean;\r\n    sizeBytes: number;\r\n    count: number;\r\n    catalogDownloaded: boolean;\r\n    bilingualDownloaded: boolean;\r\n    bilingualCount: number;\r\n  }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 219
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 301
+        }
+      ]
+    },
+    {
+      "name": "downloadDanbooru",
+      "optional": false,
+      "signature": "downloadDanbooru: () => Promise<{\r\n    ok: boolean;\r\n    message: string;\r\n    count?: number;\r\n  }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 233
+        }
+      ]
+    },
+    {
+      "name": "danbooruBrowse",
+      "optional": false,
+      "signature": "danbooruBrowse: (\r\n    category: number,\r\n    offset: number,\r\n    limit: number,\r\n  ) => Promise<TagSuggestion[]>;",
+      "uses": []
+    },
+    {
+      "name": "danbooruSearch",
+      "optional": false,
+      "signature": "danbooruSearch: (query: string, limit: number) => Promise<TagSuggestion[]>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 313
+        }
+      ]
+    },
+    {
+      "name": "artistStyleCatalog",
+      "optional": false,
+      "signature": "artistStyleCatalog: (\r\n    scope: ArtistStyleCatalogScope,\r\n    query: string,\r\n    offset: number,\r\n    limit: number,\r\n  ) => Promise<ArtistStyleCatalogResult>;",
+      "uses": [
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 725
+        },
+        {
+          "file": "src/RandomArtistLab.tsx",
+          "line": 868
+        },
+        {
+          "file": "src/tavern/StyleTagPicker.tsx",
+          "line": 32
+        },
+        {
+          "file": "src/V5ArtistWeightRepair.tsx",
+          "line": 473
+        },
+        {
+          "file": "src/V5ArtistWeightRepair.tsx",
+          "line": 553
+        }
+      ]
+    },
+    {
+      "name": "translate",
+      "optional": false,
+      "signature": "translate: (\r\n    text: string,\r\n    target?: string,\r\n  ) => Promise<{ ok: boolean; text?: string; error?: string }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 2018
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 2039
+        }
+      ]
+    },
+    {
+      "name": "checkUpdate",
+      "optional": false,
+      "signature": "checkUpdate: () => Promise<UpdateInfo>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1182
+        }
+      ]
+    },
+    {
+      "name": "isPortable",
+      "optional": false,
+      "signature": "isPortable: () => Promise<boolean>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 999
+        }
+      ]
+    },
+    {
+      "name": "downloadUpdate",
+      "optional": false,
+      "signature": "downloadUpdate: () => Promise<{ ok: boolean; message: string }>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1195
+        }
+      ]
+    },
+    {
+      "name": "installUpdate",
+      "optional": false,
+      "signature": "installUpdate: () => Promise<void>;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 1200
+        }
+      ]
+    },
+    {
+      "name": "onUpdateEvent",
+      "optional": false,
+      "signature": "onUpdateEvent: (callback: (event: UpdateProgressEvent) => void) => () => void;",
+      "uses": [
+        {
+          "file": "src/store.ts",
+          "line": 963
+        }
+      ]
+    },
+    {
+      "name": "minimize",
+      "optional": false,
+      "signature": "minimize: () => Promise<void>;",
+      "uses": [
+        {
+          "file": "src/app/AppChrome.tsx",
+          "line": 41
+        }
+      ]
+    },
+    {
+      "name": "maximize",
+      "optional": false,
+      "signature": "maximize: () => Promise<void>;",
+      "uses": [
+        {
+          "file": "src/app/AppChrome.tsx",
+          "line": 42
+        }
+      ]
+    },
+    {
+      "name": "close",
+      "optional": false,
+      "signature": "close: () => Promise<void>;",
+      "uses": [
+        {
+          "file": "src/app/AppChrome.tsx",
+          "line": 43
+        }
+      ]
+    },
+    {
+      "name": "openExternal",
+      "optional": false,
+      "signature": "openExternal: (url: string) => Promise<void>;",
+      "uses": [
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 443
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 680
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 711
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 764
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1082
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1175
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1596
+        },
+        {
+          "file": "src/AitagGallery.tsx",
+          "line": 1707
+        },
+        {
+          "file": "src/app/AppChrome.tsx",
+          "line": 96
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 5289
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6112
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6653
+        },
+        {
+          "file": "src/App.tsx",
+          "line": 6834
+        },
+        {
+          "file": "src/components/GalleryFavorites.tsx",
+          "line": 43
+        },
+        {
+          "file": "src/DetectiveArtistLab.tsx",
+          "line": 151
+        },
+        {
+          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
+          "line": 129
+        },
+        {
+          "file": "src/PromptCodex.tsx",
+          "line": 337
+        },
+        {
+          "file": "src/PromptCodex.tsx",
+          "line": 447
+        }
+      ]
+    },
+    {
+      "name": "getLogInfo",
+      "optional": false,
+      "signature": "getLogInfo: () => Promise<{\r\n    path: string;\r\n    dir: string;\r\n    exists: boolean;\r\n    sizeBytes: number;\r\n  }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 3071
+        }
+      ]
+    },
+    {
+      "name": "selectLogDir",
+      "optional": false,
+      "signature": "selectLogDir: () => Promise<string | null>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 3084
+        }
+      ]
+    },
+    {
+      "name": "openLogFile",
+      "optional": false,
+      "signature": "openLogFile: () => Promise<{ ok: boolean; message?: string }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 3088
+        }
+      ]
+    },
+    {
+      "name": "openLogDir",
+      "optional": false,
+      "signature": "openLogDir: () => Promise<{ ok: boolean; message?: string }>;",
+      "uses": [
+        {
+          "file": "src/App.tsx",
+          "line": 3092
+        }
+      ]
+    },
+    {
+      "name": "readLog",
+      "optional": false,
+      "signature": "readLog: () => Promise<string>;",
+      "uses": []
+    }
+  ]
+}
