@@ -8,3 +8,17 @@ src-tauri/gen/
 
 .webview2-cache/
 startup-error.log
+
+# Never publish local credentials, journals or imported/generated media.
+.env
+.env.*
+*.sqlite3
+*.sqlite3-*
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+/user-data/
+/outputs/
+/vibes/
+/assets/

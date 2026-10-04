@@ -14,8 +14,10 @@ try{
   let page;
   while(!page){page=context.pages().find(p=>p.url().includes("tauri.localhost")||p.url().startsWith("tauri://"));if(Date.now()>deadline)throw new Error("Native app page missing");if(!page)await new Promise(r=>setTimeout(r,250));}
   const errors=[];page.on("pageerror",e=>errors.push(e.message));
+  await page.getByRole("button",{name:"工作台",exact:true}).click();
   await page.getByRole("heading",{name:"图像生成",exact:true}).waitFor();
   const boot=await page.evaluate(()=>window.__TAURI_INTERNALS__.invoke("desktop_bootstrap"));
+  console.log(`INFO: rendererReadyHostMs=${boot.rendererReadyHostMs}; starts at Rust main, includes test debugging overhead, not a cold-start benchmark.`);
   assert.equal(boot.runtime,"tauri");assert.equal(boot.schemaVersion,2);assert.equal(boot.naiContract.verification,"observed_subset");
   if(process.env.NATIVE_WORKBENCH_SCREENSHOT)await page.screenshot({path:process.env.NATIVE_WORKBENCH_SCREENSHOT,fullPage:true});
   await page.getByLabel("正向提示词").fill("local native UI smoke only");

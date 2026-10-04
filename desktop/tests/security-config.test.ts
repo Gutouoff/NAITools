@@ -83,3 +83,8 @@ test("branding changes preserve durable data and credential identity", () => {
   assert.match(read("src-tauri/Cargo.toml"), /name = "naitools"/);
   assert.match(read("启动PC新版.cmd"), /naitools\.exe/);
 });
+
+test("local secrets and durable runtime data are excluded from source publication",()=>{
+  const ignore=readFileSync(new URL("../.gitignore",import.meta.url),"utf8");
+  for(const entry of [".env",".env.*","*.sqlite3","*.sqlite3-*","*.db","/outputs/","/vibes/","/assets/","target/","node_modules/"])assert.ok(ignore.split(/\r?\n/).includes(entry),`Missing ignore: ${entry}`);
+});

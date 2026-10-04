@@ -62,6 +62,10 @@ try {
   await page.getByRole("button", {name:"保存草稿",exact:true}).scrollIntoViewIfNeeded();
   assert.ok(await page.getByRole("button", {name:"保存草稿",exact:true}).isVisible());
   if(process.env.COMPACT_SMOKE_SCREENSHOT)await page.screenshot({path:process.env.COMPACT_SMOKE_SCREENSHOT,fullPage:true});
+  await page.setViewportSize({width:900,height:640});
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+  const minimumBox=await page.getByRole("button",{name:"生成图像（仅桌面端）",exact:true}).boundingBox();
+  assert.ok(minimumBox&&minimumBox.y>=0&&minimumBox.y+minimumBox.height<=640,"Minimum PC window must retain a visible generate action");
   // Synthetic IPC only: exercise error UI without reading real credentials,
   // touching persistent data, or sending any NovelAI request.
   const mocked = await context.newPage(); mocked.on("pageerror", e => errors.push(e.message));
