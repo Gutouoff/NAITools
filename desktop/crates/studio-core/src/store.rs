@@ -7,14 +7,19 @@ pub struct TaskRecord { pub id:String, pub state:TaskState, pub kind:String, pub
 pub struct Store { db: Connection }
 impl Store {
     pub fn open(path: &Path) -> Result<Self, AppError> {
-        if let Some(parent) = path.parent() { std::fs::create_dir_all(parent).map_err(|_| AppError::storage())?; }
-        Self::initialize(Connection::open(path).map_err(|_| AppError::storage())?)
+        if let Some(parent) = path.parent() { std::fs::create_dir_all(parent).map_err(|e| AppError::storage_io(&e))?; }
+        // Open the same database without truncation so OS access errors are reported
+        // accurately instead of collapsed into SQLite CannotOpen. No alternate path,
+        // permission changes, journal deletion or silent in-memory fallback.
+        drop(std::fs::OpenOptions::new().read(true).write(true).create(true).truncate(false)
+            .open(path).map_err(|e| AppError::storage_io(&e))?);
+        Self::initialize(Connection::open(path).map_err(|e| AppError::storage_database(&e))?)
     }
     fn initialize(db: Connection) -> Result<Self, AppError> {
-        db.busy_timeout(Duration::from_secs(5)).map_err(|_| AppError::storage())?;
-        let version: i64 = db.pragma_query_value(None, "user_version", |row| row.get(0)).map_err(|_| AppError::storage())?;
+        db.busy_timeout(Duration::from_secs(5)).map_err(|e| AppError::storage_database(&e))?;
+        let version: i64 = db.pragma_query_value(None, "user_version", |row| row.get(0)).map_err(|e| AppError::storage_database(&e))?;
         if version > 4 { return Err(AppError::new("storage_version_unsupported", "数据库版本高于程序支持的版本；未修改数据。")); }
-        db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;").map_err(|_| AppError::storage())?;
+        db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;").map_err(|e| AppError::storage_database(&e))?;
         if version == 0 {
             db.execute_batch("BEGIN IMMEDIATE;
                 CREATE TABLE editor_draft (id INTEGER PRIMARY KEY CHECK(id=1), payload TEXT NOT NULL);
@@ -22,7 +27,7 @@ impl Store {
                 CREATE INDEX history_page ON history(created_at_ms DESC, id DESC);
                 CREATE TABLE task_journal (id TEXT PRIMARY KEY, state TEXT NOT NULL);
                 PRAGMA user_version=1;
-                COMMIT;").map_err(|_| AppError::storage())?;
+                COMMIT;").map_err(|e| AppError::storage_database(&e))?;
         }
         if version <= 1 {
             db.execute_batch("BEGIN IMMEDIATE;
@@ -32,21 +37,21 @@ impl Store {
                 ALTER TABLE task_journal ADD COLUMN acknowledged INTEGER NOT NULL DEFAULT 0;
                 ALTER TABLE task_journal ADD COLUMN error_code TEXT;
                 ALTER TABLE history ADD COLUMN request_json TEXT;
-                PRAGMA user_version=2; COMMIT;").map_err(|_| AppError::storage())?;
+                PRAGMA user_version=2; COMMIT;").map_err(|e| AppError::storage_database(&e))?;
         }
         if version <= 2 {
             db.execute_batch("BEGIN IMMEDIATE;
                 CREATE TABLE connections (id TEXT PRIMARY KEY, payload TEXT NOT NULL);
                 CREATE TABLE connection_revisions (id TEXT PRIMARY KEY, revision TEXT NOT NULL);
-                PRAGMA user_version=3; COMMIT;").map_err(|_| AppError::storage())?;
+                PRAGMA user_version=3; COMMIT;").map_err(|e| AppError::storage_database(&e))?;
         }
         if version <= 3 {
             db.execute_batch("BEGIN IMMEDIATE;
                 CREATE TABLE drawing_presets (id TEXT PRIMARY KEY, payload TEXT NOT NULL);
-                PRAGMA user_version=4; COMMIT;").map_err(|_| AppError::storage())?;
+                PRAGMA user_version=4; COMMIT;").map_err(|e| AppError::storage_database(&e))?;
         }
         let official = crate::connections::ConnectionProfile::official();
-        db.execute("INSERT OR IGNORE INTO connections(id,payload) VALUES(?1,?2)", params![official.id, serde_json::to_string(&official).map_err(|_|AppError::storage())?]).map_err(|_|AppError::storage())?;
+        db.execute("INSERT OR IGNORE INTO connections(id,payload) VALUES(?1,?2)", params![official.id, serde_json::to_string(&official).map_err(|_|AppError::storage())?]).map_err(|e|AppError::storage_database(&e))?;
         Ok(Self { db })
     }
     #[cfg(test)]
@@ -387,5 +392,19 @@ mod tests {
          s.db.execute(r#"INSERT INTO task_journal(id,state,payload,kind,created_at_ms,acknowledged) VALUES('pending','"submitting"','{}','generation',1,0)"#,[]).unwrap();}
         let s=Store::open(&path).unwrap();assert_eq!(s.load_draft().unwrap().prompt,"subject");assert!(s.has_unresolved().unwrap());
         assert_eq!(s.connections().unwrap().len(),1);assert!(s.drawing_presets().unwrap().is_empty());
+    }
+}
+
+#[cfg(test)]
+mod open_safety_tests {
+    use super::*;
+    #[test]
+    fn invalid_database_is_preserved_without_reset_or_fallback() {
+        let d = tempfile::tempdir().unwrap();
+        let path = d.path().join("studio.sqlite3");
+        let original = b"not a database; retain this data";
+        std::fs::write(&path, original).unwrap();
+        assert_eq!(Store::open(&path).err().unwrap().code, "storage_corrupt");
+        assert_eq!(std::fs::read(&path).unwrap(), original);
     }
 }

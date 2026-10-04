@@ -152,7 +152,8 @@ impl NaiService {
         std::fs::write(d.path().join("studio.sqlite3"),b"not sqlite").unwrap();
         let i=EncodeInput{connection_id:None,image_id:a.id,model:MODELS[0].into(),information_extracted:0.8,confirm_paid:true};
         let e=s.encode_with(i,|| -> Result<fn(&Value)->Result<Vec<u8>,AppError>,AppError>{panic!("storage failure must not read credentials or initialize transport")}).unwrap_err();
-        assert_eq!(e.code,"storage_unavailable");
+        assert_eq!(e.code,"storage_corrupt");
+        assert_eq!(std::fs::read(d.path().join("studio.sqlite3")).unwrap(), b"not sqlite");
     }
 
     use super::*;use std::io::{Cursor,Write};

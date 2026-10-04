@@ -24,11 +24,11 @@ pub fn path(root:&Path, folder:&str, id:&str, ext:&str)->Result<PathBuf,AppError
 }
 pub fn atomic_write(target:&Path, bytes:&[u8])->Result<(),AppError>{
     let parent=target.parent().ok_or_else(AppError::storage)?;
-    std::fs::create_dir_all(parent).map_err(|_|AppError::storage())?;
+    std::fs::create_dir_all(parent).map_err(|e|AppError::storage_io(&e))?;
     let tmp=parent.join(format!(".{}.tmp",uuid::Uuid::new_v4()));
-    let result=(||{let mut f=std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp).map_err(|_|AppError::storage())?;
-        f.write_all(bytes).and_then(|_|f.sync_all()).map_err(|_|AppError::storage())?;
-        std::fs::rename(&tmp,target).map_err(|_|AppError::storage())})();
+    let result=(||{let mut f=std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp).map_err(|e|AppError::storage_io(&e))?;
+        f.write_all(bytes).and_then(|_|f.sync_all()).map_err(|e|AppError::storage_io(&e))?;
+        std::fs::rename(&tmp,target).map_err(|e|AppError::storage_io(&e))})();
     if result.is_err(){let _=std::fs::remove_file(&tmp);}result
 }
 pub fn read_bounded(target:&Path, max:usize)->Result<Vec<u8>,AppError>{
