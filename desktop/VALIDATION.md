@@ -2,7 +2,30 @@
 
 更新：2026-10-04。以下以本机命令和真实 Windows 运行输出为准，区分“实现 / 本地测试 / 真实服务验收”。源码从新仓库原有 `f5ed6e8` 续接，不重写原作者或其他 agent 的提交历史。
 
-## 本轮通过
+## 本轮绘图增量（e2c5815 / 6bafcaf）
+
+| 检查 | 结果 |
+| --- | --- |
+| 前端 | 32/32 单元测试通过；TypeScript + Vite 生产构建通过 |
+| Rust workspace | 46/46 通过（宿主 3、core 23、IPC 集成 1、NAI 19） |
+| 预设安全与迁移 | 32 套上限、允许更新 / 拒绝超限新增、拒绝账号 / 凭据 / 收费状态字段；SQLite v3 → v4 保留草稿、账号和未知任务 |
+| 生产页面真实交互 | 1440 / 1101 / 900px 布局、栏宽与三类输入高度的指针 / 键盘调整、可选布局存储失败、最小 PC 窗口生成按钮可见，通过 |
+| 合成 IPC 回归 | 顶部配置切换与复制、空密钥、未保存更改禁用选用；预设保存 / 应用；尺寸 / Seed；底图导入、氛围拖放 / 粘贴；结果按钮缩放 / Ctrl+滚轮 / 指针平移 / Seed 复用 / 转底图，通过 |
+| 收费与外网 | 只在模拟 IPC 中返回一次合成结果，远程编码 0；外部 HTTP 0，真实付费调用 0，页面脚本错误 0 |
+| 新 release 原生 | WebView2 真实渲染、IPC 2 handshake、连接 / 预设 ACL 与无效输入校验、未确认生成拒绝、输入与分隔调整通过；5 秒后 IPC 仍响应 |
+| 原生存储 | **未通过**：工具环境的 Rust 写入诊断继续返回 Win32 5 / PermissionDenied，history 为 storage_unavailable；新 release 顶部连接读取也显示本地数据失败 |
+
+合成预览只使用本地纯色 PNG，不是真实 NovelAI / 中转生图。原生 smoke 允许“命令有权限，但数据目录不可用”的结果，不把它算作持久化验收。没有读取真实凭据、改 ACL、清 journal 或将收费任务切到空目录。
+
+### 当前构建产物
+
+- EXE：`D:\dsh\nai\desktop\target\release\naitools.exe`，**14,935,040 bytes**，2026-10-04 16:59:23 本机修改时间；已启用 `custom-protocol`，不依赖 Vite 服务器。文件大小不是进程内存。
+- 主 JS 229.63 kB（gzip 73.10 kB），CSS 15.30 kB（gzip 3.82 kB）；连接编辑器按需拆包 7.00 kB。没有新增运行时 UI 依赖。
+- 原生截图：`target/naitools-compact-native.png`，包含当前真实存储失败提示；合成交互截图：`target/drawing-tools-synthetic.png`、`target/connections-dialog-synthetic.png`。截图不含真实凭据或真实生成图。
+- 本轮调试启动单次 `rendererReadyHostMs=1802`，从 Rust main 到宿主收到渲染通知，含测试开销；未做重复冷 / 热启动与旧版对照，不是“启动固定 1.8 秒”或内存结论。
+- 测试自己的原生进程已关闭，9225 调试端口已关闭。功能入口见 DRAWING_FEATURES.md。
+
+## 前次连接与布局基线（8e52187）
 
 | 检查 | 结果 |
 | --- | --- |
@@ -21,7 +44,7 @@ Rust HTTP 测试使用本机 TCP mock server，不是 NovelAI。服务测试用�
 
 浏览器合成 IPC 只存在于测试 init script，不属于发行产品；它不能证明真实原生保存可用。原生 smoke 已修正为先回到工作台，避免对同一窗口重复执行时停留在「关于」而产生定位超时。
 
-## 当前产物
+## 前次连接与布局产物（8e52187）
 
 - 本机 EXE：`D:\dsh\nai\desktop\target\release\naitools.exe`，14,779,392 bytes；已启用 `custom-protocol`，不依赖 Vite 服务器。文件大小不是运行内存。
 - 主 JS 218.17 kB（gzip 69.75 kB），CSS 12.35 kB，设置页懒加载 9.09 kB；没有新增运行时 UI 依赖。
