@@ -2,7 +2,7 @@
 
 记录日期：2026-10-04。对照的是工作区内旧版 Langbai 实现，不是从第三方代码推断 NovelAI 官方协议。
 
-参考文件：旧版 `src/App.tsx`、`src/PositivePromptPresets.tsx`、`src/components/PreviewImageViewer.tsx`、`src/types.ts`、`src/LayeredPromptEditor.tsx`、`src/retained-prompts.ts`。新版只复用工作流概念，不导入 Electron / ML / 大型组件依赖。
+参考文件：旧版 `src/components/FilePicker.tsx`、`src/App.tsx`、`src/PositivePromptPresets.tsx`、`src/components/PreviewImageViewer.tsx`、`src/types.ts`、`src/LayeredPromptEditor.tsx`、`src/retained-prompts.ts`。新版只复用工作流概念，不导入 Electron / ML / 大型组件依赖。
 
 | 绘图工作流 | 新版入口和范围 |
 | --- | --- |
@@ -13,8 +13,8 @@
 | 提示词清空 | 按保留选项处理画师串及负向提示词，不更改采样参数、API 配置或参考图 |
 | 尺寸选择 | 竖图 / 横图 / 方图快捷项，含 512 方图和 2:3 / 3:2 预设；宽高交换与总像素提示 |
 | Seed 控制 | 随机 / 固定模式、数值输入；结果下方「复用 Seed」只改本地参数 |
-| 图生图 | 右侧默认展开，可选择 / 拖入 / 粘贴 PNG、JPEG、WebP 底图；重绘强度与噪声；结果「用作底图」不会生成新图 |
-| 氛围参考 | 右侧默认展开，支持多图拖放 / 粘贴；最多 4 个，提取量 / 强度 / 缓存查找 / 显式编码确认 |
+| 生成模式 / 图生图 | 文生图与图生图互斥；选图生图后右侧展示底图，支持选择 / 拖入 / 粘贴 PNG、JPEG、WebP；重绘强度与噪声；结果「用作底图」切换模式但不生成新图 |
+| 氛围参考 | 右侧默认展开，支持单一选择按钮、多图拖放 / 粘贴；本地解码缩略图、文件名、尺寸与保存状态；最多 4 个，提取量 / 强度 / 缓存查找 / 显式编码确认 |
 | 结果预览 | 放大 / 缩小、Ctrl+滚轮、放大后拖动平移、双击或按钮适应窗口；导出原始 PNG |
 | 历史复用 | 历史分页与请求恢复；恢复的连接若已删除，要求显式重新选择，不偷换默认账号 |
 | 布局调整 | 两条分隔条拖动 / 方向键 / 双击重置；画师串 / 原文 / 分层 / 负向提示词输入均有高度拖动条；窄 PC 窗口保持生成按钮可见 |
