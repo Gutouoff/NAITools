@@ -4,7 +4,7 @@ interface Props extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     initialHeight?: number;
     minHeight?: number;
 }
-export default function ResizableTextArea({ initialHeight = 240, minHeight = 110, ...props }: Props) {
+export default function ResizableTextArea({ initialHeight = 200, minHeight = 110, ...props }: Props) {
     const [height, setHeight] = useState(initialHeight);
     const drag = useRef<{
         y: number;

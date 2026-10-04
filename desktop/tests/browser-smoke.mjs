@@ -122,6 +122,13 @@ try {
         if(window.__SMOKE_CASE__ === "credentials-failed")throw {code:"credentials_unavailable",message:"测试：凭据读取失败。",retryable:false};
         return true;
       }
+      if(command === "drawing_presets_list") return window.__SMOKE_PRESETS__??[];
+      if(command === "drawing_preset_save"){window.__SMOKE_PRESETS__=[...(window.__SMOKE_PRESETS__??[]).filter(p=>p.id!==args.preset.id),args.preset];return;}
+      if(command === "drawing_preset_delete"){window.__SMOKE_PRESETS__=(window.__SMOKE_PRESETS__??[]).filter(p=>p.id!==args.id);return;}
+      if(command === "image_import"){window.__SMOKE_IMAGE_NUMBER__=(window.__SMOKE_IMAGE_NUMBER__??0)+1;return {id:"input-"+window.__SMOKE_IMAGE_NUMBER__,width:256,height:256,previewUrl:"data:image/png;base64,"+args.base64};}
+      if(command === "artifact_read")return window.__SMOKE_PNG__;
+      if(command === "artifact_export")return true;
+      if(command === "generation_submit"&&window.__SMOKE_ALLOW_RESULT__){window.__SMOKE_SUBMITTED__=args.input;return {taskId:"mock-task",artifactId:"mock-output",seed:42,imageUrl:"data:image/png;base64,"+window.__SMOKE_PNG__};}
       if(command === "task_list"){
         if(window.__SMOKE_CASE__ === "storage-failed")throw {code:"storage_unavailable",message:"测试：存储不可用。",retryable:false};
         if(window.__SMOKE_CASE__ === "unresolved")return [{id:"test-unknown",kind:"generation",state:"outcome_unknown",createdAtMs:1,acknowledged:false,errorCode:null}];
@@ -168,11 +175,84 @@ try {
   await mocked.getByText("凭据已保存；输入框已清空。", {exact:true}).waitFor();
   assert.equal(await mocked.getByLabel("API Key / Persistent API Token", {exact:true}).inputValue(), "");
   await mocked.getByRole("button", {name:"工作台", exact:true}).click();
-  await mocked.getByLabel("生成连接", {exact:true}).selectOption({label:"Synthetic relay"});
+  await mocked.getByLabel("生成连接", {exact:true}).selectOption({label:"Synthetic relay · 原生中转"});
   await mocked.getByRole("button", {name:"生成图像", exact:true}).click();
   await mocked.getByRole("dialog").getByText(/预计生成费 \$0.020/).waitFor();
   await mocked.getByRole("button", {name:"取消", exact:true}).click();
   assert.equal(await mocked.evaluate(()=>window.__SMOKE_CALLS__.filter(c=>c==="generation_submit"||c==="vibe_encode").length),0);
+  // Production UI interactions against explicit synthetic IPC only: no server requests or real credentials.
+  await mocked.getByRole("button",{name:"交换宽高",exact:true}).click();
+  assert.equal(await mocked.getByLabel("宽度（px）",{exact:true}).inputValue(),"1216");
+  await mocked.getByLabel("尺寸预设",{exact:true}).selectOption("小方图");
+  assert.equal(await mocked.getByLabel("宽度（px）",{exact:true}).inputValue(),"512");
+  await mocked.getByRole("button",{name:"固定 Seed",exact:true}).click();
+  assert.equal(await mocked.getByLabel("随机种子（Seed）",{exact:true}).inputValue(),"0");
+  await mocked.getByRole("button",{name:"随机 Seed",exact:true}).click();
+  assert.equal(await mocked.getByLabel("随机种子（Seed）",{exact:true}).inputValue(),"");
+  await mocked.locator(".drawing-presets > summary").click();
+  await mocked.getByLabel("新预设名称",{exact:true}).fill("Drawing smoke preset");
+  await mocked.getByRole("button",{name:"保存当前为预设",exact:true}).click();
+  await mocked.getByLabel("选择生图预设",{exact:true}).locator("option",{hasText:"Drawing smoke preset"}).waitFor({state:"attached"});
+  await mocked.getByLabel("正向提示词",{exact:true}).fill("changed prompt");
+  mocked.once("dialog",d=>d.accept());
+  await mocked.getByRole("button",{name:"应用预设",exact:true}).click();
+  assert.equal(await mocked.getByLabel("正向提示词",{exact:true}).inputValue(),"synthetic IPC smoke only");
+  assert.equal(await mocked.getByLabel("生成连接",{exact:true}).inputValue(),await mocked.evaluate(()=>window.__SMOKE_PROFILES__.find(p=>p.name==="Synthetic relay").id));
+  // Duplicate profile metadata in the current-config dialog; never duplicate a credential.
+  await mocked.getByRole("button",{name:"复制配置",exact:true}).click();
+  const editor=mocked.getByRole("dialog",{name:"管理生图连接",exact:true});
+  await editor.getByLabel("配置名称",{exact:true}).waitFor();
+  assert.equal(await editor.getByLabel("配置名称",{exact:true}).inputValue(),"Synthetic relay 副本");
+  assert.equal(await editor.getByLabel("API Key / Persistent API Token",{exact:true}).inputValue(),"");
+  assert.equal(await editor.getByRole("button",{name:"使用此配置",exact:true}).isEnabled(),false);
+  await editor.getByRole("button",{name:"保存配置",exact:true}).click();
+  await editor.getByText("连接配置已保存。密钥请在下方单独保存。",{exact:true}).waitFor();
+  await editor.getByRole("button",{name:"使用此配置",exact:true}).click();
+  assert.equal(await mocked.getByLabel("生成连接",{exact:true}).locator("option:checked").textContent(),"Synthetic relay 副本 · 原生中转");
+  assert.equal(await mocked.evaluate(()=>localStorage.getItem("naitools.activeConnection")),await mocked.getByLabel("生成连接",{exact:true}).inputValue());
+  const png=await mocked.evaluate(()=>{const canvas=document.createElement("canvas");canvas.width=canvas.height=256;const c=canvas.getContext("2d");c.fillStyle="#d4ebe4";c.fillRect(0,0,256,256);window.__SMOKE_PNG__=canvas.toDataURL("image/png").split(",")[1];return window.__SMOKE_PNG__;});
+  await mocked.getByLabel("导入图生图底图",{exact:true}).setInputFiles({name:"synthetic-source.png",mimeType:"image/png",buffer:Buffer.from(png,"base64")});
+  await mocked.getByAltText("图生图底图",{exact:true}).waitFor();
+  assert.equal(await mocked.getByLabel("启用图生图",{exact:true}).isChecked(),true);
+  await mocked.getByRole("group",{name:"添加参考图拖放与粘贴区",exact:true}).evaluate((zone,base64)=>{const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));const dt=new DataTransfer();dt.items.add(new File([bytes],"synthetic-vibe.png",{type:"image/png"}));zone.dispatchEvent(new DragEvent("drop",{bubbles:true,cancelable:true,dataTransfer:dt}));},png);
+  await mocked.getByAltText("氛围参考 1",{exact:true}).waitFor();
+  await mocked.getByRole("button",{name:"移除参考 1",exact:true}).click();
+  await mocked.getByRole("group",{name:"添加参考图拖放与粘贴区",exact:true}).evaluate((zone,base64)=>{const dt=new DataTransfer();dt.items.add(new File([Uint8Array.from(atob(base64),c=>c.charCodeAt(0))],"synthetic-paste.png",{type:"image/png"}));zone.dispatchEvent(new ClipboardEvent("paste",{bubbles:true,cancelable:true,clipboardData:dt}));},png);
+  await mocked.getByAltText("氛围参考 1",{exact:true}).waitFor();
+  await mocked.getByRole("button",{name:"移除参考 1",exact:true}).click();
+  await mocked.evaluate(()=>{window.__SMOKE_ALLOW_RESULT__=true;});
+  await mocked.getByRole("button",{name:"生成图像",exact:true}).click();
+  await mocked.getByRole("dialog").getByText(/连接：Synthetic relay 副本/).waitFor();
+  await mocked.getByRole("button",{name:"确认并提交一次",exact:true}).click();
+  await mocked.getByAltText("NovelAI 生成结果",{exact:true}).waitFor();
+  assert.equal(await mocked.evaluate(()=>window.__SMOKE_SUBMITTED__.connectionId),await mocked.getByLabel("生成连接",{exact:true}).inputValue());
+  await mocked.getByRole("button",{name:"放大预览",exact:true}).click();
+  await mocked.getByText("125%",{exact:true}).waitFor();
+  const stage=mocked.locator(".image-stage");
+  const stageBox=await stage.boundingBox();assert.ok(stageBox);
+  await mocked.mouse.move(stageBox.x+stageBox.width/2,stageBox.y+stageBox.height/2);
+  await mocked.keyboard.down("Control");await mocked.mouse.wheel(0,-120);await mocked.keyboard.up("Control");
+  await mocked.getByText("138%",{exact:true}).waitFor();
+  await mocked.mouse.down();await mocked.mouse.move(stageBox.x+stageBox.width/2+30,stageBox.y+stageBox.height/2+20);await mocked.mouse.up();
+  assert.ok((await mocked.getByAltText("NovelAI 生成结果",{exact:true}).getAttribute("style")).includes("translate(30px, 20px)"));
+  await mocked.getByRole("button",{name:"适应窗口",exact:true}).click();
+  await mocked.getByRole("button",{name:"复用 Seed",exact:true}).click();
+  assert.equal(await mocked.getByLabel("随机种子（Seed）",{exact:true}).inputValue(),"42");
+  await mocked.getByRole("button",{name:"用作底图",exact:true}).click();
+  await mocked.getByText("已将生成结果导入为图生图底图，尚未发送新请求。",{exact:true}).waitFor();
+  assert.equal(await mocked.evaluate(()=>window.__SMOKE_CALLS__.filter(c=>c==="generation_submit").length),1);
+  assert.equal(await mocked.evaluate(()=>window.__SMOKE_CALLS__.filter(c=>c==="vibe_encode").length),0);
+  await mocked.locator(".drawing-presets > summary").click();
+  await mocked.locator(".controls-column").evaluate(node=>{node.scrollTop=0;});
+  if(process.env.DRAWING_SMOKE_SCREENSHOT)await mocked.screenshot({path:process.env.DRAWING_SMOKE_SCREENSHOT,fullPage:true});
+  await mocked.getByRole("button",{name:"编辑配置",exact:true}).click();
+  await mocked.getByRole("dialog",{name:"管理生图连接",exact:true}).getByLabel("配置名称",{exact:true}).waitFor();
+  await mocked.getByRole("dialog").getByLabel("配置名称",{exact:true}).fill("Unsaved name");
+  assert.equal(await mocked.getByRole("button",{name:"使用此配置",exact:true}).isEnabled(),false);
+  await mocked.getByRole("dialog").getByLabel("配置名称",{exact:true}).fill("Synthetic relay 副本");
+  assert.equal(await mocked.getByRole("button",{name:"使用此配置",exact:true}).isEnabled(),true);
+  if(process.env.CONNECTION_SMOKE_SCREENSHOT)await mocked.screenshot({path:process.env.CONNECTION_SMOKE_SCREENSHOT,fullPage:true});
+  await mocked.getByRole("dialog").getByRole("button",{name:"关闭",exact:true}).click();
   await mocked.close();
   const deniedLayout = await context.newPage();
   deniedLayout.on("pageerror", e=>errors.push(e.message));
@@ -184,5 +264,8 @@ try {
   await deniedLayout.getByLabel("正向提示词", {exact:true}).fill("layout preferences are optional");
   await deniedLayout.close();
   assert.deepEqual(external, []); assert.deepEqual(errors, []);
-  console.log("PASS: pointer/keyboard column and raw/layered/negative textarea resize, optional layout storage, 1440/1101/900px layouts, multi-profile editing and synthetic IPC failure/confirmation handling; no external HTTP requests or page errors.");
+  console.log("PASS: pointer/keyboard column and raw/layered/negative textarea resize, optional layout storage, 1440/1101/900px layouts, multi-profile switching/duplicate editor, drawing presets, resolution/seed controls, source import, atmosphere drop/paste and result viewer with synthetic IPC; no external HTTP requests or page errors.");
+} catch(error) {
+  for(const p of context.pages()) console.error("SMOKE failure state:",await p.evaluate(()=>({alerts:Array.from(document.querySelectorAll('[role="alert"]')).map(n=>n.textContent),calls:window.__SMOKE_CALLS__,presets:window.__SMOKE_PRESETS__})).catch(()=>null));
+  throw error;
 } finally { await context.close(); await browser.close(); }

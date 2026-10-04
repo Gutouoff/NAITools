@@ -25,6 +25,23 @@ try{
   });
   assert.ok(metadata.shape || metadata.errorCode === "storage_unavailable", "Connection IPC must be permitted, even if storage is unavailable");
   if(metadata.shape)assert.equal(metadata.secretRequested,false);
+  const presetRead = await page.evaluate(async()=> {
+    try {return {shape:Array.isArray(await window.__TAURI_INTERNALS__.invoke("drawing_presets_list"))};}
+    catch(e){return {errorCode:e.code};}
+  });
+  assert.ok(presetRead.shape || presetRead.errorCode === "storage_unavailable", "Preset listing IPC must have native permission");
+  const invalidPreset = await page.evaluate(async()=> {
+    const preset={id:"validation-only",name:"",draft:{prompt:"local-only",negativePrompt:"",promptDocument:null},model:"nai-diffusion-4-5-full",width:512,height:512,steps:1,guidance:5,sampler:"k_euler",seed:null,strength:0.7,noise:0};
+    try {await window.__TAURI_INTERNALS__.invoke("drawing_preset_save",{preset});return null;}
+    catch(e){return e.code;}
+  });
+  assert.equal(invalidPreset,"invalid_input");
+  const invalidDelete = await page.evaluate(async()=> {
+    try {await window.__TAURI_INTERNALS__.invoke("drawing_preset_delete",{id:"../../invalid"});return null;}
+    catch(e){return e.code;}
+  });
+  // Opening the store can fail before delete validation; neither outcome deletes user data.
+  assert.ok(["invalid_input","storage_unavailable"].includes(invalidDelete));
   const invalidProfile = {id:"invalid-test",name:"validation-only",kind:"official",baseUrl:"https://wrong.example",generationPath:"/ai/generate-image",encodePath:"/ai/encode-vibe",generationUsd:null,encodingUsd:null};
   const profileError = await page.evaluate(async profile=>{try{await window.__TAURI_INTERNALS__.invoke("connection_save",{profile});return null;}catch(e){return e.code;}},invalidProfile);
   assert.equal(profileError,"connection_invalid");
@@ -64,5 +81,5 @@ try{
   await page.waitForTimeout(5000);
   assert.equal((await page.evaluate(()=>window.__TAURI_INTERNALS__.invoke("desktop_bootstrap"))).runtime,"tauri");
   assert.deepEqual(errors,[]);
-  console.log("PASS: release WebView2 render, IPC 2 native handshake, local prompt/resize editing, connection ACL/validation and unconfirmed-generation rejection. No credential reads or paid submissions; not a performance benchmark.");
+  console.log("PASS: release WebView2 render, IPC 2 native handshake, local prompt/resize editing, connection/preset ACL and validation and unconfirmed-generation rejection. No credential reads or paid submissions; not a performance benchmark.");
 }finally{await browser.close();}
