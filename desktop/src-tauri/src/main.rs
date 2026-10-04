@@ -3,6 +3,7 @@ use std::{sync::{Arc,Mutex},time::Instant};
 use serde::Serialize;
 use tauri::{Manager,State,WebviewWindowBuilder};
 mod startup;
+mod langbai;
 use studio_core::{contract::{self,NaiContractStatus},dto::*,error::AppError,generation::GenerationInput,store::TaskRecord};
 use studio_nai::{NaiService,GenerationResult,EncodeInput,assets::{ImageAsset,VibeAsset}};
 struct Runtime {started:Instant,renderer_ready:Mutex<Option<u64>>,service:NaiService}
@@ -69,7 +70,7 @@ fn main(){let started=Instant::now();let result=tauri::Builder::default().setup(
     }
     Ok(())
 })
-.invoke_handler(tauri::generate_handler![desktop_bootstrap,desktop_mark_ready,draft_load,draft_save,history_list,history_request,generation_submit,credentials_status,credentials_set,credentials_delete,image_import,vibe_encode,artifact_read,artifact_metadata,artifact_export,task_list,task_acknowledge,connections_list,connection_save,connection_delete,connection_token_set,connection_token_delete,drawing_presets_list,drawing_preset_save,drawing_preset_delete])
+.invoke_handler(tauri::generate_handler![langbai::langbai_settings_get,langbai::langbai_setting_set,langbai::langbai_window_action,desktop_bootstrap,desktop_mark_ready,draft_load,draft_save,history_list,history_request,generation_submit,credentials_status,credentials_set,credentials_delete,image_import,vibe_encode,artifact_read,artifact_metadata,artifact_export,task_list,task_acknowledge,connections_list,connection_save,connection_delete,connection_token_set,connection_token_delete,drawing_presets_list,drawing_preset_save,drawing_preset_delete])
 .run(tauri::generate_context!());
     if let Err(error) = result {
         startup::report_failure(&error.to_string());

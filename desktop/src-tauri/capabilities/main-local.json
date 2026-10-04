@@ -31,6 +31,9 @@
     "allow-connection-token-delete",
     "allow-drawing-presets-list",
     "allow-drawing-preset-save",
-    "allow-drawing-preset-delete"
+    "allow-drawing-preset-delete",
+    "allow-langbai-settings-get",
+    "allow-langbai-setting-set",
+    "allow-langbai-window-action"
   ]
 }

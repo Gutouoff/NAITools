@@ -4,7 +4,7 @@
   "sourceVersion": "2.4.4",
   "sourceRepository": "git+https://github.com/2786886095/novelai-image-desktop.git",
   "sourceKind": "existing-local-checkout",
-  "capturedOn": "2026-10-05",
+  "capturedOn": "2026-10-04",
   "scope": "all non-test frontend sources, runtime shared JSON, shipped public assets",
   "backendCopied": false,
   "records": [

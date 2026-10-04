@@ -15,7 +15,15 @@
     "preview": "vite preview --host 127.0.0.1 --port 1420 --strictPort",
     "test:browser": "node tests/browser-smoke.mjs",
     "inventory:langbai": "node scripts/langbai-inventory.mjs",
-    "check:langbai-source": "node scripts/langbai-inventory.mjs --check && node --experimental-strip-types --test tests/langbai-source.test.ts"
+    "check:langbai-source": "node scripts/langbai-inventory.mjs --check && node scripts/langbai-defaults.mjs --check && node --experimental-strip-types --test tests/langbai-source.test.ts",
+    "defaults:langbai": "node scripts/langbai-defaults.mjs",
+    "dev:langbai": "vite --config vite.langbai.config.ts",
+    "typecheck:langbai": "tsc --noEmit -p tsconfig.langbai.json",
+    "build:langbai": "npm run typecheck:langbai && vite build --config vite.langbai.config.ts",
+    "preview:langbai": "vite preview --config vite.langbai.config.ts",
+    "desktop:dev:langbai": "tauri dev --config src-tauri/tauri.langbai.conf.json",
+    "desktop:build:langbai": "tauri build --debug --no-bundle --config src-tauri/tauri.langbai.conf.json",
+    "test:browser:langbai": "node tests/langbai-browser-smoke.mjs"
   },
   "dependencies": {
     "@tanstack/react-virtual": "3.14.10",

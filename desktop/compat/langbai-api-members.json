@@ -1,0 +1,1222 @@
+[
+  {
+    "name": "favoritesStatus",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "favoritesList",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "favoritesAdd",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "favoritesRename",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "favoritesRemove",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "favoritesChooseDirectory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onFavoritesChanged",
+    "optional": false,
+    "kind": "subscription"
+  },
+  {
+    "name": "onStudioAgentRequest",
+    "optional": true,
+    "kind": "subscription"
+  },
+  {
+    "name": "replyStudioAgent",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "commitStudioSetting",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessSetAutoPluginUpdates",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessCheckPluginUpdates",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessSnapshot",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessStart",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessStop",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessPlanDownload",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessUninstall",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessPrepareUpdate",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessApplyPreparedUpdate",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessCheckUpdates",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessUpdate",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessOpenBackups",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "harnessRestoreBackup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "platform",
+    "optional": false,
+    "kind": "property"
+  },
+  {
+    "name": "getResourceDatabaseOverview",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "downloadResourceDatabase",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "pauseResourceDatabaseDownload",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "restorePreviousResourceDatabase",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "openResourceDatabaseDirectory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "clearResourceQueryCache",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "relatedResourceTags",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onResourceDatabaseProgress",
+    "optional": false,
+    "kind": "subscription"
+  },
+  {
+    "name": "listPortableRecoveries",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "openPortableRecovery",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "activatePortableRecovery",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "exportDataBackup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "inspectDataBackup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "importDataBackup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getDataBackupStatus",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "runAutomaticBackup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "selectBackupDirectory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "openBackupDirectory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getAgentWorkspace",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "saveTavernWorkspace",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "createAgentConversation",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "selectAgentConversation",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "renameAgentConversation",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteAgentConversation",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "importAgentFiles",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteAgentAttachment",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onImageSaveFeedback",
+    "optional": false,
+    "kind": "subscription"
+  },
+  {
+    "name": "dismissImageSaveFeedback",
+    "optional": false,
+    "kind": "sync"
+  },
+  {
+    "name": "exportAgentAttachment",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "sendAgentMessage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "generateTavernImage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "importTavernCards",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "exportTavernCard",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "importTavernVisualAsset",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "abortAgentMessage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "compactAgentConversation",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "respondAgentPermission",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "upsertAgentSkill",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteAgentSkill",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "upsertAgentMemory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteAgentMemory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getAgentRuntimeStatus",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getAgentPendingPermissions",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "restartAgentRuntime",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "discoverAgentModels",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getAgentWorkspaceLocation",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "openAgentWorkspaceDirectory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onAgentEvent",
+    "optional": false,
+    "kind": "subscription"
+  },
+  {
+    "name": "promptCodexCache",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "promptCodexBundled",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "promptCodexUpdate",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "importStylePromptPresetImages",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "importStylePromptPresetImagePaths",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "reconcileStylePromptPresetImages",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteStylePromptPresetImage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteStylePromptPresetImages",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "listReferencePresets",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "saveReferencePreset",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "readReferencePreset",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteReferencePreset",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "createReferencePresetGroup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteReferencePresetGroup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "moveReferencePresetToGroup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "importReferencePresets",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "exportReferencePresets",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "downloadReferenceCatalogAsset",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onReferenceCatalogDownloadProgress",
+    "optional": false,
+    "kind": "subscription"
+  },
+  {
+    "name": "artistDetectiveStatus",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveDownloadStatus",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveDownloadStart",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveDownloadVariant",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveDownloadCancel",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveDownloadDirectory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveConfigure",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveStart",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveStop",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveOpenResults",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveVerifyRuntime",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveSelectModel",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistDetectiveClearResults",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabPickTarget",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabSearchArtists",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabPopularArtists",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabPopularArtistPool",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabAllArtists",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabCatalogSelect",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabCatalogUpdate",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabCatalogCancel",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabSelectedArtists",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabArtistTotal",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabCancelArtistSync",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onArtistPoolSyncProgress",
+    "optional": false,
+    "kind": "subscription"
+  },
+  {
+    "name": "artistLabArtistRanking",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabScoreImages",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabModelStatus",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabDiscoverSimilar",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabClearModels",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabStylePreview",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabStylePreviewPage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "aitagConfig",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "aitagSearch",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "aitagSearchFresh",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "aitagSnapshot",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "aitagWork",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "aitagPrewarm",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "aitagClearDataCache",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "aitagCacheImage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "aitagCacheStats",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "aitagClearCache",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onlineGallerySearch",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onlineGalleryDetail",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "downloadOnlineGalleryImages",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "selectOnlineGalleryDownloadDir",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onlineGalleryClearDataCache",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onlineGalleryCacheImage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "hasToken",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "accountCached",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "storedToken",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "verifyToken",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "clearToken",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "quoteAnlas",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "generate",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "generateCompatible",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "saveCompatibleImageSettings",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "setCompatibleImageProvider",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onImageServiceChanged",
+    "optional": false,
+    "kind": "subscription"
+  },
+  {
+    "name": "onGenerationPreview",
+    "optional": false,
+    "kind": "subscription"
+  },
+  {
+    "name": "generateArtistLab",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabPromoteFavorite",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabListPromotedFavorites",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabLoadFavoriteLibrary",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabSaveFavoriteCollection",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabDeleteTemporary",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistLabClearTemporary",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "generateI2I",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "redrawImage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "batchRedrawPrepare",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "batchRedrawCancel",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "inpaint",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "upscaleImage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "augmentImage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "cancel",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "readClipboardImageFiles",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "savePastedImageFiles",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "loadImage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "loadImageFromPath",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "saveMetadataSnapshot",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "saveMetadataSnapshotFromPath",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "readMetadataSnapshotFromPath",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "loadMetadataSnapshot",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getPathForFile",
+    "optional": false,
+    "kind": "sync"
+  },
+  {
+    "name": "clearWorkbenchImage",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getHistory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getHistoryDates",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getHistoryGroups",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "createHistoryGroup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "renameHistoryGroup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteHistoryGroup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "exportHistoryGroup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "exportFiles",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "setHistoryGroup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteHistory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "pruneMissingHistoryItem",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "renameHistoryItem",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "openInExplorer",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "startImageDrag",
+    "optional": false,
+    "kind": "sync"
+  },
+  {
+    "name": "selectOutputDir",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getSetting",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "setSetting",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getSettings",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "isFirstRun",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "completeSetup",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "reversePrompt",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "convertPrompt",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getConvertHistory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "addConvertHistoryItem",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteConvertHistoryItem",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "clearConvertHistory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getReverseHistory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "addReverseHistoryItem",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "deleteReverseHistoryItem",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "clearReverseHistory",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "pruneMissingReverseHistoryItem",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "comicConvertPanels",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "comicCheckConsistency",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "comicReverseAsset",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "comicGeneratePanel",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "tagComicPrepareImageService",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "tagComicGenerateCandidate",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "tagComicCancelGeneration",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "tagComicImportReference",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "tagComicDeleteReference",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "tagComicExportSelectedZip",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getAiCallLog",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "clearAiCallLog",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getReverseTemplateDefaults",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "listAiModels",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "testTagServer",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "suggestTags",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "searchTagServer",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "danbooruStatus",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "downloadDanbooru",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "danbooruBrowse",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "danbooruSearch",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "artistStyleCatalog",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "translate",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "checkUpdate",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "isPortable",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "downloadUpdate",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "installUpdate",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "onUpdateEvent",
+    "optional": false,
+    "kind": "subscription"
+  },
+  {
+    "name": "minimize",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "maximize",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "close",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "openExternal",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "getLogInfo",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "selectLogDir",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "openLogFile",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "openLogDir",
+    "optional": false,
+    "kind": "promise"
+  },
+  {
+    "name": "readLog",
+    "optional": false,
+    "kind": "promise"
+  }
+]

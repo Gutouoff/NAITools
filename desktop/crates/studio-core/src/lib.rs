@@ -9,3 +9,5 @@ pub mod prompt;
 pub mod connections;
 
 pub mod presets;
+
+pub mod langbai_settings;

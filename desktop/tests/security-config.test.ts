@@ -14,7 +14,7 @@ test("only local main webview receives narrow application command permissions", 
   assert.deepEqual(config.app.security.capabilities, ["main-local"]);
   assert.deepEqual(capability.windows, ["main"]); assert.equal(capability.local, true);
   assert.equal(capability.remote, undefined);
-  assert.deepEqual(capability.permissions, ["allow-desktop-bootstrap", "allow-desktop-mark-ready", "allow-draft-load", "allow-draft-save", "allow-history-list", "allow-history-request", "allow-generation-submit", "allow-credentials-status", "allow-credentials-set", "allow-credentials-delete", "allow-image-import", "allow-vibe-encode", "allow-artifact-read", "allow-artifact-metadata", "allow-artifact-export", "allow-task-list", "allow-task-acknowledge", "allow-connections-list", "allow-connection-save", "allow-connection-delete", "allow-connection-token-set", "allow-connection-token-delete", "allow-drawing-presets-list", "allow-drawing-preset-save", "allow-drawing-preset-delete"]);
+  assert.deepEqual(capability.permissions, ["allow-desktop-bootstrap", "allow-desktop-mark-ready", "allow-draft-load", "allow-draft-save", "allow-history-list", "allow-history-request", "allow-generation-submit", "allow-credentials-status", "allow-credentials-set", "allow-credentials-delete", "allow-image-import", "allow-vibe-encode", "allow-artifact-read", "allow-artifact-metadata", "allow-artifact-export", "allow-task-list", "allow-task-acknowledge", "allow-connections-list", "allow-connection-save", "allow-connection-delete", "allow-connection-token-set", "allow-connection-token-delete", "allow-drawing-presets-list", "allow-drawing-preset-save", "allow-drawing-preset-delete", "allow-langbai-settings-get", "allow-langbai-setting-set", "allow-langbai-window-action"]);
   // Registration must opt into AppManifest ACLs, not rely on default global command access.
   assert.ok(read("src-tauri/build.rs").includes("AppManifest::new().commands"));
 });
@@ -48,9 +48,9 @@ test("observed native subset is attributed without claiming real paid acceptance
   assert.ok(read("crates/studio-nai/src/credentials.rs").includes("keyring"));
   assert.ok(evidence.legacyEvidence.every((s: { classification: string }) => s.classification === "existing_implementation_only"));
 });
-test("new UI does not pull in Electron, Python, ML runtimes or legacy app", () => {
+test("PC builds reuse renderer-only dependencies without Electron, Python or ML runtimes", () => {
   const pkg = JSON.parse(read("package.json"));
-  assert.deepEqual(Object.keys(pkg.dependencies).sort(), ["@tauri-apps/api", "react", "react-dom"]);
+  assert.deepEqual(Object.keys(pkg.dependencies).sort(), ["@tanstack/react-virtual", "@tauri-apps/api", "clsx", "date-fns", "react", "react-dom", "react-icons", "react-markdown", "rehype-sanitize", "remark-gfm", "zustand"]);
   const coreCargo = read("crates/studio-core/Cargo.toml");
   assert.ok(!coreCargo.includes("reqwest")); assert.ok(!coreCargo.includes("ureq"));
 });
@@ -92,3 +92,12 @@ test("local secrets and durable runtime data are excluded from source publicatio
   for(const entry of [".env",".env.*","*.sqlite3","*.sqlite3-*","*.db","/outputs/","/vibes/","/assets/","target/","node_modules/"])assert.ok(ignore.split(/\r?\n/).includes(entry),`Missing ignore: ${entry}`);
 });
 
+
+test("Langbai staging keeps IPC local and allows only local resource reads", () => {
+ const stage=JSON.parse(read("src-tauri/tauri.langbai.conf.json"));
+ assert.equal(stage.build.frontendDist,"../dist-langbai");
+ assert.equal(stage.app.windows[0].label,"main"); assert.equal(stage.app.windows[0].decorations,false);
+ assert.ok(!stage.app.security.csp.includes("https:")); assert.ok(!stage.app.security.csp.includes("unsafe-eval"));
+ assert.ok(stage.app.security.csp.includes("connect-src 'self' data: blob: ipc: http://ipc.localhost"));
+ assert.ok(!read("compat/main.ts").includes("localStorage"));
+});

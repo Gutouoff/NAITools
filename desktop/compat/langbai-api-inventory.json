@@ -19,7 +19,7 @@
   ],
   "dynamicAccess": [
     {
-      "file": "src\\HarnessPage.tsx",
+      "file": "src/HarnessPage.tsx",
       "expression": "window.naiDesktop[`harness${kind}`]"
     }
   ],
@@ -890,20 +890,20 @@
           "line": 1935
         },
         {
-          "file": "src/components/FavoriteStyleExport.tsx",
-          "line": 25
-        },
-        {
           "file": "src/PositivePromptPresets.tsx",
           "line": 360
         },
         {
-          "file": "src/style-library-client.ts",
-          "line": 14
-        },
-        {
           "file": "src/StyleLibrary.tsx",
           "line": 42
+        },
+        {
+          "file": "src/components/FavoriteStyleExport.tsx",
+          "line": 25
+        },
+        {
+          "file": "src/style-library-client.ts",
+          "line": 14
         }
       ]
     },
@@ -987,16 +987,8 @@
           "line": 1843
         },
         {
-          "file": "src/components/FavoriteStyleExport.tsx",
-          "line": 31
-        },
-        {
           "file": "src/PositivePromptPresets.tsx",
           "line": 320
-        },
-        {
-          "file": "src/style-library-client.ts",
-          "line": 18
         },
         {
           "file": "src/StyleLibrary.tsx",
@@ -1005,6 +997,14 @@
         {
           "file": "src/StyleLibrary.tsx",
           "line": 57
+        },
+        {
+          "file": "src/components/FavoriteStyleExport.tsx",
+          "line": 31
+        },
+        {
+          "file": "src/style-library-client.ts",
+          "line": 18
         }
       ]
     },
@@ -2043,12 +2043,12 @@
           "line": 1566
         },
         {
-          "file": "src/store.ts",
-          "line": 2859
-        },
-        {
           "file": "src/V5ArtistWeightRepair.tsx",
           "line": 1014
+        },
+        {
+          "file": "src/store.ts",
+          "line": 2859
         }
       ]
     },
@@ -2136,16 +2136,16 @@
       "signature": "readMetadataSnapshotFromPath: (filePath: string) => Promise<MetadataSnapshotResult>;",
       "uses": [
         {
+          "file": "src/MetadataInspector.tsx",
+          "line": 630
+        },
+        {
           "file": "src/components/InpaintPromptSource.tsx",
           "line": 16
         },
         {
           "file": "src/components/WorksLibrary.tsx",
           "line": 67
-        },
-        {
-          "file": "src/MetadataInspector.tsx",
-          "line": 630
         }
       ]
     },
@@ -2174,6 +2174,10 @@
           "line": 4026
         },
         {
+          "file": "src/StyleLibrary.tsx",
+          "line": 42
+        },
+        {
           "file": "src/comic/TagComicGenerator.tsx",
           "line": 1046
         },
@@ -2184,10 +2188,6 @@
         {
           "file": "src/drag-drop.ts",
           "line": 24
-        },
-        {
-          "file": "src/StyleLibrary.tsx",
-          "line": 42
         }
       ]
     },
@@ -2208,6 +2208,10 @@
       "signature": "getHistory: (date?: string, groupId?: string) => Promise<HistoryItem[]>;",
       "uses": [
         {
+          "file": "src/MetadataInspector.tsx",
+          "line": 606
+        },
+        {
           "file": "src/components/HistoryImagePicker.tsx",
           "line": 12
         },
@@ -2218,10 +2222,6 @@
         {
           "file": "src/components/WorksLibrary.tsx",
           "line": 28
-        },
-        {
-          "file": "src/MetadataInspector.tsx",
-          "line": 606
         },
         {
           "file": "src/store.ts",
@@ -2262,12 +2262,12 @@
       "signature": "getHistoryGroups: () => Promise<HistoryGroup[]>;",
       "uses": [
         {
-          "file": "src/components/WorksLibrary.tsx",
-          "line": 28
-        },
-        {
           "file": "src/MetadataInspector.tsx",
           "line": 607
+        },
+        {
+          "file": "src/components/WorksLibrary.tsx",
+          "line": 28
         },
         {
           "file": "src/store.ts",
@@ -2400,16 +2400,16 @@
           "line": 1797
         },
         {
-          "file": "src/app/AppChrome.tsx",
-          "line": 89
-        },
-        {
           "file": "src/App.tsx",
           "line": 5962
         },
         {
           "file": "src/App.tsx",
           "line": 5974
+        },
+        {
+          "file": "src/app/AppChrome.tsx",
+          "line": 89
         },
         {
           "file": "src/components/ImageSaveFeedback.tsx",
@@ -2497,10 +2497,6 @@
         {
           "file": "src/AgentPage.tsx",
           "line": 2401
-        },
-        {
-          "file": "src/app/AppChrome.tsx",
-          "line": 62
         },
         {
           "file": "src/App.tsx",
@@ -2623,6 +2619,26 @@
           "line": 6766
         },
         {
+          "file": "src/PositivePromptPresets.tsx",
+          "line": 206
+        },
+        {
+          "file": "src/PromptChunks.tsx",
+          "line": 113
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 48
+        },
+        {
+          "file": "src/StyleLibrary.tsx",
+          "line": 48
+        },
+        {
+          "file": "src/app/AppChrome.tsx",
+          "line": 62
+        },
+        {
           "file": "src/components/CharacterPresetControls.tsx",
           "line": 20
         },
@@ -2641,14 +2657,6 @@
         {
           "file": "src/components/StorageDirectoryInput.tsx",
           "line": 13
-        },
-        {
-          "file": "src/PositivePromptPresets.tsx",
-          "line": 206
-        },
-        {
-          "file": "src/PromptChunks.tsx",
-          "line": 113
         },
         {
           "file": "src/store.ts",
@@ -2677,14 +2685,6 @@
         {
           "file": "src/style-library-client.ts",
           "line": 8
-        },
-        {
-          "file": "src/StyleLibrary.tsx",
-          "line": 48
-        },
-        {
-          "file": "src/StyleLibrary.tsx",
-          "line": 48
         }
       ]
     },
@@ -2755,12 +2755,12 @@
           "line": 1012
         },
         {
-          "file": "src/components/InpaintPromptSource.tsx",
-          "line": 18
-        },
-        {
           "file": "src/DetectiveArtistLab.tsx",
           "line": 98
+        },
+        {
+          "file": "src/components/InpaintPromptSource.tsx",
+          "line": 18
         },
         {
           "file": "src/store.ts",
@@ -3100,16 +3100,16 @@
           "line": 868
         },
         {
-          "file": "src/tavern/StyleTagPicker.tsx",
-          "line": 32
-        },
-        {
           "file": "src/V5ArtistWeightRepair.tsx",
           "line": 473
         },
         {
           "file": "src/V5ArtistWeightRepair.tsx",
           "line": 553
+        },
+        {
+          "file": "src/tavern/StyleTagPicker.tsx",
+          "line": 32
         }
       ]
     },
@@ -3254,10 +3254,6 @@
           "line": 1707
         },
         {
-          "file": "src/app/AppChrome.tsx",
-          "line": 96
-        },
-        {
           "file": "src/App.tsx",
           "line": 5289
         },
@@ -3274,16 +3270,8 @@
           "line": 6834
         },
         {
-          "file": "src/components/GalleryFavorites.tsx",
-          "line": 43
-        },
-        {
           "file": "src/DetectiveArtistLab.tsx",
           "line": 151
-        },
-        {
-          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
-          "line": 129
         },
         {
           "file": "src/PromptCodex.tsx",
@@ -3292,6 +3280,18 @@
         {
           "file": "src/PromptCodex.tsx",
           "line": 447
+        },
+        {
+          "file": "src/app/AppChrome.tsx",
+          "line": 96
+        },
+        {
+          "file": "src/components/GalleryFavorites.tsx",
+          "line": 43
+        },
+        {
+          "file": "src/features/settings/ResourceDatabaseSettings.tsx",
+          "line": 129
         }
       ]
     },

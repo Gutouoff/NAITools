@@ -18,7 +18,7 @@ impl Store {
     fn initialize(db: Connection) -> Result<Self, AppError> {
         db.busy_timeout(Duration::from_secs(5)).map_err(|e| AppError::storage_database(&e))?;
         let version: i64 = db.pragma_query_value(None, "user_version", |row| row.get(0)).map_err(|e| AppError::storage_database(&e))?;
-        if version > 4 { return Err(AppError::new("storage_version_unsupported", "数据库版本高于程序支持的版本；未修改数据。")); }
+        if version > 5 { return Err(AppError::new("storage_version_unsupported", "数据库版本高于程序支持的版本；未修改数据。")); }
         db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;").map_err(|e| AppError::storage_database(&e))?;
         if version == 0 {
             db.execute_batch("BEGIN IMMEDIATE;
@@ -50,12 +50,43 @@ impl Store {
                 CREATE TABLE drawing_presets (id TEXT PRIMARY KEY, payload TEXT NOT NULL);
                 PRAGMA user_version=4; COMMIT;").map_err(|e| AppError::storage_database(&e))?;
         }
+        if version <= 4 {
+            db.execute_batch("BEGIN IMMEDIATE;
+                CREATE TABLE langbai_settings (key TEXT PRIMARY KEY, payload TEXT NOT NULL);
+                PRAGMA user_version=5; COMMIT;").map_err(|e| AppError::storage_database(&e))?;
+        }
         let official = crate::connections::ConnectionProfile::official();
         db.execute("INSERT OR IGNORE INTO connections(id,payload) VALUES(?1,?2)", params![official.id, serde_json::to_string(&official).map_err(|_|AppError::storage())?]).map_err(|e|AppError::storage_database(&e))?;
         Ok(Self { db })
     }
     #[cfg(test)]
     fn memory() -> Self { Self::initialize(Connection::open_in_memory().unwrap()).unwrap() }
+    pub fn langbai_settings(&self) -> Result<serde_json::Value, AppError> {
+        let mut result = crate::langbai_settings::defaults()?;
+        let mut statement = self.db.prepare("SELECT key,payload FROM langbai_settings ORDER BY key")
+            .map_err(|error| AppError::storage_database(&error))?;
+        let rows = statement.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        }).map_err(|error| AppError::storage_database(&error))?;
+        for row in rows {
+            let (key, payload) = row.map_err(|error| AppError::storage_database(&error))?;
+            let value = serde_json::from_str(&payload).map_err(|_| AppError::storage())?;
+            crate::langbai_settings::validate(&key, &value).map_err(|_| AppError::storage())?;
+            result[&key] = value;
+        }
+        Ok(result)
+    }
+
+    pub fn langbai_set_setting(&self, key: &str, value: &serde_json::Value) -> Result<(), AppError> {
+        crate::langbai_settings::validate(key, value)?;
+        let payload = serde_json::to_string(value).map_err(|_| AppError::invalid())?;
+        self.db.execute(
+            "INSERT INTO langbai_settings(key,payload) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET payload=excluded.payload",
+            params![key, payload],
+        ).map_err(|error| AppError::storage_database(&error))?;
+        Ok(())
+    }
+
     pub fn connections(&self) -> Result<Vec<crate::connections::ConnectionProfile>, AppError> {
         let mut statement = self.db.prepare("SELECT payload FROM connections ORDER BY id").map_err(|_|AppError::storage())?;
         let rows = statement.query_map([], |row|row.get::<_,String>(0)).map_err(|_|AppError::storage())?;
@@ -388,7 +419,7 @@ mod tests {
     }
     #[test] fn v3_migration_preserves_accounts_draft_and_journal() {
         let d=tempfile::tempdir().unwrap();let path=d.path().join("existing.sqlite3");
-        {let s=Store::open(&path).unwrap();s.save_draft(&preset().draft).unwrap();s.db.execute_batch("DROP TABLE drawing_presets; PRAGMA user_version=3;").unwrap();
+        {let s=Store::open(&path).unwrap();s.save_draft(&preset().draft).unwrap();s.db.execute_batch("DROP TABLE drawing_presets; DROP TABLE langbai_settings; PRAGMA user_version=3;").unwrap();
          s.db.execute(r#"INSERT INTO task_journal(id,state,payload,kind,created_at_ms,acknowledged) VALUES('pending','"submitting"','{}','generation',1,0)"#,[]).unwrap();}
         let s=Store::open(&path).unwrap();assert_eq!(s.load_draft().unwrap().prompt,"subject");assert!(s.has_unresolved().unwrap());
         assert_eq!(s.connections().unwrap().len(),1);assert!(s.drawing_presets().unwrap().is_empty());
@@ -406,5 +437,66 @@ mod open_safety_tests {
         std::fs::write(&path, original).unwrap();
         assert_eq!(Store::open(&path).err().unwrap().code, "storage_corrupt");
         assert_eq!(std::fs::read(&path).unwrap(), original);
+    }
+}
+
+#[cfg(test)] mod langbai_settings_tests {
+    use super::*;
+    use serde_json::json;
+    #[test] fn sparse_settings_round_trip_preserves_other_defaults() {
+        let s=Store::memory(); let before=s.langbai_settings().unwrap();
+        s.langbai_set_setting("theme",&json!("dark")).unwrap();
+        s.langbai_set_setting("savedStylePrompt",&json!("artist:example")).unwrap();
+        let after=s.langbai_settings().unwrap(); assert_eq!(after["theme"],"dark");
+        assert_eq!(after["savedStylePrompt"],"artist:example"); assert_eq!(after["language"],before["language"]);
+        assert!(s.langbai_set_setting("theme",&json!(23)).is_err()); assert_eq!(s.langbai_settings().unwrap()["theme"],"dark");
+    }
+    #[test]
+    fn v4_migration_preserves_draft_history_connections_presets_and_unresolved_tasks() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("existing.sqlite3");
+        let draft = EditorDraft { prompt: "retained".into(), negative_prompt: "".into(), prompt_document: None };
+        let preset = crate::presets::DrawingPreset {
+            id: "preserved-preset".into(), name: "Preserved".into(), draft: draft.clone(),
+            model: "nai-diffusion-4-5-full".into(), width: 832, height: 1216,
+            steps: 23, guidance: 5.0, sampler: "k_euler_ancestral".into(),
+            seed: Some(42), strength: 0.7, noise: 0.0,
+        };
+        let mut account = crate::connections::ConnectionProfile::official();
+        account.id = "preserved-account".into();
+        account.name = "Preserved account".into();
+        {
+            let mut store = Store::open(&path).unwrap();
+            store.save_draft(&draft).unwrap();
+            store.save_connection(&account).unwrap();
+            store.rotate_connection_revision(&account.id, "preserved-revision").unwrap();
+            store.save_drawing_preset(&preset).unwrap();
+            store.insert_history(&HistoryItem {
+                id: "preserved-history".into(), created_at_ms: 1,
+                prompt: "retained history".into(), artifact_id: "preserved-image".into(),
+            }).unwrap();
+            store.db.execute_batch("DROP TABLE langbai_settings; PRAGMA user_version=4;").unwrap();
+            store.db.execute(r#"INSERT INTO task_journal(id,state,payload,kind,created_at_ms,acknowledged) VALUES('pending','"submitting"','{}','generation',1,0)"#, []).unwrap();
+        }
+        let store = Store::open(&path).unwrap();
+        assert_eq!(store.load_draft().unwrap(), draft);
+        assert_eq!(store.connections().unwrap().len(), 2);
+        assert_eq!(store.connection(&account.id).unwrap(), account);
+        assert_eq!(store.connection_revision(&account.id).unwrap(), "preserved-revision");
+        assert!(store.has_unresolved().unwrap());
+        assert_eq!(serde_json::to_value(&store.drawing_presets().unwrap()[0]).unwrap(), serde_json::to_value(&preset).unwrap());
+        let history = store.list_history(&HistoryQuery { limit: Some(10), before: None }).unwrap();
+        assert_eq!(history.items[0].id, "preserved-history");
+        assert_eq!(history.items[0].artifact_id, "preserved-image");
+        assert_eq!(history.items[0].prompt, "retained history");
+        assert_eq!(store.langbai_settings().unwrap()["theme"], "light");
+        store.langbai_set_setting("savedStylePrompt", &json!("retained artist")).unwrap();
+        drop(store);
+        assert_eq!(Store::open(&path).unwrap().langbai_settings().unwrap()["savedStylePrompt"], "retained artist");
+    }
+    #[test] fn corrupt_setting_is_not_overwritten_with_defaults() {
+        let s=Store::memory(); s.db.execute("INSERT INTO langbai_settings(key,payload) VALUES('theme','false')",[]).unwrap();
+        assert_eq!(s.langbai_settings().unwrap_err().code,"storage_unavailable");
+        let raw:String=s.db.query_row("SELECT payload FROM langbai_settings WHERE key='theme'",[],|r|r.get(0)).unwrap(); assert_eq!(raw,"false");
     }
 }
