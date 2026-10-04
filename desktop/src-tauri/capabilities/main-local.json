@@ -27,6 +27,9 @@
     "allow-connection-save",
     "allow-connection-delete",
     "allow-connection-token-set",
-    "allow-connection-token-delete"
+    "allow-connection-token-delete",
+    "allow-drawing-presets-list",
+    "allow-drawing-preset-save",
+    "allow-drawing-preset-delete"
   ]
 }

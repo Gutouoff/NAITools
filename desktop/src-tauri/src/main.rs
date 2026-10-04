@@ -39,6 +39,9 @@ async fn service<T:Send+'static>(s:Arc<Runtime>,f:impl FnOnce(&NaiService)->Resu
 #[tauri::command]async fn connection_delete(state:State<'_,Arc<Runtime>>,id:String)->Result<(),AppError>{service(state.inner().clone(),move|n|n.delete_connection(&id)).await}
 #[tauri::command]async fn connection_token_set(state:State<'_,Arc<Runtime>>,id:String,token:String)->Result<(),AppError>{service(state.inner().clone(),move|n|n.set_connection_token(&id,token)).await}
 #[tauri::command]async fn connection_token_delete(state:State<'_,Arc<Runtime>>,id:String)->Result<(),AppError>{service(state.inner().clone(),move|n|n.delete_connection_token(&id)).await}
+#[tauri::command]async fn drawing_presets_list(state:State<'_,Arc<Runtime>>)->Result<Vec<studio_core::presets::DrawingPreset>,AppError>{service(state.inner().clone(),|n|n.with_store(|s|s.drawing_presets())).await}
+#[tauri::command]async fn drawing_preset_save(state:State<'_,Arc<Runtime>>,preset:studio_core::presets::DrawingPreset)->Result<(),AppError>{preset.validate()?;service(state.inner().clone(),move|n|n.with_store(|s|s.save_drawing_preset(&preset))).await}
+#[tauri::command]async fn drawing_preset_delete(state:State<'_,Arc<Runtime>>,id:String)->Result<(),AppError>{service(state.inner().clone(),move|n|n.with_store(|s|s.delete_drawing_preset(&id))).await}
 fn setup_runtime(app: &mut tauri::App, started: Instant) -> Result<(), Box<dyn std::error::Error>> {
     // Browser cache is disposable. Durable tasks, images and credentials retain
     // their existing per-user locations even when the executable is moved.
@@ -65,7 +68,7 @@ fn main(){let started=Instant::now();let result=tauri::Builder::default().setup(
     }
     Ok(())
 })
-.invoke_handler(tauri::generate_handler![desktop_bootstrap,desktop_mark_ready,draft_load,draft_save,history_list,history_request,generation_submit,credentials_status,credentials_set,credentials_delete,image_import,vibe_encode,artifact_read,artifact_export,task_list,task_acknowledge,connections_list,connection_save,connection_delete,connection_token_set,connection_token_delete])
+.invoke_handler(tauri::generate_handler![desktop_bootstrap,desktop_mark_ready,draft_load,draft_save,history_list,history_request,generation_submit,credentials_status,credentials_set,credentials_delete,image_import,vibe_encode,artifact_read,artifact_export,task_list,task_acknowledge,connections_list,connection_save,connection_delete,connection_token_set,connection_token_delete,drawing_presets_list,drawing_preset_save,drawing_preset_delete])
 .run(tauri::generate_context!());
     if let Err(error) = result {
         startup::report_failure(&error.to_string());

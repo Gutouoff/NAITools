@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-drawing-preset-save"
+description = "Enables the drawing_preset_save command without any pre-configured scope."
+commands.allow = ["drawing_preset_save"]
+
+[[permission]]
+identifier = "deny-drawing-preset-save"
+description = "Denies the drawing_preset_save command without any pre-configured scope."
+commands.deny = ["drawing_preset_save"]

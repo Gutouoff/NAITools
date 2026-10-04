@@ -7,3 +7,5 @@ pub mod generation;
 pub mod prompt;
 
 pub mod connections;
+
+pub mod presets;

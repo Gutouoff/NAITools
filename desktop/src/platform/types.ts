@@ -23,3 +23,5 @@ export interface ConnectionProfile {
   generationUsd: number | null; encodingUsd: number | null;
 }
 export interface ConnectionStatus { profile: ConnectionProfile; hasToken: boolean | null }
+
+export interface DrawingPreset { id: string; name: string; draft: EditorDraft; model: string; width: number; height: number; steps: number; guidance: number; sampler: string; seed: number | null; strength: number; noise: number }

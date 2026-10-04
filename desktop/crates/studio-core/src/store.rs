@@ -13,7 +13,7 @@ impl Store {
     fn initialize(db: Connection) -> Result<Self, AppError> {
         db.busy_timeout(Duration::from_secs(5)).map_err(|_| AppError::storage())?;
         let version: i64 = db.pragma_query_value(None, "user_version", |row| row.get(0)).map_err(|_| AppError::storage())?;
-        if version > 3 { return Err(AppError::new("storage_version_unsupported", "数据库版本高于程序支持的版本；未修改数据。")); }
+        if version > 4 { return Err(AppError::new("storage_version_unsupported", "数据库版本高于程序支持的版本；未修改数据。")); }
         db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;").map_err(|_| AppError::storage())?;
         if version == 0 {
             db.execute_batch("BEGIN IMMEDIATE;
@@ -39,6 +39,11 @@ impl Store {
                 CREATE TABLE connections (id TEXT PRIMARY KEY, payload TEXT NOT NULL);
                 CREATE TABLE connection_revisions (id TEXT PRIMARY KEY, revision TEXT NOT NULL);
                 PRAGMA user_version=3; COMMIT;").map_err(|_| AppError::storage())?;
+        }
+        if version <= 3 {
+            db.execute_batch("BEGIN IMMEDIATE;
+                CREATE TABLE drawing_presets (id TEXT PRIMARY KEY, payload TEXT NOT NULL);
+                PRAGMA user_version=4; COMMIT;").map_err(|_| AppError::storage())?;
         }
         let official = crate::connections::ConnectionProfile::official();
         db.execute("INSERT OR IGNORE INTO connections(id,payload) VALUES(?1,?2)", params![official.id, serde_json::to_string(&official).map_err(|_|AppError::storage())?]).map_err(|_|AppError::storage())?;
@@ -75,6 +80,29 @@ impl Store {
     pub fn delete_connection(&self,id:&str) -> Result<(),AppError> {
         if id==crate::connections::DEFAULT_CONNECTION {return Err(AppError::new("default_connection","默认账号可修改名称或删除凭据，但不能删除配置。"));}
         self.db.execute("DELETE FROM connections WHERE id=?1",[id]).map_err(|_|AppError::storage())?;Ok(())
+    }
+    pub fn drawing_presets(&self) -> Result<Vec<crate::presets::DrawingPreset>, AppError> {
+        let mut statement = self.db.prepare("SELECT payload FROM drawing_presets ORDER BY id").map_err(|_|AppError::storage())?;
+        let rows = statement.query_map([], |row| row.get::<_, String>(0)).map_err(|_|AppError::storage())?;
+        rows.map(|row| {
+            let preset: crate::presets::DrawingPreset = serde_json::from_str(&row.map_err(|_|AppError::storage())?).map_err(|_|AppError::storage())?;
+            preset.validate().map_err(|_|AppError::storage())?;
+            Ok(preset)
+        }).collect()
+    }
+    pub fn save_drawing_preset(&mut self, preset: &crate::presets::DrawingPreset) -> Result<(), AppError> {
+        preset.validate()?;
+        let tx = self.db.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate).map_err(|_|AppError::storage())?;
+        let count: i64 = tx.query_row("SELECT COUNT(*) FROM drawing_presets", [], |r|r.get(0)).map_err(|_|AppError::storage())?;
+        let exists: bool = tx.query_row("SELECT EXISTS(SELECT 1 FROM drawing_presets WHERE id=?1)", [&preset.id], |r|r.get(0)).map_err(|_|AppError::storage())?;
+        if count >= 32 && !exists { return Err(AppError::new("preset_limit", "最多保存 32 套生图预设。")); }
+        tx.execute("INSERT INTO drawing_presets(id,payload) VALUES(?1,?2) ON CONFLICT(id) DO UPDATE SET payload=excluded.payload", params![preset.id, serde_json::to_string(preset).map_err(|_|AppError::invalid())?]).map_err(|_|AppError::storage())?;
+        tx.commit().map_err(|_|AppError::storage())
+    }
+    pub fn delete_drawing_preset(&self, id: &str) -> Result<(), AppError> {
+        if !valid_id(id) { return Err(AppError::invalid()); }
+        self.db.execute("DELETE FROM drawing_presets WHERE id=?1", [id]).map_err(|_|AppError::storage())?;
+        Ok(())
     }
     pub fn load_draft(&self) -> Result<EditorDraft, AppError> {
         let raw: Option<String> = self.db.query_row("SELECT payload FROM editor_draft WHERE id=1", [], |row| row.get(0)).optional().map_err(|_| AppError::storage())?;
@@ -324,5 +352,40 @@ mod tests {
         p.id="account-1".into();p.name="updated".into();s.save_connection(&p).unwrap();
         assert_eq!(s.connection_revision("account-1").unwrap(),"");
         s.rotate_connection_revision("account-1","test-revision").unwrap();assert_eq!(s.connection_revision("account-1").unwrap(),"test-revision");
+    }
+}
+
+#[cfg(test)] mod drawing_preset_tests {
+    use super::*;
+    use crate::presets::DrawingPreset;
+    fn preset() -> DrawingPreset {
+        DrawingPreset { id:"preset-1".into(), name:"portrait".into(), draft:EditorDraft{prompt:"subject".into(),negative_prompt:"".into(),prompt_document:None},
+          model:"nai-diffusion-4-5-full".into(),width:832,height:1216,steps:23,guidance:5.0,sampler:"k_euler_ancestral".into(),seed:None,strength:0.7,noise:0.0 }
+    }
+    #[test] fn round_trip_and_bounds() {
+        let mut s=Store::memory(); let mut p=preset();
+        s.save_drawing_preset(&p).unwrap(); assert_eq!(s.drawing_presets().unwrap()[0].draft.prompt,"subject");
+        p.width=1536; p.height=1536; assert!(s.save_drawing_preset(&p).is_err());
+        assert_eq!(s.drawing_presets().unwrap()[0].width,832);
+        s.delete_drawing_preset(&p.id).unwrap(); assert!(s.drawing_presets().unwrap().is_empty());
+    }
+    #[test] fn secret_and_transient_fields_rejected() {
+        for field in ["token","connectionId","imageId","vibes","confirmPaid"] {
+            let mut v=serde_json::to_value(preset()).unwrap();v[field]=serde_json::json!("not-allowed");
+            assert!(serde_json::from_value::<DrawingPreset>(v).is_err());
+        }
+    }
+    #[test] fn limit_allows_updates_not_new_entries() {
+        let mut s=Store::memory();let mut p=preset();
+        for n in 0..32 {p.id=format!("preset-{n}");s.save_drawing_preset(&p).unwrap();}
+        p.name="updated".into();s.save_drawing_preset(&p).unwrap();
+        p.id="overflow".into();assert_eq!(s.save_drawing_preset(&p).unwrap_err().code,"preset_limit");
+    }
+    #[test] fn v3_migration_preserves_accounts_draft_and_journal() {
+        let d=tempfile::tempdir().unwrap();let path=d.path().join("existing.sqlite3");
+        {let s=Store::open(&path).unwrap();s.save_draft(&preset().draft).unwrap();s.db.execute_batch("DROP TABLE drawing_presets; PRAGMA user_version=3;").unwrap();
+         s.db.execute(r#"INSERT INTO task_journal(id,state,payload,kind,created_at_ms,acknowledged) VALUES('pending','"submitting"','{}','generation',1,0)"#,[]).unwrap();}
+        let s=Store::open(&path).unwrap();assert_eq!(s.load_draft().unwrap().prompt,"subject");assert!(s.has_unresolved().unwrap());
+        assert_eq!(s.connections().unwrap().len(),1);assert!(s.drawing_presets().unwrap().is_empty());
     }
 }
