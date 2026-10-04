@@ -67,9 +67,8 @@ try{
   await page.getByLabel("画师串",{exact:true}).fill("artist:synthetic");
   assert.equal(await page.getByText("图生图（i2i）",{exact:true}).count(),0);
   assert.equal(await page.locator(".connection-toolbar select").count(),0);
-  if(process.env.NATIVE_SMOKE_STORAGE==="1"){
-    // Read only the new app's history shape, never record prompt/image contents.
-    const historyShape=await page.evaluate(async()=>{
+  // Read only the history shape; never print prompts or images.
+  const historyShape=await page.evaluate(async()=>{
       try {
         const h=await window.__TAURI_INTERNALS__.invoke("history_list",{query:{limit:1,before:null}});
         return {itemsArray:Array.isArray(h.items)};
@@ -77,8 +76,9 @@ try{
         return {itemsArray:false,errorCode:typeof e?.code==="string"?e.code:"unexpected_ipc_error"};
       }
     });
-    assert.equal(historyShape.itemsArray,true,`Native storage smoke failed: ${historyShape.errorCode||"invalid_history_shape"}`);
-  }
+  assert.ok(historyShape.itemsArray || historyShape.errorCode === "storage_unavailable", "History IPC must be permitted, even if storage is unavailable");
+  console.log(`INFO: native storage: connection=${metadata.shape ? "available" : metadata.errorCode}; presets=${presetRead.shape ? "available" : presetRead.errorCode}; history=${historyShape.itemsArray ? "available" : historyShape.errorCode}.`);
+  if(process.env.NATIVE_SMOKE_STORAGE==="1") assert.equal(historyShape.itemsArray,true,`Native storage smoke failed: ${historyShape.errorCode||"invalid_history_shape"}`);
   await page.getByRole("button",{name:"关于",exact:true}).click();
   await page.getByRole("heading",{name:"NAITools"}).waitFor();
   await page.getByText("运行诊断",{exact:true}).click();

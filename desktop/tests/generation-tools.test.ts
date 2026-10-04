@@ -85,6 +85,13 @@ test("legacy artist layer preservation uses explicit structure, never tag infere
   const raw = { ...current, draft: { ...current.draft, prompt: "inactive", promptDocument: { ...document, mode: "raw" as const } } };
   assert.equal(clearPromptDraft(raw, { style: true, negative: false }).draft.prompt, "");
   assert.equal(raw.draft.promptDocument.blocks[0].text, "artist:legacy");
+  const layeredPreset = makeDrawingPreset(current, "legacy-layered", "Legacy layered");
+  const applied = applyDrawingPreset(raw, layeredPreset, { style: true, negative: false });
+  assert.equal(applied.draft.prompt, "body");
+  assert.equal(applied.draft.promptDocument?.blocks.find(block => block.id === "block-1")?.enabled, false);
+  const artistOnly = applyArtistString(current, makeDrawingPreset(raw, "legacy-raw", "Legacy raw"));
+  assert.equal(artistOnly.draft.prompt, "body");
+  assert.equal(raw.draft.promptDocument.blocks[0].enabled, true);
 });
 test("retention flags are optional preferences and contain no prompt content", () => {
   const descriptor = Object.getOwnPropertyDescriptor(globalThis, "localStorage");

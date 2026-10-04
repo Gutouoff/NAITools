@@ -45,7 +45,11 @@ function retainedStyle(source: GenerationInput["draft"], target: GenerationInput
     next.blocks = next.blocks.filter(block => !(block.id === "block-1" && block.title === "画师"));
     if (artist && current.mode === "layered" && artist.enabled) {
         next.stylePrompt = compilePrompt({ mode: "layered", raw: "", stylePrompt: current.stylePrompt, blocks: [artist] });
-    } else if (artist) next.blocks.unshift(structuredClone(artist));
+    } else if (artist) {
+        // Raw-mode legacy layers are inactive. Carry their content without activating it
+        // when the destination configuration uses layered editing.
+        next.blocks.unshift({ ...structuredClone(artist), enabled: current.mode === "layered" && artist.enabled });
+    }
     target.promptDocument = next;
     target.prompt = compilePrompt(next);
 }
