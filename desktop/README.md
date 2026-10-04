@@ -1,56 +1,54 @@
-# NAITools · PC Preview
+# NAITools · Windows 开发预览
 
-独立 Windows PC 重构目录：Rust + Tauri 2 + React/TypeScript。旧版入口、账号与图像目录不迁移、不扫描、不覆盖。
+独立 PC 重构目录：Rust + Tauri 2 + React / TypeScript。旧版账号、图像与入口不扫描、不迁移、不覆盖。当前源码树只发布新版，旧实现保留在 Git 历史和原有本地文件中。
 
-## 当前范围
+## 功能与边界
 
-- 轻量 M3 风格工作台，系统字体、无远程 CDN 或 Node/Python sidecar。
-- 原文 / 10 层应用模板：可启用、排序、预览实际提交串；不去重、不改写权重，不宣称 NAI 官方排序。
-- V4.5 Full / Curated、Euler / Euler a、单张非流式文生图请求实现。
-- i2i 底图本地导入；提交前按目标比例中心裁剪（本应用选择，不是官方统一规则）。
-- Vibe Transfer 显式收费确认、内容/模型/提取量缓存；生成不会自动进行收费编码。
-- Windows 原生凭据存储，无明文降级，不读取旧版 Token。
-- 原始 PNG 保存/导出、游标历史查询、恢复参数仅回到编辑器。
-- 提交前持久化任务记录；超时/解析失败/中断记录为结果未知，未经人工核对阻止新付费任务；不自动重发。
+- 紧凑三栏工作台：提示词、图像预览、生成参数与参考图；窄窗口保留可见生成按钮。
+- 原文 / 10 层应用模板：两份内容独立保留，当前模式决定提交文本；可启用、排序、预览，不去重、不改权重，不宣称官方排序。
+- V4.5 Full / Curated、Euler / Euler a，单张非流式文生图。
+- 图生图（i2i）：本地导入，按目标比例中心裁剪后缩放，这是应用选择。
+- 氛围参考（Vibe Transfer）：显式编码确认、素材 / 模型 / 提取量缓存；生成不会自动付费编码。
+- Windows 凭据管理器保存 Token，无明文降级；本地草稿、PNG 保存 / 导出、历史分页与参数恢复。
+- 收费请求前检查任务存储，实际提交前通过 SQLite IMMEDIATE 事务落盘并复查未知任务；未知结果不重试。
+- 「关于」显示来源、完整项目 MIT 许可证与折叠诊断，不在主工作台展示技术宣传。
 
-**真实 NAI 生图、i2i 和编码尚未付费验收；本地测试不代表官方服务已成功返回。** V4.5 是首版选定子集，不表示当前最新模型。完整状态见 `VALIDATION.md`。
+**真实 NovelAI 文生图、i2i、Vibe 编码尚未付费验收；本机默认 AppData 存储仍未通过原生验收。不要把界面和本地测试通过当作生图 / 保存已正常。** 详见 [验证记录](VALIDATION.md)。
 
-## 使用边界
+应用限制，不代表服务通用上限：每次 1 张、最多 4 个氛围参考且强度总和 ≤ 1；尺寸 256..1536 / 64 倍数 / 总像素 ≤ 1,048,576；1..28 步、Guidance 1..10。首版没有多角色独立 caption、流式、批量和完整费用估计。V4.5 是选定子集，不表示最新模型。
 
-应用限制（不是 NAI 服务通用上限）：最多 1 张结果、4 个氛围参考且总强度不超过 1，尺寸 256..1536 / 64 倍数 / 总像素 <= 1,048,576，1..28 步、Guidance 1..10。未实现多角色专属 caption、流式、批量、完整费用估计。
+## 运行本机版本
 
-仅通过用户操作发起付费请求。Token 只输入 PC 新版「连接与任务」页面，不发到聊天。首次真实验收需要另行确认预算；浏览器预览禁止原生存储、凭据和生图调用，不能假装成功。
+双击 `启动PC新版.cmd`，或打开 `target/release/naitools.exe`。本机已完成 release 构建；无需启动 Vite、Node、Python 后台服务。其他机器从源码构建，当前没有已发布安装包。
 
-## 本机开发 / 构建
+需要 Windows WebView2 Runtime；EXE 所在文件夹必须可写，因为可丢弃的浏览器缓存位于旁边 `.webview2-cache`。此预览暂不适用于直接放入受保护的 Program Files 目录。初始化失败时显示原生弹窗，并尝试写入 EXE 旁的 `startup-error.log`。
 
-已安装的 Rust、VS2022 Build Tools、Windows SDK、WebView2 和 Node 无需重复安装。依赖已下载并生成 `Cargo.lock`；使用 `--locked` 保持版本稳定。
+**改名不改变持久数据身份**：仍使用 `com.langbai.studio.pc.preview` 的原 AppData 数据目录及 Windows 凭据命名空间，防止丢失草稿或绕过未核对收费任务。不要删除数据库、切换目录或重复提交来处理未知结果。Token 只输入桌面「连接与任务」页面，不发到聊天。
 
-普通 PowerShell，在本目录运行：
+## 开发与构建
+
+需要 Node.js 24、Rust stable（MSVC）、VS 2022 Build Tools 的 C++ 桌面工具 / Windows SDK。本机已经安装，无需重复安装。其他机器首次下载依赖时不要使用 offline；之后使用 lockfile 固定依赖。
+
+在本目录运行：
 
 ```powershell
+npm ci
+npm test
 npm run build
-& .\scripts\windows-cargo.ps1 -CargoArgs @('test','-p','studio-core','-p','studio-nai','--locked','--offline')
-& .\scripts\windows-cargo.ps1 -CargoArgs @('build','-p','naitools','--release','--features','custom-protocol','--locked','--offline')
+& .\scripts\windows-cargo.ps1 -CargoArgs @('test','--workspace','--locked')
+& .\scripts\windows-cargo.ps1 -CargoArgs @('build','-p','naitools','--release','--features','custom-protocol','--locked')
 ```
 
-辅助脚本只在本进程加载 VS2022 x64 环境，将临时目录放在 `target/build-tmp`，不改全局 PATH。参数使用数组，避免 PowerShell 的 `-p` 通用参数歧义。开发模式用 `npm run desktop:dev`，需要对应的编译环境；生产模式使用 `custom-protocol` 内嵌构建后的界面，不依赖 Vite 服务。
+辅助脚本仅为当前进程加载 VS2022 x64 环境，临时文件位于 `target/build-tmp`；不改全局 PATH。参数使用数组避免 PowerShell 的 `-p` 歧义。依赖已缓存时可追加 `--offline`。
 
-本轮已重新编译 release EXE：`target/release/naitools.exe`（14,361,600 bytes，约 13.70 MiB；不是运行内存）。可双击本目录 `启动PC新版.cmd`，或直接打开 EXE，不需要运行终端命令、Vite 或 Node 服务。当前未制作安装包、签名或自动更新，运行依赖本机已安装的 WebView2。
+开发模式：`npm run desktop:dev`。生产构建通过 `custom-protocol` 内嵌页面，不依赖开发服务器。次级页面按需加载；启动不读 Token、不初始化数据库、不扫描历史、不连接 NAI。
 
-白屏闪退修复：由宿主显式创建窗口，将可丢弃的 WebView2 缓存放在 **EXE 同目录 `.webview2-cache`**，不再使用原先启动失败的浏览器缓存位置。普通 EXE 无环境覆盖、无调试端口启动后，窗口持续运行 10 秒且响应正常；使用同一生产缓存的原生界面 / IPC smoke 通过。这是稳定性检查，不是启动耗时测量。
+可选浏览器验收：先运行 `npm run preview`，在另一个终端设置 `PLAYWRIGHT_MODULE` / `BROWSER_EXECUTABLE`，再运行 `npm run test:browser`。采用独立 context，阻断外部 HTTP；合成 IPC 用于错误 UI 测试，不冒充原生服务。
 
-**Preview 的 EXE 所在文件夹必须可写**，暂不适用于直接放在 Program Files 等受保护安装目录。SQLite、付费任务记录和图像仍放在原来的用户 AppData 目录；Token 的 Windows 凭据存储位置不变，移动 EXE 不会切换付费任务记录。初始化失败会显示原生错误弹窗，并尝试在 EXE 旁写入 `startup-error.log`，无需删除旧版数据。
+## 协议、许可和发布
 
-**本机自动验收仍有一项未通过**：默认 AppData 的 `history_list` 返回 `storage_unavailable`；本机 Rust 写入探针也得到“拒绝访问”。没有搬迁持久数据、修改系统 ACL 或重发任何付费请求；本地存储不能标记为已通过，需在实际用户启动后继续核验。详见 `VALIDATION.md`。
+协议依据及已知缺口见 [contracts](contracts/README.md)：公开 Swagger 快照、官网客户端观察及用户文档。客户端观察不是稳定 schema 承诺；fixture 是应用自编期望请求，不是付费抓包。Rust 固定 HTTPS endpoint，禁重定向、禁自动重试；界面不能传任意 URL / 远程 JSON。
 
-可选网页验收：`npm run preview`；设置 `PLAYWRIGHT_MODULE` 和 `BROWSER_EXECUTABLE` 后运行 `npm run test:browser`。脚本使用独立 context 并阻断非本机请求。
+保留原作者版权、完整 MIT 许可与 Git 来源历史。第三方依赖各有许可，详见根目录 THIRD_PARTY_NOTICES.md。当前不制作安装包、签名或自动更新；发行二进制前还需收集随包第三方许可并进行端到端验收。
 
-## 协议与安全
-
-证据索引 `contracts/novelai-evidence.json`：公开 Swagger 快照 + 官网公开客户端观察 + 用户文档。客户端观察不是承诺稳定的正式 schema；fixture 是应用自编的期望请求，不是已执行付费样本。Rust 固定 HTTPS endpoint，禁重定向、显式禁重试；UI 不能提交任意 URL 或服务端 JSON。
-
-## 性能和回退
-
-启动不打开数据库、不读 Token、不扫描历史、不连接 NAI；次级页面按需加载。尚未测量发行版冷/热启动和全进程树内存，不声称已比旧版快若干倍。继续使用根目录旧入口即可回退。
-
-
+本机资源样本与未完成事项见 [VALIDATION.md](VALIDATION.md)，变更摘要见 [CHANGELOG.md](CHANGELOG.md)。

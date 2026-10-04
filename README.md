@@ -11,7 +11,7 @@ Windows 桌面端 NovelAI 图像生成工具。新版使用 Rust + Tauri 2 + Rea
 - 本地草稿、历史记录、PNG 导出与付费任务状态记录。
 - Token 保存在 Windows 凭据管理器，不写入仓库或草稿。
 
-当前是开发预览：真实 NovelAI 文生图、i2i、Vibe 编码尚未付费验收，本地存储的自动验收仍有权限问题。实现和验证不能等同于端到端验收。见 [验证记录](desktop/VALIDATION.md)。
+当前是开发预览：真实 NovelAI 文生图、i2i、Vibe 编码尚未付费验收，默认 AppData 本地存储的原生验收仍未通过。实现和验证不能等同于端到端验收。见 [验证记录](desktop/VALIDATION.md)。
 
 ## 开发与运行
 

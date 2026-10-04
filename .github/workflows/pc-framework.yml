@@ -26,5 +26,5 @@ jobs:
       - run: npm run build
       - run: rustup toolchain install stable --profile minimal
       - run: rustup default stable
-      - run: cargo test -p studio-core -p studio-nai --locked
-      - run: cargo check -p langbai-studio-pc --locked
+      - run: cargo test --workspace --locked
+      - run: cargo build -p naitools --release --features custom-protocol --locked
