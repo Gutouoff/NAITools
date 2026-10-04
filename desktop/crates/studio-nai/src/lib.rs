@@ -28,7 +28,7 @@ impl NaiService {
     fn source(&self,id:&str)->Result<Vec<u8>,AppError>{assets::read_bounded(&assets::path(&self.root,"assets",id,"png")?,assets::MAX_IMAGE)}
     fn record_result<T>(&self,id:&str,result:Result<T,AppError>)->Result<T,AppError>{match result {Ok(v)=>Ok(v),Err(e)=>{let _=self.with_store(|s|s.record_unknown(id,e.code));Err(http::unknown(e.code))}}}
     pub fn generate(&self,input:GenerationInput)->Result<GenerationResult,AppError>{
-        input.validate()?;let token=credentials::get()?;let transport=http::Transport::new(&token)?;
+        input.validate()?;self.with_store(|s|s.preflight_remote())?;let token=credentials::get()?;let transport=http::Transport::new(&token)?;
         self.generate_with(input,|body|transport.post("generate",body,32*1024*1024))
     }
     fn generate_with(&self,mut input:GenerationInput,post:impl FnOnce(&Value)->Result<Vec<u8>,AppError>)->Result<GenerationResult,AppError>{
@@ -75,6 +75,7 @@ impl NaiService {
             return Ok(VibeAsset{id,model:input.model,information_extracted:input.information_extracted,cache_hit:true});
         }
         if !input.confirm_paid{return Err(AppError::new("confirmation_required","未命中缓存；V4+ 氛围编码可能收费，请显式确认。"));}
+        self.with_store(|s|s.preflight_remote())?;
         let post=prepare()?; // All credential/client setup happens before the durable submission point.
         let wire=json!({"image":STANDARD.encode(image),"model":input.model,"information_extracted":input.information_extracted});
         let snapshot=serde_json::to_string(&input).map_err(|_|AppError::invalid())?;let task=uuid::Uuid::new_v4().to_string();self.with_store(|s|s.begin_remote_task(&task,"vibe_encoding",&snapshot,now()))?;
@@ -85,6 +86,19 @@ impl NaiService {
     }
 }
 #[cfg(test)] mod tests {
+    #[test]fn generation_checks_storage_before_credentials(){
+        let d=tempfile::tempdir().unwrap();let root=d.path().join("not-a-directory");std::fs::write(&root,b"blocked").unwrap();
+        let s=NaiService::new(root);assert_eq!(s.generate(input()).err().unwrap().code,"storage_unavailable");
+    }
+    #[test]fn encoding_checks_journal_before_preparing_paid_transport(){
+        let d=tempfile::tempdir().unwrap();let s=NaiService::new(d.path().into());
+        let a=s.import_image(&STANDARD.encode(assets::png(&image::DynamicImage::new_rgb8(64,64)).unwrap())).unwrap();
+        std::fs::write(d.path().join("studio.sqlite3"),b"not sqlite").unwrap();
+        let i=EncodeInput{image_id:a.id,model:MODELS[0].into(),information_extracted:0.8,confirm_paid:true};
+        let e=s.encode_with(i,|| -> Result<fn(&Value)->Result<Vec<u8>,AppError>,AppError>{panic!("storage failure must not read credentials or initialize transport")}).unwrap_err();
+        assert_eq!(e.code,"storage_unavailable");
+    }
+
     use super::*;use std::io::{Cursor,Write};
     fn input()->GenerationInput{serde_json::from_value(serde_json::from_str::<Value>(include_str!("../../../contracts/generation-v1.fixture.json")).unwrap()["input"].clone()).unwrap()}
     fn response(w:u32,h:u32)->Vec<u8>{let bytes=assets::png(&image::DynamicImage::new_rgb8(w,h)).unwrap();let mut c=Cursor::new(Vec::new());{let mut z=zip::ZipWriter::new(&mut c);z.start_file("image_0.png",zip::write::SimpleFileOptions::default()).unwrap();z.write_all(&bytes).unwrap();z.finish().unwrap();}c.into_inner()}

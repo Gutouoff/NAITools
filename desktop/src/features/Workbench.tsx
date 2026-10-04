@@ -21,10 +21,12 @@ export default function Workbench({api,native,input,setInput,replaySignal,onTask
   async function importSource(file:File,vibe:boolean){await run(async()=>{const a=await api.importImage(await fileBase64(file));if(vibe)updateRows([...rows,{key:a.id,image:a,information:0.8,strength:0.5}]);else{setImage(a);patch({imageId:a.id,mode:"i2i"});}});}
   function ready(r:Row){return !!r.encoding&&r.encoding.model===input.model&&(r.information===-1||r.encoding.informationExtracted===r.information);}
   async function encode(row:Row,paid:boolean){let v:VibeAsset;try{v=await api.encodeVibe({imageId:row.image!.id,model:input.model,informationExtracted:row.information,confirmPaid:paid});}catch(e){if(paid)onTasks();throw e;}updateRows(rows.map(r=>r.key===row.key?{...r,encoding:v}:r));setMessage(v.cacheHit?"复用了本地氛围编码，没有发送收费请求。":"氛围编码已保存，之后可复用。");}
-  function requestGenerate(){if(rows.some(r=>!ready(r))){setError("有氛围参考尚未编码或已过期。请显式编码，或移除该参考；不会静默忽略。");return;}if(input.mode==="i2i"&&!input.imageId){setError("请先导入图生图底图。");return;}if(rows.reduce((sum,r)=>sum+r.strength,0)>1.000001){setError("当前版本氛围总强度不得超过 1，不会自动改权重。");return;}
+  async function requestGenerate(){await run(async()=>{if(rows.some(r=>!ready(r))){setError("有氛围参考尚未编码或已过期。请显式编码，或移除该参考；不会静默忽略。");return;}if(input.mode==="i2i"&&!input.imageId){setError("请先导入图生图底图。");return;}if(rows.reduce((sum,r)=>sum+r.strength,0)>1.000001){setError("当前版本氛围总强度不得超过 1，不会自动改权重。");return;}
+    const tasks=await api.listTasks();
+    if(tasks.some(t=>!t.acknowledged&&["submitting","running","outcome_unknown"].includes(t.state))){onTasks();throw new Error("存在未核对的付费任务；请先打开连接与任务，核对官网后再操作。");}
     const snapshot=structuredClone({...input,imageId:input.mode==="i2i"?input.imageId:null,vibes:rows.map(r=>({encodingId:r.encoding!.id,strength:r.strength})),confirmPaid:true});
     setConfirmation({title:"确认生成一张图片",description:`${input.model.includes("curated")?"V4.5 Curated":"V4.5 Full"} · ${input.width} × ${input.height} · ${input.steps} 步 · ${input.mode==="i2i"?"图生图":"文生图"} · ${rows.length} 个已编码氛围参考。实际费用由账户与 NAI 决定，本应用不承诺免费。`,run:async()=>{try{const r=await api.submitGeneration(snapshot);setResult(r);setMessage(`已保存结果。Seed: ${r.seed}`);}catch(e){onTasks();throw e;}}});
-  }
+  });}
   const disabled=busy||!!confirmation;
   return <><div className="workbench">
     <div className="editor-column">
@@ -41,7 +43,7 @@ export default function Workbench({api,native,input,setInput,replaySignal,onTask
         <div className="image-stage">{result?<img src={result.imageUrl} alt="NovelAI 生成结果"/>:<div className="empty-stage"><p>暂无生成结果</p></div>}</div>
         {result&&<div className="result-info"><span>随机种子：{result.seed}</span><button disabled={disabled} onClick={()=>void run(async()=>{if(await api.exportArtifact(result.artifactId))setMessage("已导出原始 PNG。");})}>导出 PNG</button></div>}
         {message&&<p role="status" className="success">{message}</p>}{error&&<div role="alert" className="error">{error}</div>}
-        <button className="primary generate" disabled={!native||disabled||!input.draft.prompt.trim()} onClick={requestGenerate}>{busy?"处理中…":native?"生成图像":"生成图像（仅桌面端）"}</button>
+        <button className="primary generate" disabled={!native||disabled||!input.draft.prompt.trim()} onClick={()=>void requestGenerate()}>{busy?"处理中…":native?"生成图像":"生成图像（仅桌面端）"}</button>
         <p className="hint generate-hint">提交前确认费用；失败不自动重试。</p>
       </section>
     </div>

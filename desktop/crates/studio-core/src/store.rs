@@ -93,6 +93,20 @@ impl Store {
         let unknown = serde_json::to_string(&TaskState::OutcomeUnknown).map_err(|_| AppError::storage())?;
         self.db.execute("UPDATE task_journal SET state=?1 WHERE state IN (?2,?3)", params![unknown,submitting,running]).map_err(|_| AppError::storage())
     }
+    pub fn preflight_remote(&mut self) -> Result<(), AppError> {
+        // Verify the existing journal can acquire a write transaction without
+        // recording a submission or changing its identity. begin_remote_task
+        // still repeats the unresolved check atomically before the real POST.
+        let tx = self.db.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate).map_err(|_| AppError::storage())?;
+        // BEGIN alone can succeed on a read-only WAL connection. A no-row
+        // write also verifies SQLite's write permissions, then rolls back.
+        tx.execute("UPDATE task_journal SET acknowledged=acknowledged WHERE 0", []).map_err(|_| AppError::storage())?;
+        let active = [TaskState::Submitting, TaskState::Running, TaskState::OutcomeUnknown].map(|s|serde_json::to_string(&s).unwrap());
+        let unresolved: bool = tx.query_row("SELECT EXISTS(SELECT 1 FROM task_journal WHERE state IN (?1,?2,?3) AND acknowledged=0)",params![active[0],active[1],active[2]],|r|r.get(0)).map_err(|_| AppError::storage())?;
+        tx.rollback().map_err(|_| AppError::storage())?;
+        if unresolved { return Err(AppError::new("outcome_unresolved", "存在未核对的付费任务；请先查看任务记录并核对官网。")); }
+        Ok(())
+    }
     pub fn begin_remote_task(&mut self, id: &str, kind: &str, payload: &str, at: i64) -> Result<(), AppError> {
         if !valid_id(id) || !["generation", "vibe_encoding"].contains(&kind) || payload.len() > 262_144 { return Err(AppError::invalid()); }
         // Check and durable insert share an IMMEDIATE transaction. Separate app
@@ -143,6 +157,25 @@ impl Store {
 }
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn preflight_does_not_create_or_acknowledge_tasks() {
+        let mut s = Store::memory();
+        s.preflight_remote().unwrap();
+        assert!(s.task_list().unwrap().is_empty());
+        s.begin_remote_task("preflight-task", "generation", "{}", 1).unwrap();
+        assert_eq!(s.preflight_remote().unwrap_err().code, "outcome_unresolved");
+        assert!(!s.task_list().unwrap()[0].acknowledged);
+    }
+    #[test]
+    fn preflight_rejects_read_only_database() {
+        let d = tempfile::tempdir().unwrap();
+        let path = d.path().join("read-only.sqlite3");
+        drop(Store::open(&path).unwrap());
+        let db = Connection::open_with_flags(&path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY).unwrap();
+        let mut s = Store { db };
+        assert_eq!(s.preflight_remote().unwrap_err().code, "storage_unavailable");
+    }
+
     use super::*;
     #[test]
     fn draft_round_trip_and_oversized_rejection() {

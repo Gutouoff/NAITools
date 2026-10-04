@@ -12,7 +12,7 @@ impl AppError {
     }
     pub fn storage() -> Self {
         // No raw SQL, credentials, or filesystem paths cross the WebView boundary.
-        Self::new("storage_unavailable", "本地存储暂不可用；请勿重复提交生图任务。")
+        Self::new("storage_unavailable", "无法打开或写入本地数据；请求不会自动重试。")
     }
     pub fn invalid() -> Self { Self::new("invalid_input", "输入格式或长度不符合本地接口约束。") }
 }

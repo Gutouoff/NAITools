@@ -62,6 +62,53 @@ try {
   await page.getByRole("button", {name:"保存草稿",exact:true}).scrollIntoViewIfNeeded();
   assert.ok(await page.getByRole("button", {name:"保存草稿",exact:true}).isVisible());
   if(process.env.COMPACT_SMOKE_SCREENSHOT)await page.screenshot({path:process.env.COMPACT_SMOKE_SCREENSHOT,fullPage:true});
+  // Synthetic IPC only: exercise error UI without reading real credentials,
+  // touching persistent data, or sending any NovelAI request.
+  const mocked = await context.newPage(); mocked.on("pageerror", e => errors.push(e.message));
+  await mocked.addInitScript(() => {
+    window.isTauri = true; window.__SMOKE_CASE__ = "storage-failed"; window.__SMOKE_CALLS__ = [];
+    const boot = {schemaVersion:2,appVersion:"0.1.0",runtime:"tauri",storage:"isolated_sqlite_lazy",hostElapsedMs:1,rendererReadyHostMs:1,naiContract:{verification:"observed_subset",generationEnabled:true,reason:"synthetic IPC test",evidenceFile:"contracts/novelai-evidence.json"}};
+    window.__TAURI_INTERNALS__ = {invoke: async command => {
+      window.__SMOKE_CALLS__.push(command);
+      if(command === "desktop_bootstrap" || command === "desktop_mark_ready")return boot;
+      if(command === "credentials_status"){
+        if(window.__SMOKE_CASE__ === "credentials-failed")throw {code:"credentials_unavailable",message:"测试：凭据读取失败。",retryable:false};
+        return true;
+      }
+      if(command === "task_list"){
+        if(window.__SMOKE_CASE__ === "storage-failed")throw {code:"storage_unavailable",message:"测试：存储不可用。",retryable:false};
+        if(window.__SMOKE_CASE__ === "unresolved")return [{id:"test-unknown",kind:"generation",state:"outcome_unknown",createdAtMs:1,acknowledged:false,errorCode:null}];
+        return [];
+      }
+      throw new Error(`Unexpected test IPC: ${command}`);
+    }};
+  });
+  await mocked.goto(origin);
+  await mocked.getByLabel("正向提示词").fill("synthetic IPC smoke only");
+  await mocked.getByRole("button",{name:"生成图像",exact:true}).click();
+  await mocked.getByRole("alert").filter({hasText:"测试：存储不可用。"}).waitFor();
+  assert.equal(await mocked.getByRole("dialog").count(),0);
+  await mocked.getByRole("button",{name:"连接与任务",exact:true}).click();
+  await mocked.getByText("已保存凭据",{exact:true}).waitFor();
+  await mocked.getByText("任务记录未读取，不能视为没有待核对任务。",{exact:true}).waitFor();
+  assert.equal(await mocked.getByText("暂无任务记录。",{exact:true}).count(),0);
+  await mocked.evaluate(()=>{window.__SMOKE_CASE__="credentials-failed";});
+  await mocked.getByRole("button",{name:"工作台",exact:true}).click();
+  await mocked.getByRole("button",{name:"连接与任务",exact:true}).click();
+  await mocked.getByText("暂无任务记录。",{exact:true}).waitFor();
+  await mocked.getByRole("alert").filter({hasText:"测试：凭据读取失败。"}).waitFor();
+  await mocked.evaluate(()=>{window.__SMOKE_CASE__="unresolved";});
+  await mocked.getByRole("button",{name:"工作台",exact:true}).click();
+  await mocked.getByRole("button",{name:"生成图像",exact:true}).click();
+  await mocked.getByRole("alert").filter({hasText:"存在未核对的付费任务"}).waitFor();
+  assert.equal(await mocked.getByRole("dialog").count(),0);
+  await mocked.evaluate(()=>{window.__SMOKE_CASE__="ready";});
+  await mocked.getByRole("button",{name:"生成图像",exact:true}).click();
+  await mocked.getByRole("dialog").waitFor();
+  await mocked.getByRole("button",{name:"取消",exact:true}).click();
+  assert.equal(await mocked.getByRole("dialog").count(),0);
+  assert.equal(await mocked.evaluate(()=>window.__SMOKE_CALLS__.filter(c=>c==="generation_submit"||c==="vibe_encode").length),0);
+  await mocked.close();
   assert.deepEqual(external, []); assert.deepEqual(errors, []);
-  console.log("PASS: production UI editing, lazy tabs, disabled paid/native actions, 1440/900px layouts; no external HTTP requests or page errors.");
+  console.log("PASS: production UI editing, lazy tabs, disabled paid/native actions, 1440/900px layouts, synthetic IPC failure/confirmation handling; no external HTTP requests or page errors.");
 } finally { await context.close(); await browser.close(); }
