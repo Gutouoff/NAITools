@@ -6,7 +6,7 @@ export interface DesktopApi {
   bootstrap():Promise<BootInfo>;markReady():Promise<BootInfo>;loadDraft():Promise<EditorDraft>;saveDraft(draft:EditorDraft):Promise<void>;
   listHistory(query:HistoryQuery):Promise<HistoryPage>;historyRequest(id:string):Promise<GenerationInput>;submitGeneration(input:GenerationInput):Promise<GenerationResult>;
   credentialsStatus():Promise<boolean>;setToken(token:string):Promise<void>;deleteToken():Promise<void>;
-  importImage(base64:string):Promise<ImageAsset>;encodeVibe(input:EncodeInput):Promise<VibeAsset>;readArtifact(id:string,thumbnail?:boolean):Promise<string>;exportArtifact(id:string):Promise<boolean>;
+  importImage(base64:string):Promise<ImageAsset>;encodeVibe(input:EncodeInput):Promise<VibeAsset>;readArtifact(id:string,thumbnail?:boolean):Promise<string>;readArtifactMetadata(id:string):Promise<import("./types.ts").ArtifactMetadata>;exportArtifact(id:string):Promise<boolean>;
   listConnections(checkCredentials?:boolean):Promise<ConnectionStatus[]>;saveConnection(profile:ConnectionProfile):Promise<void>;deleteConnection(id:string):Promise<void>;
   setConnectionToken(id:string,token:string):Promise<void>;deleteConnectionToken(id:string):Promise<void>;
   listDrawingPresets():Promise<DrawingPreset[]>;saveDrawingPreset(preset:DrawingPreset):Promise<void>;deleteDrawingPreset(id:string):Promise<void>;
@@ -29,13 +29,13 @@ export function nativeApi(invoke:Invoke):DesktopApi {
     listConnections:(checkCredentials=true)=>call("connections_list",{checkCredentials}),saveConnection:profile=>call("connection_save",{profile}),deleteConnection:id=>call("connection_delete",{id}),
     setConnectionToken:(id,token)=>call("connection_token_set",{id,token}),deleteConnectionToken:id=>call("connection_token_delete",{id}),
     listDrawingPresets:()=>call("drawing_presets_list"),saveDrawingPreset:preset=>call("drawing_preset_save",{preset:mapDrawingPreset(preset)}),deleteDrawingPreset:id=>call("drawing_preset_delete",{id}),
-    readArtifact:(id,thumbnail=false)=>call("artifact_read",{id,thumbnail}),exportArtifact:id=>call("artifact_export",{id}),listTasks:()=>call("task_list"),acknowledgeTask:id=>call("task_acknowledge",{id})
+    readArtifact:(id,thumbnail=false)=>call("artifact_read",{id,thumbnail}),readArtifactMetadata:id=>call("artifact_metadata",{id}),exportArtifact:id=>call("artifact_export",{id}),listTasks:()=>call("task_list"),acknowledgeTask:id=>call("task_acknowledge",{id})
   };
 }
 export function previewApi():DesktopApi {
   const boot:BootInfo={schemaVersion:2,appVersion:"0.1.0",runtime:"browser_preview",storage:"unavailable",hostElapsedMs:null,rendererReadyHostMs:null,naiContract:{verification:"unverified",generationEnabled:false,reason:"浏览器仅预览 UI；没有 Rust 宿主，也不会访问 NovelAI。",evidenceFile:"contracts/novelai-evidence.json"}};
   const unavailable=async():Promise<never>=>{throw new DesktopError("native_unavailable","浏览器预览不提供原生存储或付费接口；请在 PC 程序中使用。",false);};
-  return {bootstrap:async()=>boot,markReady:async()=>boot,loadDraft:unavailable,saveDraft:unavailable,listHistory:unavailable,historyRequest:unavailable,submitGeneration:unavailable,credentialsStatus:unavailable,setToken:unavailable,deleteToken:unavailable,importImage:unavailable,encodeVibe:unavailable,readArtifact:unavailable,exportArtifact:unavailable,listConnections:unavailable,saveConnection:unavailable,deleteConnection:unavailable,setConnectionToken:unavailable,deleteConnectionToken:unavailable,listDrawingPresets:unavailable,saveDrawingPreset:unavailable,deleteDrawingPreset:unavailable,listTasks:unavailable,acknowledgeTask:unavailable};
+  return {bootstrap:async()=>boot,markReady:async()=>boot,loadDraft:unavailable,saveDraft:unavailable,listHistory:unavailable,historyRequest:unavailable,submitGeneration:unavailable,credentialsStatus:unavailable,setToken:unavailable,deleteToken:unavailable,importImage:unavailable,encodeVibe:unavailable,readArtifact:unavailable,readArtifactMetadata:unavailable,exportArtifact:unavailable,listConnections:unavailable,saveConnection:unavailable,deleteConnection:unavailable,setConnectionToken:unavailable,deleteConnectionToken:unavailable,listDrawingPresets:unavailable,saveDrawingPreset:unavailable,deleteDrawingPreset:unavailable,listTasks:unavailable,acknowledgeTask:unavailable};
 }
 let api:DesktopApi|undefined;
 export async function getDesktopApi():Promise<DesktopApi>{if(api)return api;const {isTauri,invoke}=await import("@tauri-apps/api/core");api=isTauri()?nativeApi(invoke):previewApi();return api;}

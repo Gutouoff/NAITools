@@ -9,6 +9,12 @@ pub const MAX_IMAGE: usize = 16 * 1024 * 1024;
 pub struct ImageAsset { pub id:String, pub width:u32, pub height:u32, pub preview_url:String }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all="camelCase")]
+pub struct MetadataEntry { pub key:String, pub value:String }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct ArtifactMetadata { pub width:u32, pub height:u32, pub format:String, pub entries:Vec<MetadataEntry> }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct VibeAsset { pub id:String, pub model:String, pub information_extracted:f64, pub cache_hit:bool }
 #[derive(Serialize, Deserialize)]
 pub struct VibeMeta { #[serde(default)] pub connection_scope:String, pub model:String, pub information_extracted:f64 }
@@ -42,6 +48,18 @@ pub fn decode(bytes:&[u8])->Result<DynamicImage,AppError>{
 pub fn png(image:&DynamicImage)->Result<Vec<u8>,AppError>{let mut c=Cursor::new(Vec::new());image.write_to(&mut c,ImageFormat::Png).map_err(|_|AppError::invalid())?;Ok(c.into_inner())}
 pub fn data_url(bytes:&[u8])->String{format!("data:image/png;base64,{}",STANDARD.encode(bytes))}
 pub fn thumbnail(bytes:&[u8])->Result<String,AppError>{Ok(data_url(&png(&decode(bytes)?.thumbnail(512,512))?))}
+fn text_value(bytes:&[u8])->String{String::from_utf8_lossy(bytes).trim_matches(char::from(0)).trim().chars().take(65_536).collect()}
+pub fn metadata(bytes:&[u8])->Result<ArtifactMetadata,AppError>{
+    let image=decode(bytes)?; let mut entries=Vec::new();
+    if bytes.starts_with(&[137,80,78,71,13,10,26,10]) { let mut at=8usize;
+        while at.saturating_add(12)<=bytes.len() && entries.len()<128 { let len=u32::from_be_bytes(bytes[at..at+4].try_into().unwrap()) as usize; let ds=at+8; let de=ds.saturating_add(len); if de.saturating_add(4)>bytes.len(){break;} let kind=&bytes[at+4..at+8]; let data=&bytes[ds..de];
+            if kind==b"tEXt" { if let Some(pos)=data.iter().position(|v|*v==0){ let key=text_value(&data[..pos]); let value=text_value(&data[pos+1..]); if !key.is_empty()&&!value.is_empty(){entries.push(MetadataEntry{key,value});} } }
+            else if kind==b"iTXt" { let mut parts=data.splitn(6,|v|*v==0); let key=parts.next().map(text_value).unwrap_or_default(); let flag=parts.next().and_then(|v|v.first()).copied().unwrap_or(1); let _method=parts.next(); let _lang=parts.next(); let _translated=parts.next(); if flag==0 { if let Some(value)=parts.next().map(text_value){ if !key.is_empty()&&!value.is_empty(){entries.push(MetadataEntry{key,value});} } } }
+            at=de+4; if kind==b"IEND"{break;}
+        }
+    }
+    Ok(ArtifactMetadata{width:image.width(),height:image.height(),format:match image::guess_format(bytes).unwrap_or(ImageFormat::Png){ImageFormat::Png=>"PNG",ImageFormat::Jpeg=>"JPEG",ImageFormat::WebP=>"WebP",_=>"image"}.into(),entries})
+}
 pub fn import(root:&Path, base64:&str)->Result<ImageAsset,AppError>{
     if base64.len()>MAX_IMAGE*4/3+8{return Err(AppError::invalid());}
     let image=decode(&STANDARD.decode(base64).map_err(|_|AppError::invalid())?)?;
@@ -66,5 +84,5 @@ pub fn output_from_zip(bytes:&[u8],width:u32,height:u32)->Result<Vec<u8>,AppErro
     use super::*;
     #[test]fn rejects_paths_and_non_images(){assert!(path(Path::new("test"),"assets","../private","png").is_err());assert!(decode(b"not png").is_err());}
     #[test]fn import_and_thumbnail_are_local(){let root=tempfile::tempdir().unwrap();let bytes=png(&DynamicImage::new_rgb8(32,48)).unwrap();let a=import(root.path(),&STANDARD.encode(bytes)).unwrap();assert_eq!((a.width,a.height),(32,48));assert!(a.preview_url.starts_with("data:image/png;base64,"));assert!(path(root.path(),"assets",&a.id,"png").unwrap().exists());}
-    #[test]fn zip_retains_png_and_checks_size(){let bytes=png(&DynamicImage::new_rgb8(64,64)).unwrap();let mut c=Cursor::new(Vec::new());{let mut z=zip::ZipWriter::new(&mut c);z.start_file("image_0.png",zip::write::SimpleFileOptions::default()).unwrap();z.write_all(&bytes).unwrap();z.finish().unwrap();}assert_eq!(output_from_zip(c.get_ref(),64,64).unwrap(),bytes);assert!(output_from_zip(c.get_ref(),128,64).is_err());}
+    #[test]fn zip_retains_png_and_checks_size() {let bytes=png(&DynamicImage::new_rgb8(64,64)).unwrap();let mut c=Cursor::new(Vec::new());{let mut z=zip::ZipWriter::new(&mut c);z.start_file("image_0.png",zip::write::SimpleFileOptions::default()).unwrap();z.write_all(&bytes).unwrap();z.finish().unwrap();}assert_eq!(output_from_zip(c.get_ref(),64,64).unwrap(),bytes);assert!(output_from_zip(c.get_ref(),128,64).is_err());}
 }

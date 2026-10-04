@@ -24,6 +24,7 @@ async fn service<T:Send+'static>(s:Arc<Runtime>,f:impl FnOnce(&NaiService)->Resu
 #[tauri::command]async fn image_import(state:State<'_,Arc<Runtime>>,base64:String)->Result<ImageAsset,AppError>{service(state.inner().clone(),move|n|n.import_image(&base64)).await}
 #[tauri::command]async fn vibe_encode(state:State<'_,Arc<Runtime>>,input:EncodeInput)->Result<VibeAsset,AppError>{service(state.inner().clone(),move|n|n.encode(input)).await}
 #[tauri::command]async fn artifact_read(state:State<'_,Arc<Runtime>>,id:String,thumbnail:bool)->Result<String,AppError>{service(state.inner().clone(),move|n|n.artifact(&id,thumbnail)).await}
+#[tauri::command]async fn artifact_metadata(state:State<'_,Arc<Runtime>>,id:String)->Result<studio_nai::assets::ArtifactMetadata,AppError>{service(state.inner().clone(),move|n|n.artifact_metadata(&id)).await}
 #[tauri::command]async fn artifact_export(state:State<'_,Arc<Runtime>>,id:String)->Result<bool,AppError>{
     service(state.inner().clone(),move|n|{
         let bytes=studio_nai::assets::read_bounded(&studio_nai::assets::path(&n.root,"outputs",&id,"png")?,studio_nai::assets::MAX_IMAGE)?;
@@ -68,7 +69,7 @@ fn main(){let started=Instant::now();let result=tauri::Builder::default().setup(
     }
     Ok(())
 })
-.invoke_handler(tauri::generate_handler![desktop_bootstrap,desktop_mark_ready,draft_load,draft_save,history_list,history_request,generation_submit,credentials_status,credentials_set,credentials_delete,image_import,vibe_encode,artifact_read,artifact_export,task_list,task_acknowledge,connections_list,connection_save,connection_delete,connection_token_set,connection_token_delete,drawing_presets_list,drawing_preset_save,drawing_preset_delete])
+.invoke_handler(tauri::generate_handler![desktop_bootstrap,desktop_mark_ready,draft_load,draft_save,history_list,history_request,generation_submit,credentials_status,credentials_set,credentials_delete,image_import,vibe_encode,artifact_read,artifact_metadata,artifact_export,task_list,task_acknowledge,connections_list,connection_save,connection_delete,connection_token_set,connection_token_delete,drawing_presets_list,drawing_preset_save,drawing_preset_delete])
 .run(tauri::generate_context!());
     if let Err(error) = result {
         startup::report_failure(&error.to_string());

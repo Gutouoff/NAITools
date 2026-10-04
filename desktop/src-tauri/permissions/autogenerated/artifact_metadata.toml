@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-artifact-metadata"
+description = "Enables the artifact_metadata command without any pre-configured scope."
+commands.allow = ["artifact_metadata"]
+
+[[permission]]
+identifier = "deny-artifact-metadata"
+description = "Denies the artifact_metadata command without any pre-configured scope."
+commands.deny = ["artifact_metadata"]

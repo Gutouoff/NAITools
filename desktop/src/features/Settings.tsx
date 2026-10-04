@@ -13,6 +13,7 @@ export default function Settings({ api, native, taskSignal, onTasks, onConnectio
     selectedId: string;
     onSelect: (id: string) => void;
 }) {
+    const [section, setSection] = useState<"connections" | "tasks">("connections");
     const [tasks, setTasks] = useState<TaskRecord[]>(), [busy, setBusy] = useState(false), [error, setError] = useState("");
     const [taskError, setTaskError] = useState("");
     useEffect(() => { let active = true; if (native) {
@@ -40,7 +41,7 @@ export default function Settings({ api, native, taskSignal, onTasks, onConnectio
         setTasks(undefined);
         setTaskError(normalizeError(e).message);
     } }
-    return <div className="settings-grid"><Connections api={api} native={native} onChanged={onConnections} selectedId={selectedId} onSelect={onSelect}/><section className="panel"><div className="panel-heading"><h2>付费任务记录</h2><button disabled={!native || busy} onClick={() => void run(refresh)}>刷新</button></div><p className="hint">请求提交前写入本地任务记录。超时、返回解析失败或程序退出后，可能无法确定是否扣费。未核对任务会阻止新付费请求；解除阻止也不会重新提交原任务。</p>
+    return <div className="settings-layout"><nav className="settings-nav" aria-label="设置分类"><button aria-current={section === "connections" ? "page" : undefined} onClick={() => setSection("connections")}>API 配置</button><button aria-current={section === "tasks" ? "page" : undefined} onClick={() => setSection("tasks")}>付费任务记录</button></nav><div className="settings-content"><div hidden={section !== "connections"}><Connections api={api} native={native} onChanged={onConnections} selectedId={selectedId} onSelect={onSelect}/></div><section hidden={section !== "tasks"} className="panel"><div className="panel-heading"><h2>付费任务记录</h2><button disabled={!native || busy} onClick={() => void run(refresh)}>刷新</button></div><p className="hint">请求提交前写入本地任务记录。超时、返回解析失败或程序退出后，可能无法确定是否扣费。未核对任务会阻止新付费请求；解除阻止也不会重新提交原任务。</p>
     {error && <p className="error" role="alert">{error}</p>}{!native && <p>浏览器预览没有原生任务日志。</p>}{native && tasks?.length === 0 && <p className="muted">暂无任务记录。</p>}
     {native && tasks === undefined && <p className="muted">{taskError ? "任务记录未读取，不能视为没有待核对任务。" : "正在读取任务记录…"}</p>}
     {taskError && <p className="error" role="alert">任务记录：{taskError}</p>}
@@ -48,5 +49,5 @@ export default function Settings({ api, native, taskSignal, onTasks, onConnectio
       {t.state === "outcome_unknown" && !t.acknowledged && <button className="tonal" disabled={busy} onClick={() => { if (!window.confirm("确认已核对服务账户中的任务结果及费用？此操作仅解除新请求的提交限制，不会撤销费用或重新提交原任务。"))
             return; void run(async () => { await api.acknowledgeTask(t.id); await refresh(); }); }}>确认已核对，解除提交限制</button>}{t.acknowledged && <small>已确认核对；原任务结果仍标记为未知，不会自动重新提交。</small>}
     </article>)}
-  </section></div>;
+  </section></div></div>;
 }

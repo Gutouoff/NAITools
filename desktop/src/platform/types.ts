@@ -7,6 +7,8 @@ export interface EditorDraft { prompt: string; negativePrompt: string; promptDoc
 export interface HistoryCursor { createdAtMs: number; id: string }
 export interface HistoryQuery { limit?: number; before?: HistoryCursor | null }
 export interface HistoryItem { id: string; createdAtMs: number; prompt: string; artifactId: string }
+export interface MetadataEntry { key: string; value: string }
+export interface ArtifactMetadata { width: number; height: number; format: string; entries: MetadataEntry[] }
 export interface HistoryPage { items: HistoryItem[]; nextCursor: HistoryCursor | null }
 export interface GenerationInput { connectionId?: string | null; draft: EditorDraft; model: string; mode: "txt2img" | "i2i"; width: number; height: number; steps: number; guidance: number; sampler: string; seed: number | null; imageId: string | null; strength: number; noise: number; vibes: { encodingId: string; strength: number }[]; confirmPaid: boolean }
 export interface GenerationResult { taskId: string; artifactId: string; seed: number; imageUrl: string }

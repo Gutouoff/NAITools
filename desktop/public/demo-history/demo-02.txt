@@ -1,0 +1,71 @@
+# 铃木胜 · 超市仰躺场景（连体胶衣版）
+
+- 场景来源：用户此前给 image2 的中文提示词，本次按要求改造
+- 改造点：① 紧身衣 → **连体紧身胶衣** ② **无褶皱** ③ **无手环脚环** ④ **五指/五趾分指**
+- 参考：`_refs/masaru-official-2.png`（官方立绘 2，©ANYCOLOR）· 成品参考 `_refs/铃木胜-傲娇白底-成品v1.png`
+
+---
+
+## 版本 A · 中文自然语言版（给 image2 / GPT Image / Gemini 这类模型）
+
+```
+二次元动漫插画，赛璐璐上色，干净线稿。
+角色仰躺在超市的金属网格货架上，双手抓住两侧栏杆；接触点明确：只有脚踝部位靠在横杆上，绝对不是膝盖或大腿搭在横杆上。
+双脚穿着黑色多搭扣长靴，靴子和小腿下半段自然向后伸展、悬空，脚部自然放松，不要踩在网格上，不要朝向镜头。
+服装改为【连体紧身黑色乳胶衣】：表面光滑、无褶皱、无任何手环与脚环，手套为五指分指、脚部为五趾分趾。
+保持原有的仰躺姿势、双手抓住两侧栏杆、银发黑挑染、金色眼睛、坏笑表情、白色破洞T恤、黑色外套和超市背景完全不变。
+整体光影自然，边缘完美融合。
+```
+
+⚠️ 物理冲突：穿着长靴时看不到脚趾；"五趾分趾"仅在脱靴（或靴子露趾）时可见，否则只会被理解为鞋内形状。
+
+---
+
+## 版本 B · NAI V4.5 标签版
+
+### 正面
+
+```
+suzuki_masaru, masterpiece, best quality, amazing quality, very aesthetic, absurdres,
+anime style, cel shading, flat color, clean lineart, 2d,
+1boy, solo, silver hair, black hair highlight, yellow eyes, one_eye_closed, evil_smile, smirk,
+black latex bodysuit, latex_bodysuit, catsuit, skin_tight, shiny_clothes, gloves, elbow_gloves,
+white shirt, torn_shirt, black jacket, black boots, knee_boots, buckle, strap,
+lying, on_back, arms_up, outstretched_arms, holding, railing, handrail, supermarket, shelf, shopping,
+1.2::latex_bodysuit::, 1.1::skin_tight::, 1.1::shiny_clothes::,
+only the ankles rest on the horizontal bar, not the knees or thighs,
+```
+
+### 负面（在原定版负面基础上追加）
+
+```
+bracelet, anklet, wristband, wrinkles, folds, elbow pads,
+```
+
+### 标签依据（Danbooru 实测）
+
+| 用途 | 有效标签 | 无效/避坑 |
+| --- | --- | --- |
+| 连体胶衣 | `latex_bodysuit`(7,155) `catsuit`(1,123) `bodysuit`(185k) `latex`(19.6k) | — |
+| 光滑紧身 | `skin_tight`(53.4k) `shiny_clothes`(32.8k) `shiny`(4,816) | `wrinkles` 是 **0 张无效词** |
+| 分指手套 | `gloves`(1.96M) `elbow_gloves`(410k) | `long_gloves` 无效 |
+| 分趾 | `tabi`(25.4k) `toe_socks`(129) | — |
+| 坏笑 | `evil_smile`(23.2k) `smirk`(37k) `grin`(362k) `one_eye_closed`(627k) | `winking` 无效 |
+| 场景 | `supermarket`(727) `railing`(34.5k) `handrail`(875) `shelf`(13k) `lying`(630k) `on_back`(362k) `shopping`(2,103) | `store` / `shelves` 无效 |
+| 动作 | `arms_up`(266k) `outstretched_arms`(94k) `holding` | — |
+
+### 参考图设置（本场景专用）
+
+| 参考 | 类型 | 强度 | 理由 |
+| --- | --- | --- | --- |
+| `_refs/suzuki_masaru_tachie.png` | 风格 | 0.45 | 只锁渲染画风 |
+| `_refs/masaru_boots_crop.png` | 角色 | 0.70 | 保住多搭扣长靴 |
+| ~~`_refs/masaru-official-2.png`~~ | ~~角色~~ | — | **不要用**：它带着夹克+紫扎染衫，会和连体胶衣打架 |
+
+其余参数沿用定版 v1（`nai-diffusion-4-5-full` · 832×1216 · steps 28 · CFG 6 · Euler Ancestral · Karras · 代理 `http://127.0.0.1:8787`）。
+
+---
+
+## 一句实话
+
+"只有脚踝靠横杆，不能是膝盖或大腿"属于**接触点级空间约束**，NAI 对这类关系不敏感、成功率偏低；这类中文长句约束是 GPT Image / Gemini 系更擅长的领域。建议：版本 A 走那条路，版本 B 走 NAI 时多抽几张挑。

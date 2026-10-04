@@ -20,6 +20,7 @@
     "allow-image-import",
     "allow-vibe-encode",
     "allow-artifact-read",
+    "allow-artifact-metadata",
     "allow-artifact-export",
     "allow-task-list",
     "allow-task-acknowledge",

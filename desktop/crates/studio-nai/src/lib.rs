@@ -61,6 +61,7 @@ impl NaiService {
     }
     pub fn import_image(&self,base64:&str)->Result<ImageAsset,AppError>{assets::import(&self.root,base64)}
     pub fn artifact(&self,id:&str,thumb:bool)->Result<String,AppError>{let b=assets::read_bounded(&assets::path(&self.root,"outputs",id,"png")?,assets::MAX_IMAGE)?;if thumb{assets::thumbnail(&b)}else{Ok(assets::data_url(&b))}}
+    pub fn artifact_metadata(&self,id:&str)->Result<assets::ArtifactMetadata,AppError>{let b=assets::read_bounded(&assets::path(&self.root,"outputs",id,"png")?,assets::MAX_IMAGE)?;assets::metadata(&b)}
     fn source(&self,id:&str)->Result<Vec<u8>,AppError>{assets::read_bounded(&assets::path(&self.root,"assets",id,"png")?,assets::MAX_IMAGE)}
     fn record_result<T>(&self,id:&str,result:Result<T,AppError>)->Result<T,AppError>{match result {Ok(v)=>Ok(v),Err(e)=>{let _=self.with_store(|s|s.record_unknown(id,e.code));Err(http::unknown(e.code))}}}
     pub fn generate(&self,input:GenerationInput)->Result<GenerationResult,AppError>{
