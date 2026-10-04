@@ -51,3 +51,15 @@ test("IPC schema mismatch is rejected before using a newer host", async () => {
   const invoke: Invoke = async <T>() => ({ schemaVersion: 999 }) as T;
   await assert.rejects(() => nativeApi(invoke).bootstrap(), (e: unknown) => e instanceof DesktopError && e.code === "schema_mismatch");
 });
+
+test("connection metadata loading does not request credentials and selection reaches native generation", async () => {
+  const calls: unknown[] = [];
+  const invoke: Invoke = async <T>(command: string, args?: Record<string, unknown>) => {
+    calls.push({command,args}); return (command === "connections_list" ? [] : undefined) as T;
+  };
+  const api = nativeApi(invoke);
+  await api.listConnections(false);
+  await api.submitGeneration({...generation,connectionId:"relay-b"});
+  assert.deepEqual(calls[0], {command:"connections_list",args:{checkCredentials:false}});
+  assert.equal((calls[1] as {args:{input:{connectionId:string}}}).args.input.connectionId,"relay-b");
+});

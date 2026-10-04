@@ -10,7 +10,7 @@ const Settings=lazy(()=>import("./features/Settings"));
 type Tab="workbench"|"history"|"settings"|"diagnostics";
 const initial:GenerationInput={draft:{prompt:"",negativePrompt:"",promptDocument:newPromptDocument()},model:"nai-diffusion-4-5-full",mode:"txt2img",width:832,height:1216,steps:23,guidance:5,sampler:"k_euler_ancestral",seed:null,imageId:null,strength:0.7,noise:0,vibes:[],confirmPaid:false};
 export default function App(){
-  const [api,setApi]=useState<DesktopApi>(),[boot,setBoot]=useState<BootInfo>(),[tab,setTab]=useState<Tab>("workbench"),[error,setError]=useState(""),[input,setInput]=useState(initial),[rendererMs,setRendererMs]=useState<number>(),[replaySignal,setReplaySignal]=useState(0),[taskSignal,setTaskSignal]=useState(0);
+  const [api,setApi]=useState<DesktopApi>(),[boot,setBoot]=useState<BootInfo>(),[tab,setTab]=useState<Tab>("workbench"),[error,setError]=useState(""),[input,setInput]=useState(initial),[rendererMs,setRendererMs]=useState<number>(),[replaySignal,setReplaySignal]=useState(0),[taskSignal,setTaskSignal]=useState(0),[connectionSignal,setConnectionSignal]=useState(0);
   useEffect(()=>{let active=true;void getDesktopApi().then(async service=>{
     const b=await service.bootstrap();if(!active)return;setApi(service);setBoot(b);
     requestAnimationFrame(()=>requestAnimationFrame(()=>{if(active){setRendererMs(performance.now());void service.markReady().then(v=>{if(active)setBoot(v);}).catch(e=>{if(active)setError(normalizeError(e).message);});}}));
@@ -30,10 +30,10 @@ export default function App(){
       {error&&<div className="error" role="alert">{error}</div>}
       {taskSignal>0&&tab!=="settings"&&<div className="notice">操作结果待核对，请勿重复提交。<button onClick={()=>setTab("settings")}>查看任务记录</button></div>}
       <div className="page-content">
-        {api&&<div className="workbench-page" hidden={tab!=="workbench"}><Workbench api={api} native={native} input={input} setInput={setInput} replaySignal={replaySignal} onTasks={()=>setTaskSignal(s=>s+1)}/></div>}
+        {api&&<div className="workbench-page" hidden={tab!=="workbench"}><Workbench api={api} native={native} input={input} setInput={setInput} replaySignal={replaySignal} connectionSignal={connectionSignal} onTasks={()=>setTaskSignal(s=>s+1)}/></div>}
         <Suspense fallback={<p className="muted">加载中…</p>}>
           {tab==="history"&&api&&<History api={api} native={native} onReplay={i=>{setInput(i);setReplaySignal(s=>s+1);setTab("workbench");}}/>}
-          {tab==="settings"&&api&&<Settings api={api} native={native} taskSignal={taskSignal}/>}
+          {tab==="settings"&&api&&<Settings api={api} native={native} taskSignal={taskSignal} onConnections={()=>setConnectionSignal(s=>s+1)}/>}
           {tab==="diagnostics"&&<Diagnostics boot={boot} rendererMs={rendererMs}/>}
         </Suspense>
       </div>

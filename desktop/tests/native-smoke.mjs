@@ -19,6 +19,22 @@ try{
   const boot=await page.evaluate(()=>window.__TAURI_INTERNALS__.invoke("desktop_bootstrap"));
   console.log(`INFO: rendererReadyHostMs=${boot.rendererReadyHostMs}; starts at Rust main, includes test debugging overhead, not a cold-start benchmark.`);
   assert.equal(boot.runtime,"tauri");assert.equal(boot.schemaVersion,2);assert.equal(boot.naiContract.verification,"observed_subset");
+  const metadata = await page.evaluate(async()=> {
+    try {const values=await window.__TAURI_INTERNALS__.invoke("connections_list",{checkCredentials:false});return {shape:Array.isArray(values),secretRequested:values.some(v=>v.hasToken!==null)};}
+    catch(e){return {errorCode:e.code};}
+  });
+  assert.ok(metadata.shape || metadata.errorCode === "storage_unavailable", "Connection IPC must be permitted, even if storage is unavailable");
+  if(metadata.shape)assert.equal(metadata.secretRequested,false);
+  const invalidProfile = {id:"invalid-test",name:"validation-only",kind:"official",baseUrl:"https://wrong.example",generationPath:"/ai/generate-image",encodePath:"/ai/encode-vibe",generationUsd:null,encodingUsd:null};
+  const profileError = await page.evaluate(async profile=>{try{await window.__TAURI_INTERNALS__.invoke("connection_save",{profile});return null;}catch(e){return e.code;}},invalidProfile);
+  assert.equal(profileError,"connection_invalid");
+  const handle = page.getByRole("separator", {name:"调整提示词与预览宽度",exact:true});
+  const beforeWidth=await handle.getAttribute("aria-valuenow");
+  await handle.focus();await handle.press("ArrowRight");
+  assert.ok(Number(await handle.getAttribute("aria-valuenow")) > Number(beforeWidth));await handle.dblclick();
+  const promptHeight=page.getByRole("separator",{name:"调整正向输入区高度",exact:true});
+  const beforeHeight=Number(await promptHeight.getAttribute("aria-valuenow"));
+  await promptHeight.focus();await promptHeight.press("ArrowDown");assert.equal(Number(await promptHeight.getAttribute("aria-valuenow")),beforeHeight+20);await promptHeight.dblclick();
   if(process.env.NATIVE_WORKBENCH_SCREENSHOT)await page.screenshot({path:process.env.NATIVE_WORKBENCH_SCREENSHOT,fullPage:true});
   await page.getByLabel("正向提示词").fill("local native UI smoke only");
   assert.equal(await page.getByRole("button",{name:"生成图像",exact:true}).isEnabled(),true);
@@ -48,5 +64,5 @@ try{
   await page.waitForTimeout(5000);
   assert.equal((await page.evaluate(()=>window.__TAURI_INTERNALS__.invoke("desktop_bootstrap"))).runtime,"tauri");
   assert.deepEqual(errors,[]);
-  console.log("PASS: release WebView2 render, IPC 2 native handshake, local prompt editing and unconfirmed-generation rejection. No credential reads or paid submissions; not a performance benchmark.");
+  console.log("PASS: release WebView2 render, IPC 2 native handshake, local prompt/resize editing, connection ACL/validation and unconfirmed-generation rejection. No credential reads or paid submissions; not a performance benchmark.");
 }finally{await browser.close();}

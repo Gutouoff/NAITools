@@ -1,38 +1,44 @@
 import {useEffect,useRef,useState} from "react";
-import type React from "react";
+import type {CSSProperties,PointerEvent} from "react";
+import {readWidths,fitWidths} from "./workbench-layout";
+import ResizableTextArea from "./ResizableTextArea";
 import type {DesktopApi} from "../platform/desktop-api";
-import type {GenerationInput,GenerationResult,ImageAsset,VibeAsset} from "../platform/types";
+import type {GenerationInput,GenerationResult,ImageAsset,VibeAsset,ConnectionStatus} from "../platform/types";
 import {normalizeError} from "../platform/types";
 import PromptEditor from "./PromptEditor";
 import {compilePrompt,newPromptDocument} from "./prompt";
 interface Row {key:string;image?:ImageAsset;encoding?:VibeAsset;information:number;strength:number}
 interface Confirmation {title:string;description:string;run:()=>Promise<void>}
-interface PanelWidths {editor:number;controls:number}
-function Confirm({value,onCancel,onAccept}:{value:Confirmation;onCancel:()=>void;onAccept:()=>void}){const ref=useRef<HTMLDialogElement>(null);useEffect(()=>{ref.current?.showModal();},[]);return <dialog ref={ref} onCancel={onCancel} className="confirm-dialog"><h2>{value.title}</h2><p>{value.description}</p><p className="hint">请求可能消耗 Anlas；发生超时或未知结果不会自动重发。</p><div className="actions"><button autoFocus onClick={onCancel}>取消</button><button className="primary" onClick={onAccept}>确认并提交一次</button></div></dialog>;}
+function Confirm({value,onCancel,onAccept}:{value:Confirmation;onCancel:()=>void;onAccept:()=>void}){const ref=useRef<HTMLDialogElement>(null);useEffect(()=>{ref.current?.showModal();},[]);return <dialog ref={ref} onCancel={onCancel} className="confirm-dialog"><h2>{value.title}</h2><p>{value.description}</p><p className="hint">请求可能产生服务费用；发生超时或未知结果不会自动重发。</p><div className="actions"><button autoFocus onClick={onCancel}>取消</button><button className="primary" onClick={onAccept}>确认并提交一次</button></div></dialog>;}
 async function fileBase64(file:File){if(file.size>16*1024*1024)throw new Error("图片不得超过 16 MB。");return new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(new Error("文件读取失败。"));reader.onload=()=>resolve(String(reader.result).split(",")[1]);reader.readAsDataURL(file);});}
-export default function Workbench({api,native,input,setInput,replaySignal,onTasks}:{api:DesktopApi;native:boolean;input:GenerationInput;setInput:(i:GenerationInput)=>void;replaySignal:number;onTasks:()=>void}) {
+export default function Workbench({api,native,input,setInput,replaySignal,connectionSignal,onTasks}:{api:DesktopApi;native:boolean;input:GenerationInput;setInput:(i:GenerationInput)=>void;replaySignal:number;connectionSignal:number;onTasks:()=>void}) {
   const [busy,setBusy]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState(""),[image,setImage]=useState<ImageAsset>(),[rows,setRows]=useState<Row[]>([]),[result,setResult]=useState<GenerationResult>(),[confirmation,setConfirmation]=useState<Confirmation>();
   const lock=useRef(false);
-  const [panelWidths,setPanelWidths]=useState<PanelWidths>(()=>{
-    try { const saved=JSON.parse(localStorage.getItem("naitools.workbenchWidths")||"null"); if(saved&&Number.isFinite(saved.editor)&&Number.isFinite(saved.controls)) return saved; } catch { /* ignore malformed local layout state */ }
-    return {editor:34,controls:22};
-  });
+  const workbenchRef=useRef<HTMLDivElement>(null);
+  const [available,setAvailable]=useState(1000);
+  const [ratios,setRatios]=useState(()=>{try{return readWidths(localStorage.getItem("naitools.workbenchWidths"));}catch{return readWidths(null);}});
+  const [connections,setConnections]=useState<ConnectionStatus[]>([]);
+  const [connectionError,setConnectionError]=useState("");
   const drag=useRef<{kind:"editor"|"controls";startX:number;startValue:number}|null>(null);
-  function beginResize(kind:"editor"|"controls",event:React.PointerEvent<HTMLDivElement>){
-    if(window.matchMedia("(max-width: 1100px)").matches)return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    drag.current={kind,startX:event.clientX,startValue:panelWidths[kind]};
-    const move=(e:PointerEvent)=>{
-      if(!drag.current)return;
-      const delta=(e.clientX-drag.current.startX)/Math.max(1,window.innerWidth)*100;
-      const limits=drag.current.kind==="editor"?[24,48]:[16,34];
-      const value=Math.min(limits[1],Math.max(limits[0],drag.current.startValue+(drag.current.kind==="editor"?delta:-delta)));
-      setPanelWidths((current:PanelWidths)=>({...current,[drag.current!.kind]:Number(value.toFixed(2))}));
-    };
-    const end=()=>{window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",end);drag.current=null;};
-    window.addEventListener("pointermove",move);window.addEventListener("pointerup",end,{once:true});
+  const panelWidths=fitWidths(available,ratios);
+  useEffect(()=>{
+    const node=workbenchRef.current;if(!node)return;
+    const observer=new ResizeObserver(([entry])=>setAvailable(Math.max(720,entry.contentRect.width-52)));
+    observer.observe(node);return()=>observer.disconnect();
+  },[]);
+  useEffect(()=>{try{localStorage.setItem("naitools.workbenchWidths",JSON.stringify(ratios));}catch{/* optional layout state */}},[ratios]);
+  useEffect(()=>{let live=true;if(native)void api.listConnections(false).then(value=>{if(live){setConnections(value);setConnectionError("");}},e=>{if(live)setConnectionError(normalizeError(e).message);});return()=>{live=false;};},[api,native,connectionSignal]);
+  function setPanel(kind:"editor"|"controls",value:number){
+    const other=kind==="editor"?panelWidths.controls:panelWidths.editor;
+    const minimum=kind==="editor"?260:220;
+    const clamped=Math.max(minimum,Math.min(available-other-240,value));
+    setRatios(current=>({...current,[kind]:clamped/available}));
   }
-  useEffect(()=>{try{localStorage.setItem("naitools.workbenchWidths",JSON.stringify(panelWidths));}catch{/* layout persistence is optional */}},[panelWidths]);
+  function beginResize(kind:"editor"|"controls",event:PointerEvent<HTMLDivElement>){
+    if(event.button!==0)return;
+    event.preventDefault();event.currentTarget.setPointerCapture(event.pointerId);
+    drag.current={kind,startX:event.clientX,startValue:panelWidths[kind]};
+  }
   useEffect(()=>{setRows(input.vibes.map((v,index)=>({key:`replay-${replaySignal}-${index}`,encoding:{id:v.encodingId,model:input.model,informationExtracted:-1,cacheHit:true},information:-1,strength:v.strength})));setImage(undefined);},[replaySignal]);
   const doc=input.draft.promptDocument??newPromptDocument(input.draft.prompt);
   function patch(p:Partial<GenerationInput>){setInput({...input,...p});}
@@ -42,25 +48,35 @@ export default function Workbench({api,native,input,setInput,replaySignal,onTask
   async function save(){await run(async()=>{await api.saveDraft(input.draft);setMessage("已保存提示词草稿。");});}
   async function importSource(file:File,vibe:boolean){await run(async()=>{const a=await api.importImage(await fileBase64(file));if(vibe)updateRows([...rows,{key:a.id,image:a,information:0.8,strength:0.5}]);else{setImage(a);patch({imageId:a.id,mode:"i2i"});}});}
   function ready(r:Row){return !!r.encoding&&r.encoding.model===input.model&&(r.information===-1||r.encoding.informationExtracted===r.information);}
-  async function encode(row:Row,paid:boolean){let v:VibeAsset;try{v=await api.encodeVibe({imageId:row.image!.id,model:input.model,informationExtracted:row.information,confirmPaid:paid});}catch(e){if(paid)onTasks();throw e;}updateRows(rows.map(r=>r.key===row.key?{...r,encoding:v}:r));setMessage(v.cacheHit?"复用了本地氛围编码，没有发送收费请求。":"氛围编码已保存，之后可复用。");}
+  async function encode(row:Row,paid:boolean){let v:VibeAsset;try{v=await api.encodeVibe({connectionId:input.connectionId,imageId:row.image!.id,model:input.model,informationExtracted:row.information,confirmPaid:paid});}catch(e){if(paid)onTasks();throw e;}updateRows(rows.map(r=>r.key===row.key?{...r,encoding:v}:r));setMessage(v.cacheHit?"复用了本地氛围编码，没有发送收费请求。":"氛围编码已保存，之后可复用。");}
   async function requestGenerate(){await run(async()=>{if(rows.some(r=>!ready(r))){setError("有氛围参考尚未编码或已过期。请显式编码，或移除该参考；不会静默忽略。");return;}if(input.mode==="i2i"&&!input.imageId){setError("请先导入图生图底图。");return;}if(rows.reduce((sum,r)=>sum+r.strength,0)>1.000001){setError("当前版本氛围总强度不得超过 1，不会自动改权重。");return;}
     const tasks=await api.listTasks();
     if(tasks.some(t=>!t.acknowledged&&["submitting","running","outcome_unknown"].includes(t.state))){onTasks();throw new Error("存在未核对的付费任务；请先打开连接与任务，核对官网后再操作。");}
+    if(!connections.some(c=>c.profile.id===(input.connectionId??"default-novelai")))throw new Error("连接配置未读取或已删除，不能提交收费请求。");
     const snapshot=structuredClone({...input,imageId:input.mode==="i2i"?input.imageId:null,vibes:rows.map(r=>({encodingId:r.encoding!.id,strength:r.strength})),confirmPaid:true});
-    setConfirmation({title:"确认生成一张图片",description:`${input.model.includes("curated")?"V4.5 Curated":"V4.5 Full"} · ${input.width} × ${input.height} · ${input.steps} 步 · ${input.mode==="i2i"?"图生图":"文生图"} · ${rows.length} 个已编码氛围参考。实际费用由账户与 NAI 决定，本应用不承诺免费。`,run:async()=>{try{const r=await api.submitGeneration(snapshot);setResult(r);setMessage(`已保存结果。Seed: ${r.seed}`);}catch(e){onTasks();throw e;}}});
+    setConfirmation({title:"确认生成一张图片",description:`${input.model.includes("curated")?"V4.5 Curated":"V4.5 Full"} · ${input.width} × ${input.height} · ${input.steps} 步 · ${input.mode==="i2i"?"图生图":"文生图"} · ${rows.length} 个已编码氛围参考。${generationCost()} 最终以所选服务消费记录为准。`,run:async()=>{try{const r=await api.submitGeneration(snapshot);setResult(r);setMessage(`已保存结果。Seed: ${r.seed}`);}catch(e){onTasks();throw e;}}});
   });}
+  const selected=connections.find(c=>c.profile.id===(input.connectionId??"default-novelai"))?.profile;
+  function generationCost(){return selected?.generationUsd!=null?`预计生成费 $${selected.generationUsd.toFixed(3)}（1 张；不含新增参考编码）。`:"生成费用未配置 / 由官方账户决定，不保证免费。";}
+  function encodingCost(){return selected?.encodingUsd!=null?`首次编码预计 $${selected.encodingUsd.toFixed(3)}，本地缓存命中不发送请求。`:"编码费用未配置，请核对服务计费。";}
   const disabled=busy||!!confirmation;
-  const workbenchStyle={"--editor-width":`${panelWidths.editor}%`,"--controls-width":`${panelWidths.controls}%`} as React.CSSProperties;
+  const workbenchStyle={"--editor-width":`${panelWidths.editor}px`,"--controls-width":`${panelWidths.controls}px`} as CSSProperties;
   function separator(kind:"editor"|"controls",label:string){
-    const value=kind==="editor"?panelWidths.editor:panelWidths.controls;
-    return <div className={`workbench-divider ${kind}`} role="separator" aria-label={label} aria-valuemin={kind==="editor"?24:16} aria-valuemax={kind==="editor"?48:34} aria-valuenow={value} tabIndex={0} onPointerDown={e=>beginResize(kind,e)} onKeyDown={e=>{if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;e.preventDefault();const direction=e.key==="ArrowRight"?1:-1;const limits=kind==="editor"?[24,48]:[16,34];const next=Math.min(limits[1],Math.max(limits[0],value+direction));setPanelWidths((current:PanelWidths)=>({...current,[kind]:next}));}}/>;
+    const value=panelWidths[kind];
+    return <div className={`workbench-divider ${kind}`} role="separator" aria-orientation="vertical" aria-label={label}
+      aria-valuemin={kind==="editor"?260:220} aria-valuemax={Math.floor(available-(kind==="editor"?panelWidths.controls:panelWidths.editor)-240)} aria-valuenow={Math.round(value)} tabIndex={0}
+      onPointerDown={e=>beginResize(kind,e)}
+      onPointerMove={e=>{const current=drag.current;if(current?.kind===kind)setPanel(kind,current.startValue+(e.clientX-current.startX)*(kind==="editor"?1:-1));}}
+      onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}} onLostPointerCapture={()=>{drag.current=null;}}
+      onDoubleClick={()=>setRatios(readWidths(null))}
+      onKeyDown={e=>{if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight")return;e.preventDefault();setPanel(kind,value+(e.key==="ArrowRight"?1:-1)*(kind==="editor"?1:-1)*(e.shiftKey?40:10));}}/>;
   }
-  return <><div className="workbench" style={workbenchStyle}>
+  return <><div className="workbench" ref={workbenchRef} style={workbenchStyle}>
     <div className="editor-column">
       <PromptEditor doc={doc} disabled={disabled} onChange={d=>patch({draft:{...input.draft,promptDocument:d,prompt:compilePrompt(d)}})}/>
       <section className="panel negative-panel">
         <label htmlFor="negative">负向提示词</label>
-        <textarea id="negative" className="negative" value={input.draft.negativePrompt} disabled={disabled} onChange={e=>patch({draft:{...input.draft,negativePrompt:e.target.value}})} spellCheck={false} placeholder="输入需要排除的标签"/>
+        <ResizableTextArea initialHeight={82} minHeight={60} id="negative" className="negative" value={input.draft.negativePrompt} disabled={disabled} onChange={e=>patch({draft:{...input.draft,negativePrompt:e.target.value}})} spellCheck={false} placeholder="输入需要排除的标签"/>
         <div className="actions"><button disabled={!native||disabled} onClick={()=>void load()}>读取草稿</button><button className="tonal" disabled={!native||disabled} onClick={()=>void save()}>保存草稿</button></div>
       </section>
     </div>
@@ -78,7 +94,9 @@ export default function Workbench({api,native,input,setInput,replaySignal,onTask
     {separator("controls","调整预览与参数宽度")}
     <div className="controls-column" aria-label="生成参数与参考图">
       <section className="panel parameters"><div className="panel-heading"><h2>生成参数</h2></div>
+        {connectionError&&<p role="alert" className="error">连接配置：{connectionError}</p>}
         <fieldset disabled={disabled}><div className="field-grid">
+          <label className="wide">生成连接<select aria-label="生成连接" disabled={!native} value={input.connectionId??"default-novelai"} onChange={e=>{patch({connectionId:e.target.value,vibes:[]});setRows([]);}}><option value="default-novelai">{connections.find(c=>c.profile.id==="default-novelai")?.profile.name??"NovelAI 默认账号"}</option>{connections.filter(c=>c.profile.id!=="default-novelai").map(c=><option key={c.profile.id} value={c.profile.id}>{c.profile.name}{c.hasToken===false?"（未配置凭据）":""}</option>)}</select></label>
           <label className="wide">模型<select value={input.model} onChange={e=>patch({model:e.target.value})}><option value="nai-diffusion-4-5-full">NAI V4.5 Full</option><option value="nai-diffusion-4-5-curated">NAI V4.5 Curated</option></select></label>
           <label>宽度（px）<input type="number" min="256" max="1536" step="64" value={input.width} onChange={e=>patch({width:Number(e.target.value)})}/></label>
           <label>高度（px）<input type="number" min="256" max="1536" step="64" value={input.height} onChange={e=>patch({height:Number(e.target.value)})}/></label>
@@ -106,7 +124,7 @@ export default function Workbench({api,native,input,setInput,replaySignal,onTask
           {rows.map((r,index)=><article className="vibe-row" key={r.key}>
             <div className="vibe-heading">{r.image&&<img src={r.image.previewUrl} alt={`氛围参考 ${index+1}`}/>}<div><strong>参考 {index+1}</strong><small>{ready(r)?"编码可用":"需要编码"}</small></div><button aria-label={`移除参考 ${index+1}`} disabled={disabled} onClick={()=>updateRows(rows.filter(v=>v.key!==r.key))}>移除</button></div>
             <div className="field-grid">{r.image&&<label>信息提取量<input type="number" min="0" max="1" step="0.05" disabled={disabled} value={r.information} onChange={e=>updateRows(rows.map(v=>v.key===r.key?{...v,information:Number(e.target.value),encoding:undefined}:v))}/></label>}<label>参考强度<input type="number" min="0" max="1" step="0.05" disabled={disabled} value={r.strength} onChange={e=>updateRows(rows.map(v=>v.key===r.key?{...v,strength:Number(e.target.value)}:v))}/></label></div>
-            {r.image&&<div className="actions"><button disabled={disabled||!native} onClick={()=>void run(()=>encode(r,false))}>查找缓存</button><button className="tonal" disabled={disabled||!native} onClick={()=>setConfirmation({title:"确认氛围编码",description:`参考 ${index+1} · 信息提取量 ${r.information}。未命中缓存时提交一次编码，通常消耗 2 Anlas；实际费用以服务为准。`,run:()=>encode(r,true)})}>编码 / 复用</button></div>}
+            {r.image&&<div className="actions"><button disabled={disabled||!native} onClick={()=>void run(()=>encode(r,false))}>查找缓存</button><button className="tonal" disabled={disabled||!native} onClick={()=>setConfirmation({title:"确认氛围编码",description:`参考 ${index+1} · 信息提取量 ${r.information}。未命中缓存时提交一次编码。${encodingCost()} 编码成功后即使出图失败也可能收费。`,run:()=>encode(r,true)})}>编码 / 复用</button></div>}
           </article>)}
           <p className="hint">最多 4 张，参考强度总和 ≤ 1；不自动归一化。</p>
         </div>
