@@ -4,6 +4,8 @@
 !/.gitattributes
 !/LICENSE
 !/README.md
+!/start.bat
+!/启动程序.bat
 !/CONTRIBUTING.md
 !/THIRD_PARTY_NOTICES.md
 !/desktop/

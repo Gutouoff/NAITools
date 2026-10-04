@@ -1,9 +1,9 @@
 name: PC framework
 on:
   push:
-    paths: ["desktop/**", ".github/workflows/pc-framework.yml", ".gitattributes"]
+    paths: ["desktop/**", ".github/workflows/pc-framework.yml", ".gitattributes", ".gitignore", "start.bat", "启动程序.bat"]
   pull_request:
-    paths: ["desktop/**", ".github/workflows/pc-framework.yml", ".gitattributes"]
+    paths: ["desktop/**", ".github/workflows/pc-framework.yml", ".gitattributes", ".gitignore", "start.bat", "启动程序.bat"]
   workflow_dispatch:
 permissions:
   contents: read

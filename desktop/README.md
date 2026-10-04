@@ -1,23 +1,23 @@
 # NAITools · Windows 开发预览
 
-独立 PC 重构目录：Rust + Tauri 2 + React / TypeScript。旧版账号、图像与入口不扫描、不迁移、不覆盖。原版渲染器快照现已纳入 langbai 目录；Electron 服务实现不纳入 PC 构建。
+独立 PC 重构目录：Rust + Tauri 2 + React / TypeScript。不扫描或迁移旧 Electron 账号和图像；现有 PC 数据身份保持不变。原版渲染器快照现已纳入 langbai 目录；Electron 服务实现不纳入 PC 构建。
 
-## 原版界面迁移入口
+## 默认原版界面入口
 
-当前主线是复用 Langbai 2.4.4 的原版前端，不再调整先前近似工作台来代替复刻。Rust / Tauri 替换桌面宿主和服务，React 保留原版渲染与交互。原版界面通过单独配置构建，默认入口尚未切换。
+当前主线是复用 Langbai 2.4.4 的原版前端，不再调整先前近似工作台来代替复刻。Rust / Tauri 替换桌面宿主和服务，React 保留原版渲染与交互。默认 build / desktop:dev / desktop:build 现在均使用原版界面，不再加载自定义提示词编辑器。
 
-- npm run build:langbai / npm run check:langbai-source：构建与源内容完整性检查。
+- npm run build / npm run check:langbai-source：默认构建与源内容完整性检查。独立 build:langbai 配置仍保留。
 - npm run dev:langbai：仅前端开发服务，端口 1421。普通浏览器会显示未连接 Rust 的真实错误，不提供模拟账号或伪造的设置。
 - npm run desktop:dev:langbai：Rust 宿主开发入口。
 - npm run desktop:build:langbai：仅 debug、无安装包；不覆盖 target/release/naitools.exe。
-- 已实现 10 个宿主适配方法及 1 个原版内置模板读取方法；生成、文件、历史等剩余原生接口明确报错。完整清单见 LANGBAI_PARITY.md。
+- 已实现 17 个宿主适配方法及 1 个原版内置模板读取方法，包含本地图片及元数据快照。生成、历史、参考预设和多账号等剩余接口明确报错，剪贴板及任意路径拖放也尚未接通。完整清单见 LANGBAI_PARITY.md。
 - 同一数据库新增 v5 设置表。真实用户数据本轮未打开；升级前退出所有实例并完整备份数据库、伴随日志与素材。旧 v4 程序不能直接读取升级后的数据，回退时需恢复升级前的完整备份，不能删除表来降级。
 
 本地测试不等于原生 AppData 读写或付费服务验收。不要清库、更改应用身份或绕过系统保护来使预览启动。
 
-## 现有默认入口的功能与边界
+## 旧自定义工作台的功能与边界（非默认界面）
 
-以下描述先前自定义工作台，不代表原版迁移入口已支持对应服务：
+以下仅记录保留源代码中的先前自定义工作台能力；该界面不再由默认入口加载，不代表当前原版入口已支持对应服务：
 
 - 紧凑三栏工作台：提示词、图像预览、生成参数与参考图；宽窗口通过分隔条调整栏宽（方向键微调、双击重置），窄窗口保留可见生成按钮。画师串、原文、分层和负向输入框均有独立高度拖动条。
 - 独立画师串及原文 / 9 层正文应用模板：原文与分层内容独立保留，当前模式决定提交正文；可启用、排序、预览，不去重、不改权重，不宣称官方排序。
@@ -62,13 +62,13 @@ npm run build
 
 辅助脚本仅为当前进程加载 VS2022 x64 环境，临时文件位于 `target/build-tmp`；不改全局 PATH。参数使用数组避免 PowerShell 的 `-p` 歧义。依赖已缓存时可追加 `--offline`。
 
-开发模式：`npm run desktop:dev`。生产构建通过 `custom-protocol` 内嵌页面，不依赖开发服务器。次级页面按需加载；启动按需读取本地连接元数据，不读 Token、不扫描历史、不发远程请求；设置页打开后才查询各配置的凭据状态。
+开发模式：`npm run desktop:dev`。生产构建通过 `custom-protocol` 内嵌页面，不依赖开发服务器。原版次级页面和元数据解析模块按需加载；已适配的本地设置不会发送服务商请求。原版未接通服务明确失败，不伪造账号或历史。
 
 可选浏览器验收：先运行 `npm run preview`，在另一个终端设置 `PLAYWRIGHT_MODULE` / `BROWSER_EXECUTABLE`，再运行 `npm run test:browser`。采用独立 context，阻断外部 HTTP；合成 IPC 用于错误 UI 测试，不冒充原生服务。
 
 ## 协议、许可和发布
 
-协议依据及已知缺口见 [contracts](contracts/README.md)：公开 Swagger 快照、官网客户端观察及用户文档。客户端观察不是稳定 schema 承诺；fixture 是应用自编期望请求，不是付费抓包。官方账号固定 HTTPS endpoint；第三方提供商地址和路径必须显式保存为连接元数据，服务端校验后使用，禁止重定向与自动重试，生成 IPC 不接受任意 URL / 远程 JSON。当前仅适配 NovelAI 原生 JSON → ZIP，不冒充 OpenAI Images / Chat 全协议兼容。配置说明及第三方提供商核验边界见 [连接配置](CONNECTIONS.md)。
+协议依据及已知缺口见 [contracts](contracts/README.md)：公开 Swagger 快照、官网客户端观察及用户文档。客户端观察不是稳定 schema 承诺；fixture 是应用自编期望请求，不是付费抓包。官方账号固定 HTTPS endpoint；第三方提供商地址和路径必须显式保存为连接元数据，服务端校验后使用，禁止重定向与自动重试，生成 IPC 不接受任意 URL / 远程 JSON。已有 Rust 服务仅适配 NovelAI 原生 JSON → ZIP；原版生成接口尚未接通，不冒充 OpenAI Images / Chat 全协议兼容。配置说明及第三方提供商核验边界见 [连接配置](CONNECTIONS.md)。
 
 保留原作者版权、完整 MIT 许可与 Git 来源历史。第三方依赖各有许可，详见根目录 THIRD_PARTY_NOTICES.md。当前不制作安装包、签名或自动更新；发行二进制前还需收集随包第三方许可并进行端到端验收。
 
