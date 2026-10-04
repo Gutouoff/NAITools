@@ -9,3 +9,6 @@
 *.md text eol=lf
 *.yml text eol=lf
 *.cmd text eol=crlf
+
+# Exact upstream renderer snapshot: retain captured bytes across clones.
+/desktop/langbai/** -text
