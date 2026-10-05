@@ -193,3 +193,5 @@ impl NaiService {
 
 /// Fresh native-only identity for local library records.
 pub fn new_local_id() -> String { uuid::Uuid::new_v4().to_string() }
+
+pub mod reference_presets;

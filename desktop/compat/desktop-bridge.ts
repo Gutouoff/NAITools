@@ -1,4 +1,5 @@
 import type { AppSettings, NaiDesktopApi, SettingKey } from "../langbai/src/types.ts";
+import { createReferenceMethods, REFERENCE_METHODS } from "./reference-presets.ts";
 import { createHistoryMethods, HISTORY_METHODS } from "./history.ts";
 import { createLocalImageMethods, LOCAL_IMAGE_METHODS } from "./local-images.ts";
 import type { Invoke } from "../src/platform/desktop-api.ts";
@@ -8,7 +9,7 @@ import membersInventory from "./langbai-api-members.json" with { type: "json" };
 export const IMPLEMENTED_METHODS = [
   "getSettings", "getSetting", "setSetting", "isFirstRun", "completeSetup",
   "accountCached", "hasToken", "minimize", "maximize", "close",
-  "getReverseTemplateDefaults", ...LOCAL_IMAGE_METHODS, ...HISTORY_METHODS,
+  "getReverseTemplateDefaults", ...LOCAL_IMAGE_METHODS, ...HISTORY_METHODS, ...REFERENCE_METHODS,
 ] as const;
 
 // Callback registration works, but native producers are not connected yet.
@@ -73,6 +74,7 @@ export function createLangbaiBridge(invoke: Invoke): LangbaiBridge {
   const implemented = {
     ...createLocalImageMethods(call),
     ...createHistoryMethods(call),
+    ...createReferenceMethods(call),
     platform: "win32",
     getSettings,
     setSetting,

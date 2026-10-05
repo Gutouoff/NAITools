@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-langbai-reference-edit"
+description = "Enables the langbai_reference_edit command without any pre-configured scope."
+commands.allow = ["langbai_reference_edit"]
+
+[[permission]]
+identifier = "deny-langbai-reference-edit"
+description = "Denies the langbai_reference_edit command without any pre-configured scope."
+commands.deny = ["langbai_reference_edit"]

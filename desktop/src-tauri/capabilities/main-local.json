@@ -7,6 +7,10 @@
   ],
   "local": true,
   "permissions": [
+    "allow-langbai-references-list",
+    "allow-langbai-reference-save",
+    "allow-langbai-reference-read",
+    "allow-langbai-reference-edit",
     "allow-desktop-bootstrap",
     "allow-desktop-mark-ready",
     "allow-draft-load",

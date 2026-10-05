@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-langbai-reference-save"
+description = "Enables the langbai_reference_save command without any pre-configured scope."
+commands.allow = ["langbai_reference_save"]
+
+[[permission]]
+identifier = "deny-langbai-reference-save"
+description = "Denies the langbai_reference_save command without any pre-configured scope."
+commands.deny = ["langbai_reference_save"]

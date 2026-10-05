@@ -13,3 +13,5 @@ pub mod presets;
 pub mod langbai_settings;
 
 pub mod langbai_history;
+
+pub mod reference_presets;

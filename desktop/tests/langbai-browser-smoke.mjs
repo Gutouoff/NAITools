@@ -15,6 +15,7 @@ const context=await browser.newContext({viewport:{width:1440,height:900}});
 const external=[];const errors=[];const missingAssets=[];
 await context.route("**/*",async route=>{
  const request=route.request();const url=request.url();
+ if(url === "http://naitools-image.localhost/imports/reference-smoke.png") return route.fulfill({contentType:"image/png",body:Buffer.from(plainImage.snapshot.base64,"base64")});
  if(!url.startsWith(origin+"/")&&!url.startsWith("data:")&&!url.startsWith("blob:"+origin+"/")) {external.push(url);return route.abort();}
  if(request.resourceType()==="document") {
   const response=await route.fetch();return route.fulfill({response,headers:{...response.headers(),"content-security-policy":csp}});
@@ -33,6 +34,7 @@ try {
   await page.addInitScript(({defaults,failure,plainImage,metadataImage})=>{
    window.__LANGBAI_TEST_PICK__ = plainImage.image; window.__LANGBAI_TEST_META__ = metadataImage.image;
    window.__LANGBAI_TEST_SNAPSHOT__ = null;
+   window.__LANGBAI_TEST_REFERENCES__ = {groups:[],presets:[]};
    window.isTauri=true;window.__LANGBAI_TEST_CALLS__=[];window.__LANGBAI_TEST_SETTINGS__={...defaults,hasOnboarded:true};
    window.__TAURI_INTERNALS__={invoke:async(command,args)=>{
     window.__LANGBAI_TEST_CALLS__.push({command,args});
@@ -53,6 +55,24 @@ try {
     }
     if(command==="langbai_metadata_save") {window.__LANGBAI_TEST_SNAPSHOT__=args.snapshot;return;}
     if(command==="langbai_metadata_load")return window.__LANGBAI_TEST_SNAPSHOT__;
+    if(command==="langbai_references_list")return structuredClone(window.__LANGBAI_TEST_REFERENCES__);
+    if(command==="langbai_reference_save") {
+     const {base64,extension,width,height,...parameters}=args.request;
+     window.__LANGBAI_TEST_REFERENCE_BYTES__=base64;
+     const row={...parameters,id:"reference-smoke",extension:"png",width:64,height:48,createdAtMs:1000};
+     window.__LANGBAI_TEST_REFERENCES__.presets.push(row);
+     if(row.group&&!window.__LANGBAI_TEST_REFERENCES__.groups.includes(row.group))window.__LANGBAI_TEST_REFERENCES__.groups.push(row.group);
+     return structuredClone(window.__LANGBAI_TEST_REFERENCES__);
+    }
+    if(command==="langbai_reference_read")return {preset:structuredClone(window.__LANGBAI_TEST_REFERENCES__.presets.find(p=>p.id===args.id)),base64:window.__LANGBAI_TEST_REFERENCE_BYTES__};
+    if(command==="langbai_reference_edit") {
+     const library=window.__LANGBAI_TEST_REFERENCES__;
+     if(args.action==="create_group"&&!library.groups.includes(args.group))library.groups.push(args.group);
+     if(args.action==="move") {library.presets.find(p=>p.id===args.id).group=args.group;if(args.group&&!library.groups.includes(args.group))library.groups.push(args.group);}
+     if(args.action==="delete_group") {library.groups=library.groups.filter(g=>g!==args.group);for(const p of library.presets)if(p.group===args.group)p.group="";}
+     if(args.action==="delete")library.presets=library.presets.filter(p=>p.id!==args.id);
+     return structuredClone(library);
+    }
     throw Error("Unexpected native command: "+command);
    }};
   },{defaults,failure,plainImage,metadataImage});
@@ -156,6 +176,44 @@ try {
  await upload.getByRole("button",{name:"加载图片...",exact:true}).waitFor();
  await page.getByRole("button",{name:"文生图",exact:true}).click();
 
+ // Exercise the unchanged reference manager and actual compatibility mapping.
+ if (await page.locator('[data-tab="referencePresets"]').count()) await page.locator('[data-tab="referencePresets"]').click();
+ else { await page.locator(".tab-overflow-control").getByRole("button").click(); await page.getByRole("option",{name:"参考预设",exact:true}).click(); }
+ const manager=page.locator(".reference-preset-manager:visible");
+ await manager.waitFor();
+ await manager.getByRole("button",{name:/^本机预设/}).click();
+ await manager.getByRole("button",{name:"创建参考预设",exact:true}).click();
+ const create=page.locator(".reference-preset-create-modal");
+ await create.waitFor();
+ await create.locator('input[type="file"]').setInputFiles({name:"reference.png",mimeType:"image/png",buffer:Buffer.from(plainImage.snapshot.base64,"base64")});
+ await create.locator(".reference-preset-create-image img").waitFor();
+ await create.getByText("预设名称",{exact:true}).locator("..").locator("input").fill("本地氛围测试");
+ await create.getByText("分组",{exact:true}).locator("..").locator("input").fill("测试分组");
+ const numbers=create.locator('input[type="number"]');
+ await numbers.nth(0).fill("0.65");await numbers.nth(0).blur();
+ await numbers.nth(1).fill("0.4");await numbers.nth(1).blur();
+ await create.locator(".reference-preset-save").click();
+ await create.waitFor({state:"hidden"});
+ const card=manager.locator(".reference-preset-card").filter({hasText:"本地氛围测试"});
+ await card.waitFor();
+ await page.waitForFunction(()=>{const image=document.querySelector('.reference-preset-card img');return image?.complete&&image.naturalWidth===64;});
+ assert.match(await card.innerText(),/0\.65/);assert.match(await card.innerText(),/0\.40/);
+ await manager.locator('input[type="search"]').fill("不匹配的预设");
+ await page.waitForFunction(()=>document.querySelectorAll(".reference-preset-card").length===0);
+ await manager.locator('input[type="search"]').fill("本地氛围");await card.waitFor();
+ await card.getByRole("button",{name:"应用到生成",exact:true}).click();
+ // Check returned parameters and absence of paid side effects through the real bridge.
+ const restored=await page.evaluate(()=>window.naiDesktop.readReferencePreset("reference-smoke"));
+ assert.equal(restored.preset.infoExtracted,0.65);assert.equal(restored.preset.strength,0.4);
+ await page.evaluate(()=>window.naiDesktop.deleteReferencePresetGroup("测试分组"));
+ const kept=await page.evaluate(()=>window.naiDesktop.readReferencePreset("reference-smoke"));
+ assert.equal(kept.preset.group,"");assert.equal(kept.base64,plainImage.snapshot.base64);
+ await page.locator('[data-tab="generate"]').click();
+ await page.locator(".quick-actions").getByRole("button",{name:/氛围迁移/}).click();
+ const vibeRow=page.locator(".vibe-modal .vibe-row").first();
+ await vibeRow.waitFor();
+ assert.deepEqual(await vibeRow.locator(".slider-field strong").allTextContents(),["0.65","0.4"],"Original apply handler restores actual workbench state, not only readback data");
+ await page.locator(".vibe-modal header button[aria-label]").click();
  // The native boundary is still incomplete. Calling a paid method must fail
  // locally, never return images or execute an unknown Rust command.
  const rejection=await page.evaluate(async()=>{
@@ -166,5 +224,5 @@ try {
  assert.equal(await page.evaluate(()=>window.__LANGBAI_TEST_CALLS__.some(c=>/generation|vibe|encode/.test(c.command))),false);
  if(process.env.LANGBAI_SMOKE_SCREENSHOT)await page.screenshot({path:process.env.LANGBAI_SMOKE_SCREENSHOT,fullPage:true,animations:"disabled"});
  assert.deepEqual(external,[],"No external requests");assert.deepEqual(missingAssets,[],"No broken original assets");assert.deepEqual(errors,[],"No renderer crash");
- console.log("Langbai renderer smoke passed: explicit boot failures, original main screen, valid icon, splitters, prompt resizing, exclusive modes, settings navigation, full image display, original metadata parsing/snapshots and no paid side effects.");
+ console.log("Langbai renderer smoke passed: explicit boot failures, original main screen, valid icon, splitters, prompt resizing, exclusive modes, settings navigation, full image display, original metadata parsing/snapshots reference preset save/search/preview/apply and no paid side effects.");
 } finally {await browser.close();}

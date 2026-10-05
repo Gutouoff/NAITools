@@ -224,6 +224,8 @@ mod tests {
             let snapshot = snapshot_from_reference(root.path(), &imported.file_path).unwrap();
             assert_eq!(snapshot.media_type, mime);
             assert_eq!(STANDARD.decode(snapshot.base64).unwrap(), original);
+            let (preview, actual_mime) = media_bytes(root.path(), &imported.file_path).unwrap();
+            assert_eq!(preview, original); assert_eq!(actual_mime, mime);
         }
     }
 
@@ -234,4 +236,12 @@ mod tests {
         save_snapshot(root.path(), &snapshot).unwrap();
         assert_eq!(load_snapshot(root.path()).unwrap().unwrap().media_type, "image/png");
     }
+}
+
+/// On-demand original bytes for owned import previews. No image decode per card.
+pub fn media_bytes(root: &Path, reference: &str) -> Result<(Vec<u8>, &'static str), AppError> {
+    let path = reference_path(root, reference)?;
+    let bytes = assets::read_bounded(&path, MAX_IMAGE)?;
+    let (_, mime) = format(&bytes)?;
+    Ok((bytes, mime))
 }

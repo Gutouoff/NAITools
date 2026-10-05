@@ -160,3 +160,20 @@ pub async fn langbai_history_group_edit(state: State<'_, Arc<Runtime>>, action: 
 pub async fn langbai_history_group_set(state: State<'_, Arc<Runtime>>, id: String, group_id: Option<String>) -> Result<(), AppError> {
     service(state.inner().clone(), move |n| n.with_store(|s| s.langbai_set_history_group(&id,group_id.as_deref()))).await
 }
+
+#[tauri::command]
+pub async fn langbai_references_list(state: State<'_, Arc<Runtime>>) -> Result<studio_core::reference_presets::ReferenceLibrary, AppError> {
+    service(state.inner().clone(), |native| studio_nai::reference_presets::list(&native.root)).await
+}
+#[tauri::command]
+pub async fn langbai_reference_save(state: State<'_, Arc<Runtime>>, request: studio_nai::reference_presets::SaveRequest) -> Result<studio_core::reference_presets::ReferenceLibrary, AppError> {
+    service(state.inner().clone(), move |native| studio_nai::reference_presets::save(&native.root,request)).await
+}
+#[tauri::command]
+pub async fn langbai_reference_read(state: State<'_, Arc<Runtime>>, id: String) -> Result<studio_nai::reference_presets::ReadResult, AppError> {
+    service(state.inner().clone(), move |native| studio_nai::reference_presets::read(&native.root,&id)).await
+}
+#[tauri::command]
+pub async fn langbai_reference_edit(state: State<'_, Arc<Runtime>>, action: studio_nai::reference_presets::EditAction, id: Option<String>, group: Option<String>) -> Result<studio_core::reference_presets::ReferenceLibrary, AppError> {
+    service(state.inner().clone(), move |native| studio_nai::reference_presets::edit(&native.root,action,id.as_deref(),group.as_deref())).await
+}
