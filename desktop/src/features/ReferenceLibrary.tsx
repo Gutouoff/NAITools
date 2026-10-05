@@ -29,7 +29,7 @@ async function verifyImage(blob: Blob): Promise<void> {
   }
 }
 
-export default function ReferenceLibrary() {
+export default function ReferenceLibrary({ onApply }: { onApply?: (preset: ReferencePreset) => void }) {
   const [kind, setKind] = useState<ReferenceKind>("vibe");
   const [rows, setRows] = useState<ReferencePreset[]>([]);
   const [selected, setSelected] = useState<ReferencePreset>();
@@ -104,7 +104,7 @@ export default function ReferenceLibrary() {
 
   return <section className="panel reference-library">
     <header className="library-heading">
-      <div><h2>参考预设库</h2><p className="hint">集中管理氛围迁移与精准参考文件。本地归档与预览不会发送服务请求；尚未接入工作台参数应用。</p></div>
+      <div><h2>参考预设库</h2><p className="hint">集中管理氛围迁移与精准参考文件。本地归档与预览不会发送服务请求。氛围迁移预设可直接载入工作台；精准参考仅保存本地文件，待原生接口契约核验后接入。</p></div>
       <button disabled={busy} onClick={() => void refresh()}>刷新</button>
     </header>
     <div className="library-tabs">
@@ -133,6 +133,8 @@ export default function ReferenceLibrary() {
         <BlobImage blob={selected.blob} alt={selected.name}/><h3>{selected.name}</h3>
         <p className="hint">类型：{label(selected.kind)}</p>{selected.note && <p>{selected.note}</p>}
         <p className="hint">文件大小：{Math.ceil(selected.blob.size / 1024)} KB</p>
+        {selected.kind === "vibe" && <button className="tonal" disabled={busy} onClick={() => onApply?.(selected)}>应用到工作台</button>}
+        {selected.kind === "precise" && <p className="notice">精准参考预设已保存。当前版本仅完成本地归档，未将未核验的字段写入生成请求。</p>}
         <button disabled={busy} onClick={() => void remove(selected.id)}>删除预设</button>
       </aside>}
     </div>

@@ -9,6 +9,7 @@ import { SIZE_PRESETS, localParameterError, applyDrawingPreset, applyArtistStrin
 import ResizableTextArea from "./ResizableTextArea";
 import type { DesktopApi } from "../platform/desktop-api";
 import type { GenerationInput, GenerationResult, VibeAsset, ConnectionStatus } from "../platform/types";
+import type { ReferencePreset } from "./reference-library-store";
 import { normalizeError } from "../platform/types";
 import PromptEditor from "./PromptEditor";
 import { compilePrompt, newPromptDocument } from "./prompt";
@@ -29,7 +30,7 @@ function Confirm({ value, onCancel, onAccept }: {
     onCancel: () => void;
     onAccept: () => void;
 }) { const ref = useRef<HTMLDialogElement>(null); useEffect(() => { ref.current?.showModal(); }, []); return <dialog ref={ref} onCancel={onCancel} className="confirm-dialog"><h2>{value.title}</h2><p>{value.description}</p><p className="hint">请求可能产生服务费用；发生超时或未知结果不会自动重新提交。</p><div className="actions"><button autoFocus onClick={onCancel}>取消</button><button className="primary" onClick={onAccept}>确认并提交一次</button></div></dialog>; }
-export default function Workbench({ api, native, input, setInput, replaySignal, connectionSignal, onOpenSettings, onTasks }: {
+export default function Workbench({ api, native, input, setInput, replaySignal, connectionSignal, onOpenSettings, onTasks, applyPreset }: {
     api: DesktopApi;
     native: boolean;
     input: GenerationInput;
@@ -38,6 +39,7 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
     connectionSignal: number;
     onOpenSettings: () => void;
     onTasks: () => void;
+    applyPreset?: { preset: ReferencePreset; nonce: string };
 }) {
     const [busy, setBusy] = useState(false), [message, setMessage] = useState(""), [error, setError] = useState(""), [image, setImage] = useState<SelectedImage>(), [rows, setRows] = useState<Row[]>([]), [result, setResult] = useState<GenerationResult>(), [confirmation, setConfirmation] = useState<Confirmation>();
     const [retention, setRetention] = useState(readPromptRetention);
@@ -150,6 +152,13 @@ export default function Workbench({ api, native, input, setInput, replaySignal, 
             }
         });
     }
+    useEffect(() => {
+        const request = applyPreset;
+        if (!request || request.preset.kind !== "vibe") return;
+        const file = new File([request.preset.blob], request.preset.name, { type: request.preset.blob.type || "image/png" });
+        void importSources([file], true).then(() => setMessage(`已载入氛围迁移预设“${request.preset.name}”，请完成信息提取后再提交生成。`));
+    // The nonce is the explicit event boundary; the preset contents are immutable for one event.
+    }, [applyPreset?.nonce]);
     async function retrySource() {
         if (!image?.file) return;
         await run(async () => {

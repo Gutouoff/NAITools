@@ -1,6 +1,7 @@
 import { useEffect, useState, lazy, Suspense } from "react";
 import { getDesktopApi, type DesktopApi } from "./platform/desktop-api";
 import type { BootInfo, GenerationInput } from "./platform/types";
+import type { ReferencePreset } from "./features/reference-library-store";
 import { normalizeError } from "./platform/types";
 import Workbench from "./features/Workbench";
 import { readSelectedConnection, rememberConnection } from "./features/generation-tools";
@@ -14,6 +15,7 @@ const initial: GenerationInput = { draft: { prompt: "", negativePrompt: "", prom
 export default function App() {
     const [api, setApi] = useState<DesktopApi>(), [boot, setBoot] = useState<BootInfo>(), [tab, setTab] = useState<Tab>("workbench"), [error, setError] = useState(""), [input, setInput] = useState<GenerationInput>(() => ({ ...initial, connectionId: readSelectedConnection() })), [rendererMs, setRendererMs] = useState<number>(), [replaySignal, setReplaySignal] = useState(0), [taskSignal, setTaskSignal] = useState(0), [connectionSignal, setConnectionSignal] = useState(0);
     const [taskStatus, setTaskStatus] = useState<"none" | "unknown" | "unavailable">("none");
+    const [referenceApply, setReferenceApply] = useState<{ preset: ReferencePreset; nonce: string }>();
     useEffect(() => {
         let active = true;
         void getDesktopApi().then(async (service) => {
@@ -55,10 +57,10 @@ export default function App() {
       {error && <div className="error" role="alert">{error}</div>}
       {taskStatus !== "none" && tab !== "settings" && <div className="notice">{taskStatus === "unknown" ? "存在结果待核对的付费任务，新请求已暂停。" : "付费任务记录不可用，无法提交生成请求。"}<button onClick={() => setTab("settings")}>查看任务记录</button></div>}
       <div className="page-content">
-        {api && <div className="workbench-page" hidden={tab !== "workbench"}><Workbench api={api} native={native} input={input} setInput={setInput} replaySignal={replaySignal} connectionSignal={connectionSignal} onOpenSettings={() => setTab("settings")} onTasks={() => setTaskSignal(s => s + 1)}/></div>}
+        {api && <div className="workbench-page" hidden={tab !== "workbench"}><Workbench api={api} native={native} input={input} setInput={setInput} replaySignal={replaySignal} connectionSignal={connectionSignal} applyPreset={referenceApply} onOpenSettings={() => setTab("settings")} onTasks={() => setTaskSignal(s => s + 1)}/></div>}
         <Suspense fallback={<p className="muted">加载中…</p>}>
           {tab === "history" && api && <History api={api} native={native} onReplay={i => { setInput(i); setReplaySignal(s => s + 1); setTab("workbench"); }}/> }
-          {tab === "library" && <ReferenceLibrary />}
+          {tab === "library" && <ReferenceLibrary onApply={preset => { if (preset.kind !== "vibe") return; setReferenceApply({ preset, nonce: crypto.randomUUID() }); setTab("workbench"); }}/>}
           {tab === "settings" && api && <Settings api={api} native={native} taskSignal={taskSignal} onTasks={() => setTaskSignal(s => s + 1)} onConnections={() => setConnectionSignal(s => s + 1)} selectedId={input.connectionId ?? "default-novelai"} onSelect={id => { if (id === input.connectionId) return; setInput(i => ({ ...i, connectionId: id, vibes: [], confirmPaid: false })); setReplaySignal(s => s + 1); }}/> }
           {tab === "diagnostics" && <Diagnostics boot={boot} rendererMs={rendererMs}/>}
         </Suspense>
