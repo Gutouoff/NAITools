@@ -17,6 +17,10 @@ Windows 桌面端 NovelAI 图像生成工具，基于 Langbai 开展 PC 重构�
 
 **原版生成及多个账号 / 第三方提供商切换仍需接通。** 先前自定义界面中的 Rust 服务代码保留供迁移和回归，不代表当前原版界面已具备全部服务。本机默认 AppData 读写和真实生图尚未通过原生验收。详见 [迁移进度](desktop/LANGBAI_PARITY.md)及 [验收说明](desktop/VALIDATION.md)。
 
+## 开发交接
+
+下一位开发者或 agent 请先阅读 [开发交接文档](desktop/HANDOFF.md)，包含默认原版界面的真实完成度、数据安全约束、复验命令与下一步接线方案。
+
 ## 启动
 
 本机构建成功后，运行根目录 `启动程序.bat`、`start.bat` 或 `desktop/启动PC新版.cmd`。这些入口均指向 `desktop/target/release/naitools.exe`，不再回退到旧 Electron 程序。仓库不提交本机构建的 EXE。
