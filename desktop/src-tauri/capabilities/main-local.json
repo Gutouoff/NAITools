@@ -40,6 +40,11 @@
     "allow-langbai-workbench-clear",
     "allow-langbai-metadata-read",
     "allow-langbai-metadata-save",
-    "allow-langbai-metadata-load"
+    "allow-langbai-metadata-load",
+    "allow-langbai-history-page",
+    "allow-langbai-history-days",
+    "allow-langbai-history-groups",
+    "allow-langbai-history-group-edit",
+    "allow-langbai-history-group-set"
   ]
 }

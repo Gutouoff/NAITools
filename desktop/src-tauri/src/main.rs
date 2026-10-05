@@ -4,6 +4,7 @@ use serde::Serialize;
 use tauri::{Manager,State,WebviewWindowBuilder};
 mod startup;
 mod langbai;
+mod media;
 use studio_core::{contract::{self,NaiContractStatus},dto::*,error::AppError,generation::GenerationInput,store::TaskRecord};
 use studio_nai::{NaiService,GenerationResult,EncodeInput,assets::{ImageAsset,VibeAsset}};
 struct Runtime {started:Instant,renderer_ready:Mutex<Option<u64>>,service:NaiService,workbench:Mutex<Option<String>>}
@@ -64,14 +65,16 @@ fn setup_runtime(app: &mut tauri::App, started: Instant) -> Result<(), Box<dyn s
         .build()?;
     Ok(())
 }
-fn main(){let started=Instant::now();let result=tauri::Builder::default().setup(move|app|{
+fn main(){let started=Instant::now();let media=media::MediaServer::new();let result=tauri::Builder::default()
+.register_asynchronous_uri_scheme_protocol("naitools-image",move |context,request,responder|media.handle(context,request,responder))
+.setup(move|app|{
     if let Err(error) = setup_runtime(app, started) {
         startup::report_failure(&error.to_string());
         std::process::exit(1);
     }
     Ok(())
 })
-.invoke_handler(tauri::generate_handler![langbai::langbai_settings_get,langbai::langbai_setting_set,langbai::langbai_window_action,langbai::langbai_image_pick,langbai::langbai_image_read,langbai::langbai_workbench_clear,langbai::langbai_metadata_read,langbai::langbai_metadata_save,langbai::langbai_metadata_load,desktop_bootstrap,desktop_mark_ready,draft_load,draft_save,history_list,history_request,generation_submit,credentials_status,credentials_set,credentials_delete,image_import,vibe_encode,artifact_read,artifact_metadata,artifact_export,task_list,task_acknowledge,connections_list,connection_save,connection_delete,connection_token_set,connection_token_delete,drawing_presets_list,drawing_preset_save,drawing_preset_delete])
+.invoke_handler(tauri::generate_handler![langbai::langbai_history_page,langbai::langbai_history_days,langbai::langbai_history_groups,langbai::langbai_history_group_edit,langbai::langbai_history_group_set,langbai::langbai_settings_get,langbai::langbai_setting_set,langbai::langbai_window_action,langbai::langbai_image_pick,langbai::langbai_image_read,langbai::langbai_workbench_clear,langbai::langbai_metadata_read,langbai::langbai_metadata_save,langbai::langbai_metadata_load,desktop_bootstrap,desktop_mark_ready,draft_load,draft_save,history_list,history_request,generation_submit,credentials_status,credentials_set,credentials_delete,image_import,vibe_encode,artifact_read,artifact_metadata,artifact_export,task_list,task_acknowledge,connections_list,connection_save,connection_delete,connection_token_set,connection_token_delete,drawing_presets_list,drawing_preset_save,drawing_preset_delete])
 .run(tauri::generate_context!());
     if let Err(error) = result {
         startup::report_failure(&error.to_string());

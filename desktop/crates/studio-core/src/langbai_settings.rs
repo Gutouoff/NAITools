@@ -13,7 +13,7 @@ const WRITABLE: &[&str] = &[
     "promptTemplates", "stylePromptPresets", "stylePromptPresetGroups", "positivePromptPresets",
     "promptChunks", "characterPromptPresets", "stylePromptPresetSort", "lastGenerationState",
     "persistGenerateParams", "persistI2IParams", "persistInpaintParams", "persistUpscaleParams",
-    "persistDirectorParams",
+    "persistDirectorParams", "activeHistoryGroupId", "generationGroupId",
 ];
 
 pub fn defaults() -> Result<Value, AppError> {
@@ -70,6 +70,7 @@ pub fn validate(key: &str, value: &Value) -> Result<(), AppError> {
             array.len() <= 1024
                 && array.iter().all(|item| item.as_str().is_some_and(|text| text.len() <= 1024))
         }),
+        "activeHistoryGroupId" | "generationGroupId" => value.as_str().is_some_and(|id| id.is_empty() || id == "__ungrouped" || crate::dto::valid_id(id)),
         "completionSound" => valid_completion_sound(value),
         _ => true,
     };

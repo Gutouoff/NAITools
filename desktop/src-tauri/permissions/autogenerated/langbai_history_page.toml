@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-langbai-history-page"
+description = "Enables the langbai_history_page command without any pre-configured scope."
+commands.allow = ["langbai_history_page"]
+
+[[permission]]
+identifier = "deny-langbai-history-page"
+description = "Denies the langbai_history_page command without any pre-configured scope."
+commands.deny = ["langbai_history_page"]

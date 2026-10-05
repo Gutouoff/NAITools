@@ -11,7 +11,7 @@ test("every required original contract member is present, without invented metho
  assert.ok(Object.isFrozen(bridge.api));
  assert.deepEqual(Object.keys(bridge.api).sort(),contract.filter((m:{optional:boolean})=>!m.optional).map((m:{name:string})=>m.name).sort());
  assert.equal(bridge.api.platform,"win32");
- assert.equal(IMPLEMENTED_METHODS.length,18);
+ assert.equal(IMPLEMENTED_METHODS.length,25);
  assert.equal(bridge.api.onStudioAgentRequest,undefined);
  for(const name of SUBSCRIPTIONS) {
   const remove=(bridge.api[name as keyof typeof bridge.api] as (callback:()=>void)=>()=>void)(()=>{throw Error("fake progress");});
@@ -49,7 +49,7 @@ test("storage failures retain their error and never trigger default success or r
 });
 test("unported native and paid methods reject without invoking any service",async()=>{
  let calls=0; const {api}=createLangbaiBridge(async()=>{calls++;throw Error("must not invoke");});
- for(const name of ["storedToken","verifyToken","generate","generateCompatible","listReferencePresets","runAutomaticBackup","getHistory"]) {
+ for(const name of ["storedToken","verifyToken","generate","generateCompatible","listReferencePresets","runAutomaticBackup"]) {
   assert.equal(typeof (api as unknown as Record<string,unknown>)[name],"function",name);
   await assert.rejects((api as unknown as Record<string,()=>Promise<unknown>>)[name](),(e:unknown)=>e instanceof DesktopError && e.code==="langbai_api_unavailable");
  }

@@ -14,7 +14,7 @@ test("only local main webview receives narrow application command permissions", 
   assert.deepEqual(config.app.security.capabilities, ["main-local"]);
   assert.deepEqual(capability.windows, ["main"]); assert.equal(capability.local, true);
   assert.equal(capability.remote, undefined);
-  assert.deepEqual(capability.permissions, ["allow-desktop-bootstrap", "allow-desktop-mark-ready", "allow-draft-load", "allow-draft-save", "allow-history-list", "allow-history-request", "allow-generation-submit", "allow-credentials-status", "allow-credentials-set", "allow-credentials-delete", "allow-image-import", "allow-vibe-encode", "allow-artifact-read", "allow-artifact-metadata", "allow-artifact-export", "allow-task-list", "allow-task-acknowledge", "allow-connections-list", "allow-connection-save", "allow-connection-delete", "allow-connection-token-set", "allow-connection-token-delete", "allow-drawing-presets-list", "allow-drawing-preset-save", "allow-drawing-preset-delete", "allow-langbai-settings-get", "allow-langbai-setting-set", "allow-langbai-window-action", "allow-langbai-image-pick", "allow-langbai-image-read", "allow-langbai-workbench-clear", "allow-langbai-metadata-read", "allow-langbai-metadata-save", "allow-langbai-metadata-load"]);
+  assert.deepEqual(capability.permissions, ["allow-desktop-bootstrap", "allow-desktop-mark-ready", "allow-draft-load", "allow-draft-save", "allow-history-list", "allow-history-request", "allow-generation-submit", "allow-credentials-status", "allow-credentials-set", "allow-credentials-delete", "allow-image-import", "allow-vibe-encode", "allow-artifact-read", "allow-artifact-metadata", "allow-artifact-export", "allow-task-list", "allow-task-acknowledge", "allow-connections-list", "allow-connection-save", "allow-connection-delete", "allow-connection-token-set", "allow-connection-token-delete", "allow-drawing-presets-list", "allow-drawing-preset-save", "allow-drawing-preset-delete", "allow-langbai-settings-get", "allow-langbai-setting-set", "allow-langbai-window-action", "allow-langbai-image-pick", "allow-langbai-image-read", "allow-langbai-workbench-clear", "allow-langbai-metadata-read", "allow-langbai-metadata-save", "allow-langbai-metadata-load", "allow-langbai-history-page", "allow-langbai-history-days", "allow-langbai-history-groups", "allow-langbai-history-group-edit", "allow-langbai-history-group-set"]);
   // Registration must opt into AppManifest ACLs, not rely on default global command access.
   assert.ok(read("src-tauri/build.rs").includes("AppManifest::new().commands"));
 });
@@ -22,7 +22,7 @@ test("production CSP excludes internet access and remote scripts", () => {
   const csp = config.app.security.csp;
   assert.equal(csp.split(";").find((part: string) => part.trim().startsWith("connect-src"))?.trim(), "connect-src 'self' data: blob: ipc: http://ipc.localhost");
   assert.ok(!csp.includes("https:")); assert.ok(!csp.includes("unsafe-eval"));
-  assert.ok(csp.includes("img-src 'self' data: blob:;"));
+  assert.ok(csp.includes("img-src 'self' data: blob: http://naitools-image.localhost;"));
   assert.ok(!csp.includes("script-src 'self' blob:"));
   assert.ok(csp.includes("object-src 'none'")); assert.ok(csp.includes("form-action 'none'"));
 });

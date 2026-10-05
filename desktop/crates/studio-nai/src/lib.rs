@@ -190,3 +190,6 @@ impl NaiService {
         assert_eq!(s.encode(input).unwrap_err().code,"encoding_unsupported");assert!(s.with_store(|db|db.task_list()).unwrap().is_empty());
     }
 }
+
+/// Fresh native-only identity for local library records.
+pub fn new_local_id() -> String { uuid::Uuid::new_v4().to_string() }

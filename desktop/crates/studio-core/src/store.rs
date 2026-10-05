@@ -4,7 +4,7 @@ use crate::{dto::*, error::AppError, task::TaskState};
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all="camelCase")]
 pub struct TaskRecord { pub id:String, pub state:TaskState, pub kind:String, pub created_at_ms:i64, pub acknowledged:bool, pub error_code:Option<String>, pub connection:Option<crate::connections::ConnectionProfile> }
-pub struct Store { db: Connection }
+pub struct Store { pub(crate) db: Connection }
 impl Store {
     pub fn open(path: &Path) -> Result<Self, AppError> {
         if let Some(parent) = path.parent() { std::fs::create_dir_all(parent).map_err(|e| AppError::storage_io(&e))?; }
@@ -18,7 +18,7 @@ impl Store {
     fn initialize(db: Connection) -> Result<Self, AppError> {
         db.busy_timeout(Duration::from_secs(5)).map_err(|e| AppError::storage_database(&e))?;
         let version: i64 = db.pragma_query_value(None, "user_version", |row| row.get(0)).map_err(|e| AppError::storage_database(&e))?;
-        if version > 5 { return Err(AppError::new("storage_version_unsupported", "数据库版本高于程序支持的版本；未修改数据。")); }
+        if version > 6 { return Err(AppError::new("storage_version_unsupported", "数据库版本高于程序支持的版本；未修改数据。")); }
         db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;").map_err(|e| AppError::storage_database(&e))?;
         if version == 0 {
             db.execute_batch("BEGIN IMMEDIATE;
@@ -54,6 +54,14 @@ impl Store {
             db.execute_batch("BEGIN IMMEDIATE;
                 CREATE TABLE langbai_settings (key TEXT PRIMARY KEY, payload TEXT NOT NULL);
                 PRAGMA user_version=5; COMMIT;").map_err(|e| AppError::storage_database(&e))?;
+        }
+        if version <= 5 {
+            db.execute_batch("BEGIN IMMEDIATE;
+                CREATE TABLE history_groups (id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at_ms INTEGER NOT NULL);
+                CREATE TABLE history_memberships (history_id TEXT PRIMARY KEY REFERENCES history(id) ON DELETE CASCADE,
+                    group_id TEXT NOT NULL REFERENCES history_groups(id) ON DELETE CASCADE);
+                CREATE INDEX history_group_items ON history_memberships(group_id, history_id);
+                PRAGMA user_version=6; COMMIT;").map_err(|e| AppError::storage_database(&e))?;
         }
         let official = crate::connections::ConnectionProfile::official();
         db.execute("INSERT OR IGNORE INTO connections(id,payload) VALUES(?1,?2)", params![official.id, serde_json::to_string(&official).map_err(|_|AppError::storage())?]).map_err(|e|AppError::storage_database(&e))?;
@@ -419,7 +427,7 @@ mod tests {
     }
     #[test] fn v3_migration_preserves_accounts_draft_and_journal() {
         let d=tempfile::tempdir().unwrap();let path=d.path().join("existing.sqlite3");
-        {let s=Store::open(&path).unwrap();s.save_draft(&preset().draft).unwrap();s.db.execute_batch("DROP TABLE drawing_presets; DROP TABLE langbai_settings; PRAGMA user_version=3;").unwrap();
+        {let s=Store::open(&path).unwrap();s.save_draft(&preset().draft).unwrap();s.db.execute_batch("DROP TABLE history_memberships; DROP TABLE history_groups; DROP TABLE drawing_presets; DROP TABLE langbai_settings; PRAGMA user_version=3;").unwrap();
          s.db.execute(r#"INSERT INTO task_journal(id,state,payload,kind,created_at_ms,acknowledged) VALUES('pending','"submitting"','{}','generation',1,0)"#,[]).unwrap();}
         let s=Store::open(&path).unwrap();assert_eq!(s.load_draft().unwrap().prompt,"subject");assert!(s.has_unresolved().unwrap());
         assert_eq!(s.connections().unwrap().len(),1);assert!(s.drawing_presets().unwrap().is_empty());
@@ -475,7 +483,7 @@ mod open_safety_tests {
                 id: "preserved-history".into(), created_at_ms: 1,
                 prompt: "retained history".into(), artifact_id: "preserved-image".into(),
             }).unwrap();
-            store.db.execute_batch("DROP TABLE langbai_settings; PRAGMA user_version=4;").unwrap();
+            store.db.execute_batch("DROP TABLE history_memberships; DROP TABLE history_groups; DROP TABLE langbai_settings; PRAGMA user_version=4;").unwrap();
             store.db.execute(r#"INSERT INTO task_journal(id,state,payload,kind,created_at_ms,acknowledged) VALUES('pending','"submitting"','{}','generation',1,0)"#, []).unwrap();
         }
         let store = Store::open(&path).unwrap();

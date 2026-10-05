@@ -11,3 +11,5 @@ pub mod connections;
 pub mod presets;
 
 pub mod langbai_settings;
+
+pub mod langbai_history;

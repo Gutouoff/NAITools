@@ -127,3 +127,36 @@ pub async fn langbai_metadata_save(
 pub async fn langbai_metadata_load(state: State<'_, Arc<Runtime>>) -> Result<Option<MetadataSnapshot>, AppError> {
     service(state.inner().clone(), |native| local_images::load_snapshot(&native.root)).await
 }
+
+use studio_core::langbai_history::{HistoryFilter, HistoryGroup, ReceiptPage};
+
+#[tauri::command]
+pub async fn langbai_history_page(state: State<'_, Arc<Runtime>>, filter: HistoryFilter) -> Result<ReceiptPage, AppError> {
+    service(state.inner().clone(), move |n| n.with_store(|s| s.langbai_history_page(&filter))).await
+}
+#[tauri::command]
+pub async fn langbai_history_days(state: State<'_, Arc<Runtime>>) -> Result<Vec<i64>, AppError> {
+    service(state.inner().clone(), |n| n.with_store(|s| s.langbai_history_days())).await
+}
+#[tauri::command]
+pub async fn langbai_history_groups(state: State<'_, Arc<Runtime>>) -> Result<Vec<HistoryGroup>, AppError> {
+    service(state.inner().clone(), |n| n.with_store(|s| s.langbai_history_groups())).await
+}
+#[derive(Deserialize)]
+#[serde(rename_all="camelCase")]
+pub enum GroupAction { Create, Rename, Delete }
+#[tauri::command]
+pub async fn langbai_history_group_edit(state: State<'_, Arc<Runtime>>, action: GroupAction, id: Option<String>, name: Option<String>) -> Result<Vec<HistoryGroup>, AppError> {
+    service(state.inner().clone(), move |n| n.with_store(|s| match action {
+        GroupAction::Create => {
+            let at=std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|_|AppError::storage())?.as_millis().try_into().map_err(|_|AppError::storage())?;
+            s.langbai_create_history_group(&studio_nai::new_local_id(),&name.ok_or_else(AppError::invalid)?,at)
+        },
+        GroupAction::Rename => s.langbai_rename_history_group(&id.ok_or_else(AppError::invalid)?,&name.ok_or_else(AppError::invalid)?),
+        GroupAction::Delete => s.langbai_delete_history_group(&id.ok_or_else(AppError::invalid)?),
+    })).await
+}
+#[tauri::command]
+pub async fn langbai_history_group_set(state: State<'_, Arc<Runtime>>, id: String, group_id: Option<String>) -> Result<(), AppError> {
+    service(state.inner().clone(), move |n| n.with_store(|s| s.langbai_set_history_group(&id,group_id.as_deref()))).await
+}
